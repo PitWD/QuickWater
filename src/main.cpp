@@ -108,7 +108,7 @@ int PrintAllMenuOpt2(int address1st, int pos){
   EscFaint(1);
   Serial.print("(Auto)Name: ");
   EscFaint(0);
-  Serial.print((char*)strHLP);
+  Serial.print((char*)strHLP2);
   EscFaint(1);
   Serial.print("   (1st)Address: ");
   EscFaint(0);
@@ -145,7 +145,7 @@ void PrintAllMenu(){
   static char address1st = 33;
 
   if (!ImInside){
-    strcpy(strHLP, "-DummyName-");
+    strcpy(strHLP2, "-DummyName-");
     address1st = 33;
   }
   ImInside = 1;
@@ -204,7 +204,7 @@ void PrintProbeMenu(int ezo){
   static char all = 0;
 
   if (!ImInside){
-    strcpy(strHLP, "-DummyName-");
+    strcpy(strHLP2, "-DummyName-");
     address1st = 33;
     all = 0;
   }
@@ -278,7 +278,6 @@ void PrintProbeMenu(int ezo){
     PrintProbeMenu(ezo);
   }
   
-
   ImInside = 0;
 
 }

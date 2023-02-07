@@ -16,7 +16,7 @@ static byte ezoAction = 0;
 static byte ezoAct = 0;
 
 // How many ezo's we have
-static int ezoCnt = 0;
+static byte ezoCnt = 0;
 
 enum ezoType: int{
     ezoRTD = 1, ezoPH, ezoEC, ezoORP, ezoHUM, ezoCO2, ezoFLOW, ezoRGB, ezoDiO2
@@ -60,7 +60,7 @@ typedef struct ezoProbeSTRUCT{
     unsigned int version; 
     char name[17];
     long value[EZO_MAX_VALUES];
-    long valueLast[EZO_MAX_VALUES];
+    //long valueLast[EZO_MAX_VALUES];
 }ezoProbeSTRUCT;
 
 ezoProbeSTRUCT ezoProbe[EZO_MAX_PROBES];
@@ -164,7 +164,7 @@ void EzoScan(){
     // Scan for Ezo's
 
     int err;
-    int recEzo;         // recognized EzoezoProbe[ezoCnt].module.version
+    int recEzo;         // recognized EzoProbe[ezoCnt].module.version
     int verPos;         // 'pointer' on 1st char of version
     int hasCal;         // has a calibration
     
@@ -172,6 +172,7 @@ void EzoScan(){
     char strSetup[6][9];
 
     ezoCnt = 0;
+    Serial.println("");
 
     for (int i = EZO_1st_ADDRESS; i < EZO_LAST_ADDRESS + 1 && ezoCnt < EZO_MAX_PROBES; i++){
         Wire.beginTransmission(i);

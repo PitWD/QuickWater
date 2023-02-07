@@ -7,7 +7,7 @@
 // global IIC I/O buffer
 char iicStr[IIC_STR_LEN];
 char strHLP[17];
-//char strMenuHLP[17];
+char strHLP2[17];
 
 int IICgETsTRING(int address, int atlasValidity){
 
@@ -31,7 +31,7 @@ int IICgETsTRING(int address, int atlasValidity){
 
     while (Wire.available() && count < IIC_STR_LEN - 1){
 
-        char c = Wire.read();
+        byte c = Wire.read();
 
         if (firstChar && atlasValidity){
             // 1st char in a atlas answer indicates the answers "quality"

@@ -26,16 +26,12 @@ int IICgETsTRING(int address, int atlasValidity){
 
     iicStr[0] = 0;
 
-    Serial.print("GET2-IN: ");
-   
     // Request up to IIC_STR_LEN bytes
     Wire.requestFrom(address, IIC_STR_LEN);
 
-    Serial.println("request");
-
     while (Wire.available() && count < IIC_STR_LEN - 1){
 
-        int c = Wire.read();
+        char c = Wire.read();
 
         if (firstChar && atlasValidity){
             // 1st char in a atlas answer indicates the answers "quality"

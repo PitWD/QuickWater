@@ -16,9 +16,9 @@ static byte ezoAction = 0;
 static byte ezoAct = 0;
 
 // How many ezo's we have
-static byte ezoCnt = 0;
+static int ezoCnt = 0;
 
-enum ezoType: byte {
+enum ezoType: int{
     ezoRTD = 1, ezoPH, ezoEC, ezoORP, ezoHUM, ezoCO2, ezoFLOW, ezoRGB, ezoDiO2
 };
 
@@ -50,7 +50,7 @@ PGM_P const ezoStrType[] PROGMEM = {
 const int ezoWait[10] PROGMEM = {0, 600, 900, 600, 900, 300, 900, 300, 300, 600};
 
 // Count of vals of probe
-const byte ezoValCnt[10] PROGMEM = {0, 1, 1, 1, 1, 3, 2, 2, 5, 2};
+const int ezoValCnt[10] PROGMEM = {0, 1, 1, 1, 1, 3, 2, 2, 5, 2};
 
 typedef struct ezoProbeSTRUCT{
     byte type;
@@ -60,6 +60,7 @@ typedef struct ezoProbeSTRUCT{
     unsigned int version; 
     char name[17];
     long value[EZO_MAX_VALUES];
+    long valueLast[EZO_MAX_VALUES];
 }ezoProbeSTRUCT;
 
 ezoProbeSTRUCT ezoProbe[EZO_MAX_PROBES];
@@ -141,14 +142,13 @@ void EzoIntToStr(long val){
 void EzoStartValues(int ezo){
     IIcSetStr(ezoProbe[ezo].address, (char*)"R");
 }
+
 void EzoWaitValues(int ezo){
     delay((int)pgm_read_word(&(ezoWait[ezoProbe[ezo].type])));
 }
-int EzoGetValues(int ezo){
-    Serial.print("GET-IN: ");
-    Serial.println(ezo);
-    if (IIcGetAtlas(ezoProbe[ezo].address) > 0){
 
+int EzoGetValues(int ezo){
+    if (IIcGetAtlas((int)ezoProbe[ezo].address) > 0){
         ezoProbe[ezo].value[0] = StrToInt(iicStr, 0);
         for (int i = 1; i < (int)pgm_read_word(&(ezoValCnt[ezoProbe[ezo].type])); i++){
             ezoProbe[ezo].value[i] = StrToInt(iicStr, 1);
@@ -384,11 +384,8 @@ void EzoScan(){
                         // Value(s)
                         Serial.print("     Value(s): ");
                         EzoStartValues(ezoCnt);
-                        Serial.println("START");
                         EzoWaitValues(ezoCnt);
-                        Serial.println("WAIT");
                         if (EzoGetValues(ezoCnt)){
-                            Serial.println("GOT");
                             Serial.print(ezoProbe[ezoCnt].value[0]);
                             for (int i2 = 1; i2 < (int)pgm_read_word(&(ezoValCnt[recEzo])); i2++){
                                 Serial.print(" , ");

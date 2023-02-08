@@ -2,12 +2,13 @@
 #include <Wire.h>
 #include <string.h>
 
-#define IIC_STR_LEN 32
+#define IIC_STR_LEN 33
+#define IIC_HLP_LEN 17
 
 // global IIC I/O buffer
 char iicStr[IIC_STR_LEN];
-char strHLP[17];
-char strHLP2[17];
+char strHLP[IIC_HLP_LEN];
+char strHLP2[IIC_HLP_LEN];
 
 int IICgETsTRING(int address, int atlasValidity){
 

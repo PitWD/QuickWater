@@ -2,7 +2,7 @@
 #include <Wire.h>
 #include <string.h>
 
-#define IIC_STR_LEN 33
+#define IIC_STR_LEN 34
 #define IIC_HLP_LEN 17
 
 // global IIC I/O buffer

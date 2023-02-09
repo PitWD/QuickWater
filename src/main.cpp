@@ -6,7 +6,6 @@
 // Seconds between RTC sync's (0 disables sync)
 #define syncRTCinterval 0
 
-
 void setup() {
   // put your setup code here, to run once:
 
@@ -19,9 +18,7 @@ void setup() {
 
   if (ezoCnt){
     // at least 1 ezo got found
-    Serial.println("");
-    Serial.println("Press a key to enter menu...");
-    Serial.read();
+    Serial.println(F(""));
     PrintMainMenu();
   }
   

@@ -18,6 +18,8 @@ static byte ezoAct = 0;
 // How many ezo's we have
 static byte ezoCnt = 0;
 
+byte myAddress = 123;
+
 enum ezoType: int{
     ezoRTD = 1, ezoPH, ezoEC, ezoORP, ezoHUM, ezoCO2, ezoFLOW, ezoRGB, ezoDiO2
 };
@@ -64,6 +66,52 @@ typedef struct ezoProbeSTRUCT{
 }ezoProbeSTRUCT;
 
 ezoProbeSTRUCT ezoProbe[EZO_MAX_PROBES];
+
+long failSave_HUM = 50000L;
+long failSave_TMP = 25000L;
+long failSave_CO2 = 400000L;
+long failSave_RTD = 21000L;
+long failSave_EC = 1250000L;
+long failSave_pH = 6000L;
+long failSave_ORP = 225000L;
+long failSave_O2 = 99000L;
+
+long avg_HUM = 50000L;
+long avg_TMP = 25000L;
+long avg_CO2 = 400000L;
+long avg_RTD = 21000L;
+long avg_EC = 1250000L;
+long avg_pH = 6000L;
+long avg_ORP = 225000L;
+long avg_O2 = 99000L;
+
+
+
+#define CAL_RTD_RES -1L         // Value for Reset
+#define CAL_RTD_LOW 0L          // Value for LowPoint
+#define CAL_RTD_MID 21000L      // Value for MidPoint
+#define CAL_RTD_HIGH 100000L    // Value for HighPoint
+
+#define CAL_EC_RES 0L
+#define CAL_EC_LOW 84000L 
+#define CAL_EC_MID 1413000L
+#define CAL_EC_HIGH -1L
+
+#define CAL_PH_RES -1L
+#define CAL_PH_LOW 4000L 
+#define CAL_PH_MID 7000L
+#define CAL_PH_HIGH 10000L
+
+#define CAL_ORP_RES -1L
+#define CAL_ORP_LOW -1L 
+#define CAL_ORP_MID 225000L
+#define CAL_ORP_HIGH -1L
+
+#define CAL_DiO2_RES 0L
+#define CAL_DiO2_LOW 0L 
+#define CAL_DiO2_MID 0L
+#define CAL_DiO2_HIGH 0L
+
 
 long exp10(int e){
   long x = 1;
@@ -129,14 +177,67 @@ long StrToInt(char *strIN, int next){
     return r;
 }
 
-void EzoIntToStr(long val){
-    itoa(val, strHLP, 10);
+int EzoIntToStr(long val, int lz, int dp, char lc){
+
+    // dp = decimal places
+    // lz = leading zero's
+    // lc = leading char for zero
+    // return = position of decimal point
+
+    // int (scaled by 1000)
+    ltoa(val, strHLP, 10);
     int len = strlen(strHLP);
-    strHLP[len + 1] = 0;
-    strHLP[len] = strHLP[len - 1];
-    strHLP[len - 1] = strHLP[len - 2];
-    strHLP[len - 2] = strHLP[len - 3];
+
+    if (len < 4){
+        // value is < 1 (1000)
+        memmove(&strHLP[4 - len], &strHLP[0], len);
+        memset(&strHLP[0], '0', 4 - len);
+        len = 4;
+    }
+    
+    // Set leading zero's
+    lz -= (len - 3);
+    if (lz > 0){
+        // space for missing zeros
+        memmove(&strHLP[lz], &strHLP[0], len);
+        // set missing zeros
+        memset(&strHLP[0], lc, lz);
+        // correct len
+        len += lz;        
+    }
+
+    // shift dp's to set decimal point
+    memmove(&strHLP[len -2], &strHLP[len - 3], 3);
+    // set decimal point
     strHLP[len - 3] = '.';
+    len++;
+
+    // Trailing zero's
+    lz = dp + lz - len + 2;
+    if (lz > 0){
+        // missing trailing zero's
+        memset(&strHLP[len], '0', lz);
+        len += lz;
+    }
+
+    // Return final decimal point
+    lz = len - 4;
+
+    // calculate decimal places
+    if (dp > 0){
+        // cut the too much dp's
+        len -= 3 - dp;
+    }
+    else if (dp == 0){
+        // integer
+        len = lz;
+        lz = 0;
+    }
+
+    // set EndOfString
+    strHLP[len] = 0;
+
+    return lz;
 }
 
 void EzoStartValues(int ezo){

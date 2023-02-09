@@ -1,6 +1,9 @@
 #include "ezoIIC.h"
 #include "myTime.h"
 
+enum escColors {
+  fgBlack = 30, fgRed, fgGreen, fgYellow, fgBlue, fgMagenta, fgCyan, fgWhite
+};
 
 char myBoot = 0;    // 0 = Terminal  /  1 = Slave
 
@@ -29,6 +32,32 @@ void EscFaint(int set){
   else{
     EscBold(0);
   } 
+}
+void EscColor(int color){
+  if (!color){
+    color = 39;
+  }
+  Serial.print(F("\x1B["));
+  Serial.print(color);
+  Serial.print(F("m"));
+}
+
+void SetAvgColor(long avg, long tooLow, long low, long high, long tooHigh){
+  if (avg < tooLow){
+    EscColor(fgBlue);
+  }
+  else if (avg < low){
+    EscColor(fgCyan);
+  }
+  else if (avg > high){
+    EscColor(fgYellow);
+  }
+  else if (avg > tooHigh){
+    EscColor(fgRed);
+  }
+  else{
+    EscColor(fgGreen);
+  }
 }
 
 char GetUserKey(int maxChar, int ezoType){

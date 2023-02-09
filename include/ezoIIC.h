@@ -21,7 +21,7 @@ static byte ezoCnt = 0;
 byte myAddress = 123;
 
 enum ezoType: int{
-    ezoRTD = 1, ezoPH, ezoEC, ezoORP, ezoHUM, ezoCO2, ezoFLOW, ezoRGB, ezoDiO2
+    ezoRTD = 1, ezoPH, ezoEC, ezoORP, ezoHUM, ezoCO2, ezoFLOW, ezoRGB, ezoDiO2, ezoPRES
 };
 
 const char ezoStrType_0[] PROGMEM = "N/A";
@@ -34,6 +34,7 @@ const char ezoStrType_6[] PROGMEM = "CO2";
 const char ezoStrType_7[] PROGMEM = "Flow";
 const char ezoStrType_8[] PROGMEM = "RGB";
 const char ezoStrType_9[] PROGMEM = "D.O.";
+const char ezoStrType_10[] PROGMEM = "Pres";
 
 PGM_P const ezoStrType[] PROGMEM = {
     ezoStrType_0,
@@ -45,14 +46,15 @@ PGM_P const ezoStrType[] PROGMEM = {
     ezoStrType_6,
     ezoStrType_7,
     ezoStrType_8,
-    ezoStrType_9
+    ezoStrType_9,
+    ezoStrType_10
 };
 
 // Waittime for readings...
-const int ezoWait[10] PROGMEM = {0, 600, 900, 600, 900, 300, 900, 300, 300, 600};
+const int ezoWait[11] PROGMEM = {0, 600, 900, 600, 900, 300, 900, 300, 300, 600, 900};
 
 // Count of vals of probe
-const int ezoValCnt[10] PROGMEM = {0, 1, 1, 1, 1, 3, 2, 2, 5, 2};
+const int ezoValCnt[11] PROGMEM = {0, 1, 1, 1, 1, 3, 2, 2, 5, 2, 1};
 
 typedef struct ezoProbeSTRUCT{
     byte type;
@@ -84,6 +86,43 @@ long avg_EC = 1250000L;
 long avg_pH = 6000L;
 long avg_ORP = 225000L;
 long avg_O2 = 99000L;
+
+long tooLow_HUM = 40000L;
+long tooLow_TMP = 16000L;
+long tooLow_CO2 = 350000L;
+long tooLow_RTD = 15000L;
+long tooLow_EC = 1000000L;
+long tooLow_pH = 5500L;
+long tooLow_ORP = -750000L;
+long tooLow_O2 = 50000L;
+
+long low_HUM = 50000L;
+long low_TMP = 19000L;
+long low_CO2 = 400000L;
+long low_RTD = 17000L;
+long low_EC = 1250000L;
+long low_pH = 6000L;
+long low_ORP = -500000L;
+long low_O2 = 66666L;
+
+long high_HUM = 66666L;
+long high_TMP = 25000L;
+long high_CO2 = 1250000L;
+long high_RTD = 20000L;
+long high_EC = 1750000L;
+long high_pH = 6800L;
+long high_ORP = 500000L;
+long high_O2 = 100001L;
+
+long tooHigh_HUM = 75000L;
+long tooHigh_TMP = 27000L;
+long tooHigh_CO2 = 1500000L;
+long tooHigh_RTD = 22000L;
+long tooHigh_EC = 2000000L;
+long tooHigh_pH = 7000L;
+long tooHigh_ORP = 750000L;
+long tooHigh_O2 = 100001L;
+
 
 
 
@@ -329,7 +368,8 @@ void EzoScan(){
                             strcpy(strSetup[1],"O,RGB,1");
                             strcpy(strSetup[2],"O,LUX,1");
                             strcpy(strSetup[3],"O,CIE,1");
-                            cntSetup = 4;
+                            strcpy(strSetup[4],"L,33,T");
+                            cntSetup = 5;
                             break;
                         case 'T':
                             // RTD
@@ -369,7 +409,8 @@ void EzoScan(){
                         strcpy(strSetup[1],"O,HUM,1"); // Humidity
                         strcpy(strSetup[2],"O,T,1");   // Temperature 
                         strcpy(strSetup[3],"O,Dew,1"); // Dewing point
-                        cntSetup = 4;
+                        strcpy(strSetup[4],"Alarm,en,0");
+                        cntSetup = 5;
                         break;    
                     case 'E':
                         // EC
@@ -394,6 +435,14 @@ void EzoScan(){
                         strcpy(strSetup[1],"O,mg,1");
                         strcpy(strSetup[2],"O,%,1");
                         cntSetup = 3;
+                        break;
+                    case 'P':
+                        // Embedded Pressure
+                        recEzo = ezoPRES;
+                        strcpy(strSetup[1],"Dec,3");
+                        strcpy(strSetup[2],"U,bar");
+                        strcpy(strSetup[3],"Alarm,en,0");
+                        cntSetup = 4;
                         break;
                     default:
                         // LATE ERROR

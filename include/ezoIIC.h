@@ -279,8 +279,8 @@ int EzoIntToStr(long val, int lz, int dp, char lc){
     return lz;
 }
 
-void EzoStartValues(int ezo){
-    IIcSetStr(ezoProbe[ezo].address, (char*)"R");
+int EzoStartValues(int ezo){
+    return IIcSetStr(ezoProbe[ezo].address, (char*)"R");
 }
 
 void EzoWaitValues(int ezo){

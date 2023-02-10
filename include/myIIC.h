@@ -28,11 +28,11 @@ int IICgETsTRING(int address, int atlasValidity){
     iicStr[0] = 0;
 
     // Request up to IIC_STR_LEN bytes
-    Wire.requestFrom(address, IIC_STR_LEN);
+    Wire.requestFrom(address, IIC_STR_LEN, 1);
 
     while (Wire.available() && count < IIC_STR_LEN - 1){
 
-        byte c = Wire.read();
+        char c = Wire.read();
 
         if (firstChar && atlasValidity){
             // 1st char in a atlas answer indicates the answers "quality"
@@ -80,7 +80,7 @@ int IICgETsTRING(int address, int atlasValidity){
         }    
     }
 
-    i2c_error = Wire.endTransmission();  // Check for I2C communication errors
+    i2c_error = Wire.endTransmission(1);  // Check for I2C communication errors
 
     if (i2c_error == 0 || count < 0){
         return count;
@@ -106,7 +106,7 @@ int IIcSetStr(int address, char *strIN){
         Wire.write(strIN[i]);
     }
 
-    int i2c_error = Wire.endTransmission();
+    int i2c_error = Wire.endTransmission(1);
 
     if (i2c_error == 0){
         return length;

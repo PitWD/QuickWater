@@ -16,8 +16,49 @@
   unsigned char myMonth = 1;
   unsigned int myYear = 1970;
   unsigned long myTime = 0;
+  
   // Seconds between RTC sync's (0 disables sync
   #define syncRTCinterval 0
+
+void PrintHlpTime(unsigned char hourIN, unsigned char minIN, unsigned char secIN){
+    EzoIntToStr((long)hourIN * 1000,2,0,'0');
+    Serial.print(strHLP);
+    Serial.print(F(":"));
+    EzoIntToStr((long)minIN * 1000,2,0,'0');
+    Serial.print(strHLP);
+    Serial.print(F(":"));
+    EzoIntToStr((long)secIN * 1000,2,0,'0');
+    Serial.print(strHLP);
+}
+
+void PrintHlpDate(unsigned char dayIN, unsigned char monthIN, unsigned int yearIN){
+    EzoIntToStr((long)dayIN * 1000,2,0,'0');
+    Serial.print(strHLP);
+    Serial.print(F("."));
+    EzoIntToStr((long)monthIN * 1000,2,0,'0');
+    Serial.print(strHLP);
+    Serial.print(F("."));
+    EzoIntToStr((long)yearIN * 1000,4,0,'0');
+    Serial.print(strHLP);
+}
+
+void PrintTime(){
+    PrintHlpTime(myHour, myMin, mySec);
+}
+
+void PrintRunTime(){
+    EzoIntToStr((long)myRunDay * 1000,4,0,' ');
+    Serial.print(strHLP);
+    Serial.print(F("d"));
+    Serial.print(F(" "));
+    PrintHlpTime(myRunHour, myRunMin, myRunSec);
+}
+
+void PrintDateTime(){
+    PrintHlpDate(myDay, myMonth, myYear);
+    Serial.print(F(" "));
+    PrintHlpTime(myHour, myMin, mySec);
+}
 
 int IsLeapYear(){
   if (!(myYear % 4) && (myYear % 100)){

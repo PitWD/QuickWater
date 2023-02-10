@@ -1,9 +1,41 @@
 #include "ezoIIC.h"
 #include "myTime.h"
 
-enum escColors {
-  fgBlack = 30, fgRed, fgGreen, fgYellow, fgBlue, fgMagenta, fgCyan, fgWhite
-};
+#define fgBlack 30
+#define fgRed 31
+#define fgGreen 32
+#define fgYellow 33
+#define fgBlue 34
+#define fgMagenta 35
+#define fgCyan 36
+#define fgWhite 37
+
+#define bgBlack 40
+#define bgRed 41
+#define bgGreen 42
+#define bgYellow 43
+#define bgBlue 44
+#define bgMagenta 45
+#define bgCyan 46
+#define bgWhite 47
+
+#define fgBlackB 90
+#define fgRedB 91
+#define fgGreenB 92
+#define fgYellowB 93
+#define fgBlueB 94
+#define fgMagentaB 95
+#define fgCyanB 96
+#define fgWhiteB 97
+
+#define bgBlackB 100
+#define bgRedB 101
+#define bgGreenB 102
+#define bgYellowB 103
+#define bgBlueB 104
+#define bgMagentaB 105
+#define bgCyanB 106
+#define bgWhiteB 107
 
 char myBoot = 0;    // 0 = Terminal  /  1 = Slave
 
@@ -40,6 +72,81 @@ void EscColor(int color){
   Serial.print(F("\x1B["));
   Serial.print(color);
   Serial.print(F("m"));
+  if (color == 39){
+    EscColor(49);
+  }
+  
+}
+void EscInverse(int set){
+ 	if (set) {
+		// Set
+		Serial.print(F("\x1B[7m"));
+	}
+	else {
+		// Reset
+		Serial.print(F("\x1B[27m"));
+	}
+}
+void EscCursorVisible(int set){
+	Serial.print(F("\x1B?25"));
+	if (set){
+		// visible
+		Serial.print(F("h"));
+	}
+	else{
+		// invisible
+		Serial.print(F("l"));
+	}	
+}
+
+void PrintErrorOK(int err, int ezo, char *strIN){
+
+  // Err: 0 = info, -1 = err, 1 = OK
+  // Err: 0 = black, -1 = red, 1 = green
+
+  int len = strlen(strIN) + 47;
+
+  EscColor(bgBlueB);
+  EscLocate(1,24);
+
+  if (err == -1){
+    EscColor(fgRed);
+  }
+  else if(err == 1){
+    EscColor(fgGreen);
+  }
+  else{
+    EscColor(fgBlack);
+    EscBold(1);
+  }
+  
+  Serial.print(F("    "));
+  Serial.print(strIN);
+  EscBold(0);
+  
+  if (ezo > -1){
+    Serial.print(F(" - on: "));
+    EscColor(fgBlack);
+    EzoIntToStr((long)ezoProbe[ezo].address * 1000,3,0,'0');
+    Serial.print(strHLP);
+    len += strlen(strHLP);
+  }
+  else{
+    EscColor(fgBlack);
+    len -= 7;
+  }
+    
+  Serial.print(F(" @ "));
+  PrintRunTime();
+
+  len = 80 - len;
+  for (int i = 0; i < len; i++){
+    Serial.print(F(" "));
+  }
+  
+  PrintDateTime();
+  EscColor(0);
+
 }
 
 void SetAvgColor(long avg, long tooLow, long low, long high, long tooHigh){
@@ -120,6 +227,12 @@ char GetUserKey(int maxChar, int ezoType){
 int PrintLine(int pos){
   EscLocate(5, pos++);
   Serial.print(F("---"));
+  return pos;
+}
+
+int PrintLongLine(int pos){
+  EscLocate(5, pos++);
+  Serial.print(F(" ----------------------------------------------------------------------"));
   return pos;
 }
 
@@ -753,6 +866,155 @@ Start:
   
 }
 
+void PrintLoopMenu(){
+  int pos1st = 0;
+  int posMax = 0;
+  int posAct = 0;
+
+  EscCls();
+  EscCursorVisible(0);
+  EscInverse(1);
+  int pos = PrintMenuTop((char*)"                                - QuickWater 1.00 -                             ");
+  EscInverse(0);
+  pos++;
+
+  EscLocate(5, pos++);
+  EscBold(1);
+  Serial.print(F(" | Temperature | Conductivity |     pH     |    Redox    |     O2     |"));
+  pos = PrintLongLine(pos);
+  EscBold(0);
+
+  PrintErrorOK(0,-1,(char*)"Read Loop started...");
+
+  pos1st = pos;
+  posAct = 0;
+  for (int i = 0; i < ezoCnt; i++){
+    if (ezoProbe[i].type == ezoRTD){
+      posAct++;
+      EscLocate(7, pos++);
+      Serial.print(i + 1);
+      Serial.print(F(": "));
+      PrintBoldValue((long)ezoProbe[i].value[0],2,2,' ');
+      EscFaint(1);
+      Serial.print(F("°C"));
+      EscFaint(0);
+    }
+  }
+  posMax = posAct;
+
+  pos = pos1st;
+  posAct = 0;
+  for (int i = 0; i < ezoCnt; i++){
+    if (ezoProbe[i].type == ezoEC){
+      posAct++;
+      EscLocate(24, pos++);
+      Serial.print(i + 1);
+      Serial.print(F(": "));
+      PrintBoldValue((long)ezoProbe[i].value[0],4,0,' ');
+      EscFaint(1);
+      Serial.print(F("µS"));
+      EscFaint(0);
+    }
+  }
+  if (posAct > posMax){
+    posMax = posAct;
+  }
+
+  pos = pos1st;
+  posAct = 0;
+  for (int i = 0; i < ezoCnt; i++){
+    if (ezoProbe[i].type == ezoPH){
+      posAct++;
+      EscLocate(37, pos++);
+      Serial.print(i + 1);
+      Serial.print(F(": "));
+      PrintBoldValue((long)ezoProbe[i].value[0],2,2,' ');
+      EscFaint(1);
+      Serial.print(F("pH"));
+      EscFaint(0);
+    }
+  }
+  if (posAct > posMax){
+    posMax = posAct;
+  }
+
+  pos = pos1st;
+  posAct = 0;
+  for (int i = 0; i < ezoCnt; i++){
+    if (ezoProbe[i].type == ezoORP){
+      posAct++;
+      EscLocate(48, pos++);
+      Serial.print(i + 1);
+      Serial.print(F(": "));
+      PrintBoldValue((long)ezoProbe[i].value[0],4,2,' ');
+      EscFaint(1);
+      Serial.print(F("mV"));
+      EscFaint(0);
+    }
+  }
+  if (posAct > posMax){
+    posMax = posAct;
+  }
+
+  pos = pos1st;
+  posAct = 0;
+  for (int i = 0; i < ezoCnt; i++){
+    if (ezoProbe[i].type == ezoDiO2){
+      posAct++;
+      EscLocate(63, pos++);
+      Serial.print(i + 1);
+      Serial.print(F(": "));
+      PrintBoldValue((long)ezoProbe[i].value[0],3,2,' ');
+      EscFaint(1);
+      Serial.print(F("r%"));
+      EscFaint(0);
+    }
+  }
+  if (posAct > posMax){
+    posMax = posAct;
+  }
+
+  pos = pos1st + posMax;
+
+  // Avg 
+  pos = PrintLongLine(pos);
+  
+  SetAvgColor(avg_RTD, tooLow_RTD, low_RTD, high_RTD, tooHigh_RTD);
+  EscLocate(12, pos);
+  PrintBoldValue(avg_RTD,2,2,' ');
+  EscColor(0);
+  Serial.print(F("°C"));
+
+  SetAvgColor(avg_EC, tooLow_EC, low_EC, high_EC, tooHigh_EC);
+  EscLocate(27, pos);
+  PrintBoldValue(avg_EC,4,0,' ');
+  EscColor(0);
+  Serial.print(F("µS"));
+
+  SetAvgColor(avg_pH, tooLow_pH, low_pH, high_pH, tooHigh_pH);
+  EscLocate(40, pos);
+  PrintBoldValue(avg_pH,2,2,' ');
+  EscColor(0);
+  Serial.print(F("pH"));
+
+  SetAvgColor(avg_ORP, tooLow_ORP, low_ORP, high_ORP, tooHigh_ORP);
+  EscLocate(51, pos);
+  PrintBoldValue(avg_ORP,4,2,' ');
+  EscColor(0);
+  Serial.print(F("mV"));
+
+  SetAvgColor(avg_O2, tooLow_O2, low_O2, high_O2, tooHigh_O2);
+  EscLocate(66, pos++);
+  PrintBoldValue(avg_O2,3,2,' ');
+  EscColor(0);
+  Serial.print(F("r%"));
+
+  EscBold(1);
+  pos = PrintLongLine(pos);
+  EscBold(0);
+
+}
+
 void PrintMainMenu(){
 
 Start:
@@ -853,5 +1115,5 @@ Start:
   if (pos > 0){
     goto Start;
   }
-  EscCls();
+  PrintLoopMenu();
 }

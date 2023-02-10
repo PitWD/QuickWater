@@ -22,148 +22,106 @@ void setup() {
     PrintMainMenu();
   }
 
-  int pos1st = 0;
-  int posMax = 0;
-  int posAct = 0;
-
-  int pos = PrintMenuTop((char*)"                                 - QuickWater 1.00 -");
-  pos++;
-
-  EscLocate(5, pos++);
-  EscBold(1);
-  Serial.print(F(" | Temperature  | Conductivity |      pH      |     Redox    |      O2      |"));
-  EscLocate(5, pos++);
-  Serial.print(F(" ----------------------------------------------------------------------------"));
-  EscBold(0);
-
-  pos1st = pos;
-  posAct = 0;
-  for (int i = 0; i < ezoCnt; i++){
-    if (ezoProbe[i].type == ezoRTD){
-      posAct++;
-      EscLocate(8, pos++);
-      Serial.print(i + 1);
-      Serial.print(F(": "));
-      PrintBoldValue((long)ezoProbe[i].value[0],2,2,' ');
-      Serial.print(F(" °C"));
-    }
-  }
-  posMax = posAct;
-
-  pos = pos1st;
-  posAct = 0;
-  for (int i = 0; i < ezoCnt; i++){
-    if (ezoProbe[i].type == ezoEC){
-      posAct++;
-      EscLocate(24, pos++);
-      Serial.print(i + 1);
-      Serial.print(F(": "));
-      PrintBoldValue((long)ezoProbe[i].value[0],4,0,' ');
-      Serial.print(F(" µS"));
-    }
-  }
-  if (posAct > posMax){
-    posMax = posAct;
-  }
-
-  pos = pos1st;
-  posAct = 0;
-  for (int i = 0; i < ezoCnt; i++){
-    if (ezoProbe[i].type == ezoPH){
-      posAct++;
-      EscLocate(38, pos++);
-      Serial.print(i + 1);
-      Serial.print(F(": "));
-      PrintBoldValue((long)ezoProbe[i].value[0],2,2,' ');
-      Serial.print(F(" pH"));
-    }
-  }
-  if (posAct > posMax){
-    posMax = posAct;
-  }
-
-  pos = pos1st;
-  posAct = 0;
-  for (int i = 0; i < ezoCnt; i++){
-    if (ezoProbe[i].type == ezoORP){
-      posAct++;
-      EscLocate(53, pos++);
-      Serial.print(i + 1);
-      Serial.print(F(": "));
-      PrintBoldValue((long)ezoProbe[i].value[0],4,2,' ');
-      Serial.print(F(" mV"));
-    }
-  }
-  if (posAct > posMax){
-    posMax = posAct;
-  }
-
-  pos = pos1st;
-  posAct = 0;
-  for (int i = 0; i < ezoCnt; i++){
-    if (ezoProbe[i].type == ezoDiO2){
-      posAct++;
-      EscLocate(68, pos++);
-      Serial.print(i + 1);
-      Serial.print(F(": "));
-      PrintBoldValue((long)ezoProbe[i].value[0],3,2,' ');
-      Serial.print(F(" r%"));
-    }
-  }
-  if (posAct > posMax){
-    posMax = posAct;
-  }
-
-  pos = pos1st + posMax;
-
-  // Avg 
-  EscLocate(5, pos++);
-  Serial.print(F(" ----------------------------------------------------------------------------"));
-  
-  SetAvgColor(avg_RTD, tooLow_RTD, low_RTD, high_RTD, tooHigh_RTD);
-  EscLocate(11, pos);
-  PrintBoldValue(avg_RTD,2,2,' ');
-  EscColor(0);
-  Serial.print(F(" °C"));
-
-  SetAvgColor(avg_EC, tooLow_EC, low_EC, high_EC, tooHigh_EC);
-  EscLocate(27, pos);
-  PrintBoldValue(avg_EC,4,0,' ');
-  EscColor(0);
-  Serial.print(F(" µS"));
-
-  SetAvgColor(avg_pH, tooLow_pH, low_pH, high_pH, tooHigh_pH);
-  EscLocate(41, pos);
-  PrintBoldValue(avg_pH,2,2,' ');
-  EscColor(0);
-  Serial.print(F(" pH"));
-
-  SetAvgColor(avg_ORP, tooLow_ORP, low_ORP, high_ORP, tooHigh_ORP);
-  EscLocate(56, pos);
-  PrintBoldValue(avg_ORP,4,2,' ');
-  EscColor(0);
-  Serial.print(F(" mV"));
-
-  SetAvgColor(avg_O2, tooLow_O2, low_O2, high_O2, tooHigh_O2);
-  EscLocate(71, pos++);
-  PrintBoldValue(avg_O2,3,2,' ');
-  EscColor(0);
-  Serial.print(F(" r%"));
-
-  EscBold(1);
-  EscLocate(5, pos++);
-  Serial.print(F(" ----------------------------------------------------------------------------"));
-  EscBold(0);
-
 }
 
 void loop() {
 // put your main code here, to run repeatedly:
 
-
-
   if (DoTimer()){
-  // A Second is over...
+    // A Second is over...
+
+    int err = 1;
+    int errCnt = 0;
+
+    // Runtime
+    EscLocate(67,1);
+    EscInverse(1);
+    PrintRunTime();
+    EscInverse(0);    
+    
+    // Realtime
+    EscColor(bgBlueB);
+    EscColor(fgBlack);
+    EscLocate(62,24);
+    PrintDateTime();
+    EscColor(0);
+
+    //Read EZO's
+    switch (ezoAction){
+    case 0:
+      // Set Avg-RTD to EC & pH probes
+      EzoIntToStr(avg_RTD,2,2,'0');
+      strcpy(&iicStr[2], strHLP);
+      iicStr[0] = 'T'; iicStr[1] = ',';
+
+      if (ezoProbe[ezoAct].type == ezoPH || ezoProbe[ezoAct].type == ezoEC){
+        errCnt = 0;
+        err = -1;
+        while (err < 0){
+          err = IIcSetStr(ezoProbe[ezoAct].address, iicStr);
+          if (err < 0){
+            errCnt++;
+            if (errCnt > 3){
+              // Fatal for this Probe
+              PrintErrorOK(-1,ezoAct,(char*)"'T'");
+              break;
+            }
+            delay(333);
+          }
+          else{
+              // PrintErrorOK(1,ezoAct,(char*)"'T'");
+          }          
+        }
+      }
+
+      break;
+    
+    case 1:
+      // Ask for Data
+      errCnt = 0;
+      err = -1;
+      while (err < 0){
+        err = EzoStartValues(ezoAct);
+        if (err < 0){
+          errCnt++;
+          if (errCnt > 3){
+            // Fatal for this Probe
+            PrintErrorOK(-1,ezoAct,(char*)"'R'");
+            break;
+          }
+          delay(333);
+        }
+        else{
+          // PrintErrorOK(1,ezoAct,(char*)"'R'");
+        }          
+      }
+    
+      break;
+
+    case 2:
+      // Get Data
+      err = EzoGetValues(ezoAct);
+
+      if (err == 0){
+        // Immediately Fatal for this Probe
+        PrintErrorOK(-1,ezoAct,(char*)"Data");
+      }
+      else{
+        // PrintErrorOK(1,ezoAct,(char*)"Data");
+      }          
+      break;
+    default:
+      ezoAction = 0;
+      break;
+    }
+
+    if (ezoAct == ezoCnt -1){
+      ezoAction++;
+      ezoAct = 0;
+    }
+    else{
+      ezoAct++;
+    }
 
   }
 

@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <Wire.h>
 #include <string.h>
+#include "myESC.h"
 
 #define IIC_STR_LEN 34
 #define IIC_HLP_LEN 17
@@ -9,6 +10,7 @@
 char iicStr[IIC_STR_LEN];
 char strHLP[IIC_HLP_LEN];
 char strHLP2[IIC_HLP_LEN];
+char strDefault[IIC_HLP_LEN];
 
 int IICgETsTRING(int address, int atlasValidity){
 
@@ -80,7 +82,7 @@ int IICgETsTRING(int address, int atlasValidity){
         }    
     }
 
-    i2c_error = Wire.endTransmission(1);  // Check for I2C communication errors
+    i2c_error = Wire.endTransmission();  // Check for I2C communication errors
 
     if (i2c_error == 0 || count < 0){
         return count;
@@ -92,7 +94,7 @@ int IICgETsTRING(int address, int atlasValidity){
 #define IIcGetStr(address) IICgETsTRING(address, 0)
 #define IIcGetAtlas(address) IICgETsTRING(address, 1)
 
-int IIcSetStr(int address, char *strIN){
+int IIcSetStr(int address, char *strIN, int term){
 
     int length = strlen(strIN);
 
@@ -102,11 +104,11 @@ int IIcSetStr(int address, char *strIN){
 
     Wire.beginTransmission(address);
 
-    for (int i = 0; i < length; i++){
+    for (int i = 0; i < length + term; i++){
         Wire.write(strIN[i]);
     }
 
-    int i2c_error = Wire.endTransmission(1);
+    int i2c_error = Wire.endTransmission();
 
     if (i2c_error == 0){
         return length;

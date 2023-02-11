@@ -20,6 +20,70 @@
   // Seconds between RTC sync's (0 disables sync
   #define syncRTCinterval 0
 
+int EzoIntToStr(long val, int lz, int dp, char lc){
+
+    // dp = decimal places
+    // lz = leading zero's
+    // lc = leading char for zero
+    // return = position of decimal point
+
+    // int (scaled by 1000)
+    ltoa(val, strHLP, 10);
+    int len = strlen(strHLP);
+
+    if (len < 4){
+        // value is < 1 (1000)
+        memmove(&strHLP[4 - len], &strHLP[0], len);
+        memset(&strHLP[0], '0', 4 - len);
+        len = 4;
+    }
+    
+    // Set leading zero's
+    lz -= (len - 3);
+    if (lz > 0){
+        // space for missing zeros
+        memmove(&strHLP[lz], &strHLP[0], len);
+        // set missing zeros
+        memset(&strHLP[0], lc, lz);
+        // correct len
+        len += lz;        
+    }
+
+    // shift dp's to set decimal point
+    memmove(&strHLP[len -2], &strHLP[len - 3], 3);
+    // set decimal point
+    strHLP[len - 3] = '.';
+    len++;
+
+    // Trailing zero's
+    lz = dp + lz - len + 2;
+    if (lz > 0){
+        // missing trailing zero's
+        memset(&strHLP[len], '0', lz);
+        len += lz;
+    }
+
+    // Return final decimal point
+    lz = len - 4;
+
+    // calculate decimal places
+    if (dp > 0){
+        // cut the too much dp's
+        len -= 3 - dp;
+    }
+    else if (dp == 0){
+        // integer
+        len = lz;
+        lz = 0;
+    }
+
+    // set EndOfString
+    strHLP[len] = 0;
+
+    return lz;
+}
+
+
 void PrintHlpTime(unsigned char hourIN, unsigned char minIN, unsigned char secIN){
     EzoIntToStr((long)hourIN * 1000,2,0,'0');
     Serial.print(strHLP);

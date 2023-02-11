@@ -1,170 +1,103 @@
 #include "ezoIIC.h"
-#include "myTime.h"
-
-#define fgBlack 30
-#define fgRed 31
-#define fgGreen 32
-#define fgYellow 33
-#define fgBlue 34
-#define fgMagenta 35
-#define fgCyan 36
-#define fgWhite 37
-
-#define bgBlack 40
-#define bgRed 41
-#define bgGreen 42
-#define bgYellow 43
-#define bgBlue 44
-#define bgMagenta 45
-#define bgCyan 46
-#define bgWhite 47
-
-#define fgBlackB 90
-#define fgRedB 91
-#define fgGreenB 92
-#define fgYellowB 93
-#define fgBlueB 94
-#define fgMagentaB 95
-#define fgCyanB 96
-#define fgWhiteB 97
-
-#define bgBlackB 100
-#define bgRedB 101
-#define bgGreenB 102
-#define bgYellowB 103
-#define bgBlueB 104
-#define bgMagentaB 105
-#define bgCyanB 106
-#define bgWhiteB 107
 
 char myBoot = 0;    // 0 = Terminal  /  1 = Slave
 
-void EscLocate(int x, int y){
-  Serial.print(F("\x1B["));
-  Serial.print(y);
-  Serial.print(F(";"));
-  Serial.print(x);
-  Serial.print(F("H"));
-}
-void EscCls(){
-  Serial.print(F("\x1B[2J"));
-}
-void EscBold(int set){
-  if (set){
-    Serial.print(F("\x1B[1m"));
-  }
-  else{
-    Serial.print(F("\x1B[22m"));
-  } 
-}
-void EscFaint(int set){
-  if (set){
-    Serial.print(F("\x1B[2m"));
-  }
-  else{
-    EscBold(0);
-  } 
-}
-void EscColor(int color){
-  if (!color){
-    color = 39;
-  }
-  Serial.print(F("\x1B["));
-  Serial.print(color);
-  Serial.print(F("m"));
-  if (color == 39){
-    EscColor(49);
-  }
+int GetUserString(char *strIN){
   
-}
-void EscInverse(int set){
- 	if (set) {
-		// Set
-		Serial.print(F("\x1B[7m"));
-	}
-	else {
-		// Reset
-		Serial.print(F("\x1B[27m"));
-	}
-}
-void EscCursorVisible(int set){
-	Serial.print(F("\x1B?25"));
-	if (set){
-		// visible
-		Serial.print(F("h"));
-	}
-	else{
-		// invisible
-		Serial.print(F("l"));
-	}	
-}
+  char c = 0;
+  char timeOut = 60;
+  int eos = 0;       // Pos of EndOfString
 
-void PrintErrorOK(int err, int ezo, char *strIN){
-
-  // Err: 0 = info, -1 = err, 1 = OK
-  // Err: 0 = black, -1 = red, 1 = green
-
-  int len = strlen(strIN) + 47;
-
-  EscColor(bgBlueB);
-  EscLocate(1,24);
-
-  if (err == -1){
-    EscColor(fgRed);
-  }
-  else if(err == 1){
-    EscColor(fgGreen);
-  }
-  else{
-    EscColor(fgBlack);
-    EscBold(1);
-  }
-  
-  Serial.print(F("    "));
-  Serial.print(strIN);
+  EscBold(1);
+  Serial.print(F(">> "));
   EscBold(0);
-  
-  if (ezo > -1){
-    Serial.print(F(" - on: "));
-    EscColor(fgBlack);
-    EzoIntToStr((long)ezoProbe[ezo].address * 1000,3,0,'0');
-    Serial.print(strHLP);
-    len += strlen(strHLP);
-  }
-  else{
-    EscColor(fgBlack);
-    len -= 7;
-  }
-    
-  Serial.print(F(" @ "));
-  PrintRunTime();
+  EscColor(fgCyan);
 
-  len = 80 - len;
-  for (int i = 0; i < len; i++){
-    Serial.print(F(" "));
+  eos = strlen(strIN);
+  if (eos){
+    Serial.print(strIN);
+    strcpy(strHLP, strIN);
   }
   
-  PrintDateTime();
+  strHLP[eos] = 0;
+
+  while (c != 13){
+
+    if (DoTimer()){
+      timeOut--;
+      if (!timeOut){
+        strHLP[0] = 0;
+        EscColor(0);
+        return 0;
+      }
+    }
+
+    if (Serial.available()){
+      
+      timeOut = 60;
+
+      c = Serial.read();
+      if (eos < IIC_HLP_LEN - 1){
+        eos++;
+      }
+      else{
+        EscCursorLeft(1);
+      }
+
+      switch (c){
+      case 8:
+      case 27:
+      case 127:
+        // DEL and Backspace
+        if (eos > 1){
+          eos -= 2;
+          EscCursorLeft(1);
+          Serial.print(F(" "));
+          EscCursorLeft(1);
+        }        
+        break;
+      case 10:
+      case 13:
+        break;
+      default:
+        // Print and save char
+        Serial.print(c);
+        strHLP[eos - 1] = c;
+        break;
+      }
+    }
+  }
+
+  strHLP[eos - 1] = 0;
   EscColor(0);
+  return 1;
 
 }
 
-void SetAvgColor(long avg, long tooLow, long low, long high, long tooHigh){
-  if (avg < tooLow){
-    EscColor(fgBlue);
-  }
-  else if (avg < low){
-    EscColor(fgCyan);
-  }
-  else if (avg > high){
-    EscColor(fgYellow);
-  }
-  else if (avg > tooHigh){
-    EscColor(fgRed);
+long GetUserVal(long defVal, int type){
+  // type:  0 = int as it is
+  //        1 = float (*1000)
+  if (type){
+    // Is scaled float
+    EzoIntToStr(defVal, 1, 3, ' ');
+    strcpy(strHLP2, strHLP);
   }
   else{
-    EscColor(fgGreen);
+    /* code */
+    ltoa(defVal, strHLP2, 10);
   }
+  if (GetUserString(strHLP2)){
+    if (type){
+      // Is scaled float
+      strcpy(strHLP2, strHLP);
+      defVal = StrToInt(strHLP2, 0);
+    }
+    else{
+      /* code */
+      defVal = atol(strHLP);
+    }
+  }
+  return defVal;  
 }
 
 char GetUserKey(int maxChar, int ezoType){
@@ -265,7 +198,7 @@ int PrintAllMenuOpt2(int address1st, int pos){
   EscFaint(1);
   Serial.print(F("(Auto)Name: "));
   EscFaint(0);
-  Serial.print((char*)strHLP2);
+  Serial.print((char*)strDefault);
   EscFaint(1);
   Serial.print(F("   (1st)Address: "));
   EscFaint(0);
@@ -283,14 +216,14 @@ int PrintAllMenuOpt1(int pos){
   EscLocate(5, pos++);
   Serial.print(F("B): Delete Name(s)"));
   EscLocate(5, pos++);
-  Serial.print(F("C): Set (Auto-)Name..."));
+  Serial.print(F("C): Edit (Auto-)Name..."));
   EscLocate(5, pos++);
-  Serial.print(F("D): Write (Auto-)Name(s)"));
+  Serial.print(F("D): Set (Auto-)Name(s)"));
   pos = PrintLine(pos);
   EscLocate(5, pos++);
-  Serial.print(F("E): Set (1st) Address..."));
+  Serial.print(F("E): Edit (1st) Address..."));
   EscLocate(5, pos++);
-  Serial.print(F("F): Write Address(es)"));
+  Serial.print(F("F): Set Address(es)"));
   pos = PrintLine(pos);
   EscLocate(5, pos++);
   Serial.print(F("G): Clear Calibration(s)"));
@@ -302,10 +235,10 @@ int PrintAllMenuOpt1(int pos){
 void PrintAllMenu(){
 
   static char ImInside = 0;
-  static char address1st = 33;
+  static long address1st = 33;
 
   if (!ImInside){
-    strcpy(strHLP2, "-DummyName-");
+    strcpy(strDefault, "-DummyName-");
     address1st = 33;
   }
   ImInside = 1;
@@ -321,20 +254,47 @@ Start:
 
   switch (pos){
   case 'a':
+    // Factory Reset for All
+    EzoReset(0,2);
     break;
   case 'b':
+    // Delete all names
+    EzoSetName((char*)"", 0, 2, 0);
     break;
   case 'c':
+    // Edit Auto Name
+    if (GetUserString(strDefault)){
+      strcpy(strDefault, strHLP);
+    }
     break;
   case 'd':
+    // Set AutoNames
+    EzoSetName(strHLP2,0,2,1);
     break;
   case 'e':
+    // Edit 1st Address
+    address1st = GetUserVal(address1st, 0);
+    if (address1st > 127 - ezoCnt){
+      address1st = 127 - ezoCnt;
+    }
+    else if (address1st < 32){
+      address1st = 32;
+    }
     break;
   case 'f':
+    // Set Addresses
+    EzoSetAddress(0, (int)address1st, 2);
+    // wait 4 reboots done
+    delay(1000);
+    // Scan new
+    EzoScan();
+    // direct back to main
+    pos = 0;
     break;
   case 'g':
+    // Clear calibration
+    EzoSetCal((char*)"Cal,clear", 0, 2);
     break;
-  
   default:
     break;
   }
@@ -709,7 +669,7 @@ void PrintProbeMenu(int ezo){
   static char all = 0;
 
   if (!ImInside){
-    strcpy(strHLP2, "-DummyName-");
+    strcpy(strDefault, "-DummyName-");
     address1st = 33;
     all = 0;
   }
@@ -866,25 +826,13 @@ Start:
   
 }
 
-void PrintLoopMenu(){
+int PrintWaterVals(int pos){
+
   int pos1st = 0;
   int posMax = 0;
   int posAct = 0;
 
-  EscCls();
-  EscCursorVisible(0);
-  EscInverse(1);
-  int pos = PrintMenuTop((char*)"                                - QuickWater 1.00 -                             ");
-  EscInverse(0);
-  pos++;
-
-  EscLocate(5, pos++);
-  EscBold(1);
-  Serial.print(F(" | Temperature | Conductivity |     pH     |    Redox    |     O2     |"));
-  pos = PrintLongLine(pos);
-  EscBold(0);
-
-  PrintErrorOK(0,-1,(char*)"Read Loop started...");
+  long avg = 0;
 
   pos1st = pos;
   posAct = 0;
@@ -895,15 +843,21 @@ void PrintLoopMenu(){
       Serial.print(i + 1);
       Serial.print(F(": "));
       PrintBoldValue((long)ezoProbe[i].value[0],2,2,' ');
+      avg += ezoProbe[i].value[0];
       EscFaint(1);
       Serial.print(F("°C"));
       EscFaint(0);
     }
   }
   posMax = posAct;
+  if (posAct){
+    avg_RTD = avg / (long)posAct;
+  }
+  
 
   pos = pos1st;
   posAct = 0;
+  avg = 0;
   for (int i = 0; i < ezoCnt; i++){
     if (ezoProbe[i].type == ezoEC){
       posAct++;
@@ -911,6 +865,7 @@ void PrintLoopMenu(){
       Serial.print(i + 1);
       Serial.print(F(": "));
       PrintBoldValue((long)ezoProbe[i].value[0],4,0,' ');
+      avg += ezoProbe[i].value[0];
       EscFaint(1);
       Serial.print(F("µS"));
       EscFaint(0);
@@ -919,9 +874,13 @@ void PrintLoopMenu(){
   if (posAct > posMax){
     posMax = posAct;
   }
+  if (posAct){
+    avg_EC = avg / (long)posAct;
+  }
 
   pos = pos1st;
   posAct = 0;
+  avg = 0;
   for (int i = 0; i < ezoCnt; i++){
     if (ezoProbe[i].type == ezoPH){
       posAct++;
@@ -929,6 +888,7 @@ void PrintLoopMenu(){
       Serial.print(i + 1);
       Serial.print(F(": "));
       PrintBoldValue((long)ezoProbe[i].value[0],2,2,' ');
+      avg += ezoProbe[i].value[0];
       EscFaint(1);
       Serial.print(F("pH"));
       EscFaint(0);
@@ -937,9 +897,13 @@ void PrintLoopMenu(){
   if (posAct > posMax){
     posMax = posAct;
   }
+  if (posAct){
+    avg_pH = avg / (long)posAct;
+  }
 
   pos = pos1st;
   posAct = 0;
+  avg = 0;
   for (int i = 0; i < ezoCnt; i++){
     if (ezoProbe[i].type == ezoORP){
       posAct++;
@@ -947,6 +911,7 @@ void PrintLoopMenu(){
       Serial.print(i + 1);
       Serial.print(F(": "));
       PrintBoldValue((long)ezoProbe[i].value[0],4,2,' ');
+      avg += ezoProbe[i].value[0];
       EscFaint(1);
       Serial.print(F("mV"));
       EscFaint(0);
@@ -955,9 +920,13 @@ void PrintLoopMenu(){
   if (posAct > posMax){
     posMax = posAct;
   }
+  if (posAct){
+    avg_ORP = avg / (long)posAct;
+  }
 
   pos = pos1st;
   posAct = 0;
+  avg = 0;
   for (int i = 0; i < ezoCnt; i++){
     if (ezoProbe[i].type == ezoDiO2){
       posAct++;
@@ -965,6 +934,7 @@ void PrintLoopMenu(){
       Serial.print(i + 1);
       Serial.print(F(": "));
       PrintBoldValue((long)ezoProbe[i].value[0],3,2,' ');
+      avg += ezoProbe[i].value[0];
       EscFaint(1);
       Serial.print(F("r%"));
       EscFaint(0);
@@ -973,14 +943,18 @@ void PrintLoopMenu(){
   if (posAct > posMax){
     posMax = posAct;
   }
+  if (posAct){
+    avg_O2 = avg / (long)posAct;
+  }
 
-  pos = pos1st + posMax;
+  return pos1st + posMax;
 
-  // Avg 
-  pos = PrintLongLine(pos);
+}
+
+int PrintAVGs(int pos){
   
   SetAvgColor(avg_RTD, tooLow_RTD, low_RTD, high_RTD, tooHigh_RTD);
-  EscLocate(12, pos);
+  EscLocate(10, pos);
   PrintBoldValue(avg_RTD,2,2,' ');
   EscColor(0);
   Serial.print(F("°C"));
@@ -1008,6 +982,34 @@ void PrintLoopMenu(){
   PrintBoldValue(avg_O2,3,2,' ');
   EscColor(0);
   Serial.print(F("r%"));
+
+  return pos;
+
+}
+
+void PrintLoopMenu(){
+
+  EscCls();
+  EscCursorVisible(0);
+  EscInverse(1);
+  int pos = PrintMenuTop((char*)"                                - QuickWater 1.00 -                             ");
+  EscInverse(0);
+  pos++;
+
+  EscLocate(5, pos++);
+  EscBold(1);
+  Serial.print(F(" | Temperature | Conductivity |     pH     |    Redox    |     O2     |"));
+  pos = PrintLongLine(pos);
+  EscBold(0);
+
+  PrintErrorOK(0,-1,(char*)"Read Loop started...");
+
+  pos = PrintWaterVals(pos);
+
+  pos = PrintLongLine(pos);
+
+  // Avg 
+  pos = PrintAVGs(pos);
 
   EscBold(1);
   pos = PrintLongLine(pos);

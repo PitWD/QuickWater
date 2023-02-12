@@ -83,7 +83,6 @@ int EzoIntToStr(long val, int lz, int dp, char lc){
     return lz;
 }
 
-
 void PrintHlpTime(unsigned char hourIN, unsigned char minIN, unsigned char secIN){
     EzoIntToStr((long)hourIN * 1000,2,0,'0');
     Serial.print(strHLP);

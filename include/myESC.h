@@ -34,7 +34,7 @@
 #define bgCyanB 106
 #define bgWhiteB 107
 
-void EscLocate(int x, int y){
+void EscLocate(byte x, byte y){
   Serial.print(F("\x1B["));
   Serial.print(y);
   Serial.print(F(";"));
@@ -44,7 +44,7 @@ void EscLocate(int x, int y){
 void EscCls(){
   Serial.print(F("\x1B[2J"));
 }
-void EscBold(int set){
+void EscBold(byte set){
   if (set){
     Serial.print(F("\x1B[1m"));
   }
@@ -52,7 +52,7 @@ void EscBold(int set){
     Serial.print(F("\x1B[22m"));
   } 
 }
-void EscFaint(int set){
+void EscFaint(byte set){
   if (set){
     Serial.print(F("\x1B[2m"));
   }
@@ -60,7 +60,7 @@ void EscFaint(int set){
     EscBold(0);
   } 
 }
-void EscColor(int color){
+void EscColor(byte color){
   if (!color){
     color = 39;
   }
@@ -72,7 +72,7 @@ void EscColor(int color){
   }
   
 }
-void EscInverse(int set){
+void EscInverse(byte set){
  	if (set) {
 		// Set
 		Serial.print(F("\x1B[7m"));
@@ -82,7 +82,7 @@ void EscInverse(int set){
 		Serial.print(F("\x1B[27m"));
 	}
 }
-void EscCursorVisible(int set){
+void EscCursorVisible(byte set){
 	Serial.print(F("\x1B?25"));
 	if (set){
 		// visible
@@ -93,7 +93,7 @@ void EscCursorVisible(int set){
 		Serial.print(F("l"));
 	}	
 }
-void EscCursorLeft(int cnt){
+void EscCursorLeft(byte cnt){
     Serial.print(F("\x1B["));
     Serial.print(cnt);
     Serial.print(F("D"));

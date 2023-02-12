@@ -317,6 +317,14 @@ int EzoGetValues(int ezo){
     }
 }
 
+int EzoCheckOnSet(int ezo, int all, int i){
+    // Check, if Module on i is valid in a EzoSetXYZ() function...
+    if (i == ezo || (all == 1 && ezoProbe[i].type == ezoProbe[ezo].type) || (all == 2)){
+        return 1;
+    }
+    return 0;
+}
+
 void EzoSetName(char *strIN, int ezo, int all, int autoName){
     
     char cnt[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
@@ -325,7 +333,7 @@ void EzoSetName(char *strIN, int ezo, int all, int autoName){
 
     for (int i = 0; i < ezoCnt; i++){
 
-        if ((i == ezo) || (all == 1 && (ezoProbe[i].type == ezoProbe[ezo].type)) || (all == 2)){
+        if (EzoCheckOnSet(ezo,all, i)){
 
             strcpy(iicStr,"Name,");
 
@@ -366,7 +374,7 @@ void EzoReset(int ezo, int all){
 
     for (int i = 0; i < ezoCnt; i++){
 
-        if (i == ezo || (all == 1 && ezoProbe[i].type == ezoProbe[ezo].type) || (all == 2)){
+        if (EzoCheckOnSet(ezo,all, i)){
         
             strcpy(strSetup[0],"L,1");  // Indicator LED
             cntSetup = 1;
@@ -441,7 +449,7 @@ void EzoReset(int ezo, int all){
 
 void EzoSetCal(char *strCmd, int ezo, int all){
     for (int i = 0; i < ezoCnt; i++){
-        if (i == ezo|| (all == 1 && ezoProbe[i].type == ezoProbe[ezo].type) || (all == 2)){
+        if (EzoCheckOnSet(ezo,all, i)){
             if ((int)pgm_read_word(&(ezoHasCal[ezoProbe[ezo].type]))){
                 // Has set-able calibration
                 IIcSetStr(ezoProbe[i].address, strCmd, 0);
@@ -453,7 +461,7 @@ void EzoSetCal(char *strCmd, int ezo, int all){
 
 void EzoSetAddress(int ezo, int addrNew, int all){
     for (int i = 0; i < ezoCnt; i++){
-        if (i == ezo|| (all == 1 && ezoProbe[i].type == ezoProbe[ezo].type) || (all == 2)){
+        if (EzoCheckOnSet(ezo,all, i)){
             strcpy(strHLP, "I2C,");
             itoa(addrNew, strHLP2, 10);
             strcpy(&strHLP[4], strHLP2);
@@ -479,17 +487,17 @@ void EzoScan(){
         Wire.beginTransmission(i);
         err = Wire.endTransmission();
         if (!err){
-            Serial.print("Slave @: ");
+            Serial.print(F("Slave @: "));
             Serial.print(i);
-            Serial.print(" : ");
+            Serial.print(F(" : "));
             // Slave found... looking for EZO-ID
             err = IIcSetStr(i, (char*)"i", 0);
             Serial.print(err);
-            Serial.print(" : ");
+            Serial.print(F(" : "));
             delay(333);
             err = IIcGetAtlas(i);
             Serial.print(err);
-            Serial.print(" : ");
+            Serial.print(F(" : "));
             switch (err){
             case 0:
                 // nothing received
@@ -505,7 +513,7 @@ void EzoScan(){
             default:
                 // something received
                 Serial.print(iicStr);
-                Serial.print(" : ");
+                Serial.print(F(" : "));
                 if (iicStr[0] == '?' && iicStr[1] == 'I'){
                     // It's an ezo...
 
@@ -602,74 +610,74 @@ void EzoScan(){
                         }
 
                         // Output (in RAM)
-                        Serial.print("Found: ");
+                        Serial.print(F("Found: "));
                         strcpy_P(strHLP,(PGM_P)pgm_read_word(&(ezoStrType[recEzo])));
                         Serial.print(strHLP);
-                        Serial.print(" @: ");
+                        Serial.print(F(" @: "));
                         Serial.println(i);
 
-                        Serial.print("         Name: ");
+                        Serial.print(F("         Name: "));
                         Serial.print((char*)ezoProbe[ezoCnt].name);
-                        Serial.println("");
-                        Serial.print("      Version: ");
+                        Serial.println(F(""));
+                        Serial.print(F("      Version: "));
                         Serial.println(ezoProbe[ezoCnt].version);
 
-                        Serial.print("  Calibration: ");
+                        Serial.print(F("  Calibration: "));
                         Serial.println(ezoProbe[ezoCnt].calibrated);
 
                         // Output (in Module)
                         // Status
                         IIcSetStr(i, (char*)"Status", 0);
-                        Serial.print("        State: ");
+                        Serial.print(F("        State: "));
                         delay(300);
                         if (IIcGetAtlas(i) > 0){
                             switch (iicStr[8]){
                             case 'P':
                                 // powered off
-                                Serial.print("'powered off'");
+                                Serial.print(F("'powered off'"));
                                 break;
                             case 'S':
                                 // software reset
-                                Serial.print("'software reset'");
+                                Serial.print(F("'software reset'"));
                                 break;
                             case 'B':
                                 // brown out
-                                Serial.print("'brown out'");
+                                Serial.print(F("'brown out'"));
                                 break;
                             case 'W':
                                 // watchdog
-                                Serial.print("'watchdog'");
+                                Serial.print(F("'watchdog'"));
                                 break;
                             case 'U':
                                 // Unknown
                             default:
-                                Serial.print("'unknown'");
+                                Serial.print(F("'unknown'"));
                                 break;
                             }             
-                            Serial.print(" @ ");
+                            Serial.print(F(" @ "));
                             Serial.print(&iicStr[10]);
-                            Serial.println(" Volt");
+                            Serial.println(F(" Volt"));
                         }
                         else{
-                            Serial.println("ERROR");
+                            Serial.println(F("ERROR"));
                         }
                         
                         // Value(s)
-                        Serial.print("     Value(s): ");
+                        Serial.print(F("     Value(s): "));
                         EzoStartValues(ezoCnt);
                         EzoWaitValues(ezoCnt);
                         if (EzoGetValues(ezoCnt)){
                             Serial.print(ezoProbe[ezoCnt].value[0]);
                             for (int i2 = 1; i2 < (int)pgm_read_word(&(ezoValCnt[recEzo])); i2++){
-                                Serial.print(" , ");
+                                Serial.print(F(" , "));
                                 Serial.print(ezoProbe[ezoCnt].value[i2]);
                             }          
-                            Serial.println("");
+                            Serial.println(F(""));
                         }
                         else{
-                            Serial.println("ERROR");
+                            Serial.println(F("ERROR"));
                         }
-                        Serial.println("");
+                        Serial.println(F(""));
                         
                         // done
                         ezoCnt++;
@@ -758,35 +766,12 @@ int EzoDoNext(){
       break;
     }
 
-/*
-    if (ezoAct == ezoCnt - 1){
-        // Modules done in actual step
-        ezoAct = 0;
-        ezoAction++;
-        if (ezoAction == 3){
-            // All read
-            return 1;
-        }
-    }
-    else{
-      // Next Module  
-      ezoAct++;
-    }
-
-    if (err < 0){
-        return -1;
-    }
-    else{
-        return 0;
-    }
-*/    
-
     if (ezoAction == 2){
         // Actions done for this Module
         ezoAct++;
         ezoAction = 0;
         if (ezoAct == ezoCnt){
-            // All read
+            // All Modules Read
             ezoAct = 0;
             return 1;
         }

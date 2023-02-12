@@ -2,11 +2,11 @@
 
 char myBoot = 0;    // 0 = Terminal  /  1 = Slave
 
-int GetUserString(char *strIN){
+byte GetUserString(char *strIN){
   
   char c = 0;
-  char timeOut = 60;
-  int eos = 0;       // Pos of EndOfString
+  byte timeOut = 60;
+  byte eos = 0;       // Pos of EndOfString
 
   EscBold(1);
   Serial.print(F(">> "));
@@ -74,7 +74,7 @@ int GetUserString(char *strIN){
 
 }
 
-long GetUserVal(long defVal, int type){
+long GetUserVal(long defVal, byte type){
   // type:  0 = int as it is
   //        1 = float (*1000)
   if (type){
@@ -100,15 +100,15 @@ long GetUserVal(long defVal, int type){
   return defVal;  
 }
 
-char GetUserKey(int maxChar, int ezoType){
+char GetUserKey(byte maxChar, byte ezoType){
 
   // ezoType = -1     No Numbers
   // ezoType = 0     1-9
   // ezoType = >0    Just probe-types
 
-  int timeOut = 60;
+  byte timeOut = 60;
   char charIN = 0;
-  int r = -1;         // TimeOut
+  char r = -1;         // TimeOut
 
   while (timeOut){
 
@@ -157,27 +157,28 @@ char GetUserKey(int maxChar, int ezoType){
 
 }
 
-int PrintLine(int pos){
-  EscLocate(5, pos++);
-  Serial.print(F("---"));
+byte PrintLine(byte pos, byte start, byte len){
+  EscLocate(start, pos++);
+  for (int i = 0; i < len; i++){
+    Serial.print(F("-"));
+  }
   return pos;
 }
 
-int PrintLongLine(int pos){
-  EscLocate(5, pos++);
-  Serial.print(F(" ----------------------------------------------------------------------"));
+byte PrintShortLine(byte pos){
+  pos = PrintLine(pos, 5, 3);
   return pos;
 }
 
-int PrintBoldValue(long val, int lz, int dp, char lc){
+byte PrintBoldValue(long val, byte lz, byte dp, char lc){
   EscBold(1);
-  int r = EzoIntToStr(val, lz, dp, lc);
+  byte r = EzoIntToStr(val, lz, dp, lc);
   Serial.print(strHLP);
   EscBold(0);
   return r;
 }
 
-int PrintMenuTop(char *strIN){
+byte PrintMenuTop(char *strIN){
   EscCls();
   EscLocate(1, 1);
   EscBold(1);
@@ -186,12 +187,12 @@ int PrintMenuTop(char *strIN){
   return 2;
 }
 
-void PrintMenuEnd(int pos){
+void PrintMenuEnd(byte pos){
   Serial.println(F("\n"));
   Serial.print(F("    Select key, or Enter(for return)..."));
 }
 
-int PrintAllMenuOpt2(int address1st, int pos){
+byte PrintAllMenuOpt2(byte address1st, byte pos){
 
   EscLocate(5, pos++);
 
@@ -208,23 +209,23 @@ int PrintAllMenuOpt2(int address1st, int pos){
 
 }
 
-int PrintAllMenuOpt1(int pos){
+byte PrintAllMenuOpt1(byte pos){
 
   EscLocate(5, pos++);
   Serial.print(F("A): 'Factory' Reset"));
-  pos = PrintLine(pos);
+  pos = PrintShortLine(pos);
   EscLocate(5, pos++);
   Serial.print(F("B): Delete Name(s)"));
   EscLocate(5, pos++);
   Serial.print(F("C): Edit (Auto-)Name..."));
   EscLocate(5, pos++);
   Serial.print(F("D): Set (Auto-)Name(s)"));
-  pos = PrintLine(pos);
+  pos = PrintShortLine(pos);
   EscLocate(5, pos++);
   Serial.print(F("E): Edit (1st) Address..."));
   EscLocate(5, pos++);
   Serial.print(F("F): Set Address(es)"));
-  pos = PrintLine(pos);
+  pos = PrintShortLine(pos);
   EscLocate(5, pos++);
   Serial.print(F("G): Clear Calibration(s)"));
   
@@ -245,7 +246,7 @@ void PrintAllMenu(){
 
 Start:
 
-  int pos = PrintMenuTop((char*)"                    - ALL Menu -");
+  byte pos = PrintMenuTop((char*)"                    - ALL Menu -");
   pos = PrintAllMenuOpt1(pos + 1);
   pos = PrintAllMenuOpt2(address1st, pos + 1);
   PrintMenuEnd(pos + 1);
@@ -269,7 +270,7 @@ Start:
     break;
   case 'd':
     // Set AutoNames
-    EzoSetName(strHLP2,0,2,1);
+    EzoSetName(strDefault,0,2,1);
     break;
   case 'e':
     // Edit 1st Address
@@ -307,7 +308,7 @@ Start:
 
 }
 
-void PrintProbeLine(int ezo, int pos){
+void PrintProbeLine(byte ezo, byte pos){
     EscLocate(5, pos);
     Serial.print(ezo + 1);
     Serial.print(F(".:"));
@@ -332,7 +333,7 @@ void PrintCal_Faint(){
     EscFaint(1);
     Serial.print(F("NA:"));
 }
-void PrintCal_Value(long val, int faint){
+void PrintCal_Value(long val, byte faint){
   EscFaint(0);
   if (faint){
     Serial.print(F("NA"));
@@ -341,7 +342,7 @@ void PrintCal_Value(long val, int faint){
     PrintBoldValue(val, 4, 2, ' ');
   }
 }
-int PrintCal_B(int faint, int pos){
+byte PrintCal_B(byte faint, byte pos){
 
   EscLocate(5, pos++);
   if (faint){
@@ -356,7 +357,7 @@ int PrintCal_B(int faint, int pos){
   return pos;
 
 }
-int PrintCal_C(int faint, int pos){
+byte PrintCal_C(byte faint, byte pos){
 
   EscLocate(5, pos++);
   if (faint){
@@ -371,7 +372,7 @@ int PrintCal_C(int faint, int pos){
   return pos;
   
 }
-int PrintCal_D(int faint, int pos){
+byte PrintCal_D(byte faint, byte pos){
 
   EscLocate(5, pos++);
   if (faint){
@@ -382,11 +383,11 @@ int PrintCal_D(int faint, int pos){
   }
   Serial.print(F(" Do 3-Point Cal..."));
   EscFaint(0);
-  pos = PrintLine(pos);
+  pos = PrintShortLine(pos);
   
   return pos;
 }
-int PrintCal_E(int faint, int pos, long val){
+byte PrintCal_E(byte faint, byte pos, long val){
 
   EscLocate(5, pos++);
   if (faint){
@@ -401,7 +402,7 @@ int PrintCal_E(int faint, int pos, long val){
   return pos;
   
 }
-int PrintCal_F(int faint, int pos, long val){
+byte PrintCal_F(byte faint, byte pos, long val){
 
   EscLocate(5, pos++);
   if (faint){
@@ -413,12 +414,12 @@ int PrintCal_F(int faint, int pos, long val){
   Serial.print(F(" Avg As Single/Mid Point = "));
   PrintCal_Value(val, faint);  
 
-  pos = PrintLine(pos);
+  pos = PrintShortLine(pos);
   
   return pos;
 
 }
-int PrintCal_G(int faint, int pos, long val){
+byte PrintCal_G(byte faint, byte pos, long val){
 
   EscLocate(5, pos++);
   if (faint){
@@ -433,7 +434,7 @@ int PrintCal_G(int faint, int pos, long val){
   return pos;
 
 }
-int PrintCal_H(int faint, int pos, long val){
+byte PrintCal_H(byte faint, byte pos, long val){
 
   EscLocate(5, pos++);
   if (faint){
@@ -449,9 +450,9 @@ int PrintCal_H(int faint, int pos, long val){
 
 }
 
-void PrintCalMenu(int ezo, int all){
+void PrintCalMenu(byte ezo, byte all){
 
-  static int ImInside = 0;
+  static byte ImInside = 0;
 
   long calLow = 0;      // Value for LowPoint
   long calMid = 0;      // Value for MidPoint
@@ -533,7 +534,7 @@ void PrintCalMenu(int ezo, int all){
   default:
     break;
   }
-  int pos = PrintMenuTop(iicStr);
+  byte pos = PrintMenuTop(iicStr);
   ImInside = 1;
 
   for (int i = 0; i < ezoCnt; i++){  
@@ -553,11 +554,11 @@ void PrintCalMenu(int ezo, int all){
   }
   EscFaint(0);
 
-  pos = PrintLine(pos + 1);
+  pos = PrintShortLine(pos + 1);
 
   EscLocate(5, pos++);
   Serial.print(F("A): Clear Calibration"));
-  pos = PrintLine(pos);
+  pos = PrintShortLine(pos);
 
   switch (ezoProbe[ezo].type){
   case ezoRTD:
@@ -661,7 +662,7 @@ void PrintCalMenu(int ezo, int all){
   ImInside = 0;
 }
 
-void PrintProbeMenu(int ezo){
+void PrintProbeMenu(byte ezo){
 
 
   static char ImInside = 0;
@@ -677,7 +678,7 @@ void PrintProbeMenu(int ezo){
 
 Start:
 
-  int pos = PrintMenuTop((char*)"               - Probe(Type) Menu -");
+  byte pos = PrintMenuTop((char*)"               - Probe(Type) Menu -");
 
   for (int i = 0; i < ezoCnt; i++){  
     if (ezoProbe[i].type == ezoProbe[ezo].type) {
@@ -696,12 +697,12 @@ Start:
   }
   EscFaint(0);
 
-  pos = PrintLine(pos + 1);
+  pos = PrintShortLine(pos + 1);
 
   pos = PrintAllMenuOpt1(pos);
   EscLocate(5, pos++);
   Serial.print(F("H): Calibration(s)..."));
-  pos = PrintLine(pos);
+  pos = PrintShortLine(pos);
   EscLocate(5, pos++);
   Serial.print(F("I): Select Single"));
   EscLocate(5, pos++);
@@ -754,7 +755,7 @@ void PrintValuesMenu(){
 
 Start:
 
-  int pos = PrintMenuTop((char*)"              - Set FailSafe Values -") + 1;
+  char pos = PrintMenuTop((char*)"              - Set FailSafe Values -") + 1;
 
   EscLocate(5, pos++);
   Serial.print(F("A): Humidity %rH = "));
@@ -765,7 +766,7 @@ Start:
   EscLocate(5, pos++);
   Serial.print(F("C):  Air-CO  ppm = "));
   PrintBoldValue(failSave_CO2, 4, 2, ' ');
-  pos = PrintLine(pos);
+  pos = PrintShortLine(pos);
   EscLocate(5, pos++);
   Serial.print(F("D):   RTD    °C  = "));
   PrintBoldValue(failSave_RTD, 4, 2, ' ');
@@ -826,14 +827,40 @@ Start:
   
 }
 
-int PrintWaterVals(int pos){
+byte PrintWaterValsHlp(byte pos, byte posX, byte ezotype, byte lz, byte dp, long *avgExt, char *strUnit){
 
-  int pos1st = 0;
-  int posMax = 0;
-  int posAct = 0;
-
+  byte posAct = 0;
   long avg = 0;
 
+  for (int i = 0; i < ezoCnt; i++){
+    if (ezoProbe[i].type == ezotype){
+      posAct++;
+      EscLocate(posX, pos++);
+      Serial.print(i + 1);
+      Serial.print(F(": "));
+      PrintBoldValue((long)ezoProbe[i].value[0],lz,dp,' ');
+      avg += ezoProbe[i].value[0];
+      EscFaint(1);
+      Serial.print(strUnit);
+      EscFaint(0);
+    }
+  }
+
+  if (posAct){
+    *avgExt = avg / (long)posAct;
+  }
+
+  return posAct;
+
+}
+
+byte PrintWaterVals(byte pos){
+
+  byte posMax = 0;
+  byte posAct = 0;
+
+
+/*
   pos1st = pos;
   posAct = 0;
   for (int i = 0; i < ezoCnt; i++){
@@ -849,12 +876,17 @@ int PrintWaterVals(int pos){
       EscFaint(0);
     }
   }
+
   posMax = posAct;
   if (posAct){
     avg_RTD = avg / (long)posAct;
   }
-  
+*/  
 
+  posMax = PrintWaterValsHlp(pos, 8, ezoRTD, 2, 2, &avg_RTD, (char*)"°C");
+
+
+/*
   pos = pos1st;
   posAct = 0;
   avg = 0;
@@ -871,13 +903,18 @@ int PrintWaterVals(int pos){
       EscFaint(0);
     }
   }
-  if (posAct > posMax){
-    posMax = posAct;
-  }
   if (posAct){
     avg_EC = avg / (long)posAct;
   }
+*/
 
+  posAct = PrintWaterValsHlp(pos, 24, ezoEC, 4, 0, &avg_EC, (char*)"µS");
+  if (posAct > posMax){
+    posMax = posAct;
+  }
+
+  
+/*
   pos = pos1st;
   posAct = 0;
   avg = 0;
@@ -894,13 +931,18 @@ int PrintWaterVals(int pos){
       EscFaint(0);
     }
   }
-  if (posAct > posMax){
-    posMax = posAct;
-  }
   if (posAct){
     avg_pH = avg / (long)posAct;
   }
+*/
 
+  posAct = PrintWaterValsHlp(pos, 37, ezoPH, 2, 2, &avg_pH, (char*)"pH");
+  if (posAct > posMax){
+    posMax = posAct;
+  }
+
+
+/*
   pos = pos1st;
   posAct = 0;
   avg = 0;
@@ -917,13 +959,18 @@ int PrintWaterVals(int pos){
       EscFaint(0);
     }
   }
-  if (posAct > posMax){
-    posMax = posAct;
-  }
   if (posAct){
     avg_ORP = avg / (long)posAct;
   }
+*/
 
+  posAct = PrintWaterValsHlp(pos, 48, ezoORP, 4, 2, &avg_ORP, (char*)"mV");
+  if (posAct > posMax){
+    posMax = posAct;
+  }
+
+
+/*
   pos = pos1st;
   posAct = 0;
   avg = 0;
@@ -940,18 +987,21 @@ int PrintWaterVals(int pos){
       EscFaint(0);
     }
   }
-  if (posAct > posMax){
-    posMax = posAct;
-  }
   if (posAct){
     avg_O2 = avg / (long)posAct;
   }
+*/
 
-  return pos1st + posMax;
+  posAct = PrintWaterValsHlp(pos, 63, ezoDiO2, 3, 2, &avg_O2, (char*)"mV");
+  if (posAct > posMax){
+    posMax = posAct;
+  }
+
+  return pos + posMax;
 
 }
 
-int PrintAVGs(int pos){
+byte PrintAVGs(byte pos){
   
   SetAvgColor(avg_RTD, tooLow_RTD, low_RTD, high_RTD, tooHigh_RTD);
   EscLocate(10, pos);
@@ -992,27 +1042,27 @@ void PrintLoopMenu(){
   EscCls();
   EscCursorVisible(0);
   EscInverse(1);
-  int pos = PrintMenuTop((char*)"                                - QuickWater 1.00 -                             ");
+  byte pos = PrintMenuTop((char*)"                                - QuickWater 1.00 -                             ");
   EscInverse(0);
   pos++;
 
   EscLocate(5, pos++);
   EscBold(1);
   Serial.print(F(" | Temperature | Conductivity |     pH     |    Redox    |     O2     |"));
-  pos = PrintLongLine(pos);
+  pos = PrintLine(pos, 6, 70);
   EscBold(0);
 
   PrintErrorOK(0,-1,(char*)"Read Loop started...");
 
   pos = PrintWaterVals(pos);
 
-  pos = PrintLongLine(pos);
+  pos = PrintLine(pos, 6, 70);
 
   // Avg 
   pos = PrintAVGs(pos);
 
   EscBold(1);
-  pos = PrintLongLine(pos);
+  pos = PrintLine(pos, 6, 70);
   EscBold(0);
 
 }
@@ -1028,21 +1078,21 @@ Start:
     PrintProbeLine(i, pos);
   }
 
-  pos = PrintLine(pos + 1);
+  pos = PrintShortLine(pos + 1);
 
   EscLocate(5, pos++);
   Serial.print(F("A):  Select All..."));
   EscLocate(5, pos++);
   Serial.print(F("B):  ReBoot"));
-  pos = PrintLine(pos);
+  pos = PrintShortLine(pos);
   EscLocate(5, pos++);
   Serial.print(F("C):  Save State As Default"));
   EscLocate(5, pos++);
   Serial.print(F("D):  Erase Default State"));
-  pos = PrintLine(pos);
+  pos = PrintShortLine(pos);
   EscLocate(5, pos++);
   Serial.print(F("E):  Set FailSafe Values..."));
-  pos = PrintLine(pos);
+  pos = PrintShortLine(pos);
   EscLocate(5, pos++);
   Serial.print(F("F):  Boot for Terminal = "));
   if (myBoot){

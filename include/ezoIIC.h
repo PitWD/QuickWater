@@ -177,7 +177,7 @@ void PrintErrorOK(int err, int ezo, char *strIN){
     EscColor(fgRed);
   }
   else if(err == 1){
-    EscColor(fgGreen);
+    EscColor(fgBlackB);
   }
   else{
     EscColor(fgBlack);
@@ -708,7 +708,7 @@ int EzoDoNext(){
             delay(333);
           }
           else{
-              // PrintErrorOK(1,ezoAct,(char*)"'T'");
+              PrintErrorOK(1,ezoAct,(char*)"'T'");
           }          
         }
       }
@@ -731,12 +731,12 @@ int EzoDoNext(){
           delay(333);
         }
         else{
-          // PrintErrorOK(1,ezoAct,(char*)"'R'");
+          PrintErrorOK(1,ezoAct,(char*)"'R'");
         }          
       }
     
       break;
-
+    
     case 2:
       // Get Data
       err = EzoGetValues(ezoAct);
@@ -747,25 +747,24 @@ int EzoDoNext(){
         err = - 1;
       }
       else{
-        // PrintErrorOK(1,ezoAct,(char*)"Data");
+        PrintErrorOK(1,ezoAct,(char*)"Data");
       }          
       break;
+
     default:
       ezoAction = 0;
+      ezoAct = 0;
+      return 0;
       break;
     }
 
     if (ezoAct == ezoCnt - 1){
         // Modules done in actual step
         ezoAct = 0;
-        if (ezoAction == 2){
+        ezoAction++;
+        if (ezoAction == 3){
             // All read
-            ezoAction = 0;
             return 1;
-        }
-        else{
-            // Next Step
-            ezoAction++;
         }
     }
     else{

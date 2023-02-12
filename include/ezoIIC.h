@@ -758,6 +758,7 @@ int EzoDoNext(){
       break;
     }
 
+/*
     if (ezoAct == ezoCnt - 1){
         // Modules done in actual step
         ezoAct = 0;
@@ -778,6 +779,28 @@ int EzoDoNext(){
     else{
         return 0;
     }
-    
+*/    
+
+    if (ezoAction == 2){
+        // Actions done for this Module
+        ezoAct++;
+        ezoAction = 0;
+        if (ezoAct == ezoCnt){
+            // All read
+            ezoAct = 0;
+            return 1;
+        }
+    }
+    else{
+      // Next Module  
+      ezoAction++;
+    }
+
+    if (err < 0){
+        return -1;
+    }
+    else{
+        return 0;
+    }
 
 }

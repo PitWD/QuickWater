@@ -34,8 +34,22 @@
 #define bgCyanB 106
 #define bgWhiteB 107
 
-byte escFaintDeleteColor = 39;
+#define ESC_CAN_FAINT 1
+#define ESC_SOLARIZED 1
 
+#if ESC_CAN_FAINT
+#else
+  byte escFaintDeleteColor = 39;
+  char escFaintIsActive = 0;
+#endif
+
+#if ESC_SOLARIZED
+  #define fgFaint 92
+#else
+  #define fgFaint 90
+#endif
+
+void EscBold(byte set);
 void EscLocate(byte x, byte y){
   Serial.print(F("\x1B["));
   Serial.print(y);
@@ -46,58 +60,77 @@ void EscLocate(byte x, byte y){
 void EscCls(){
   Serial.print(F("\x1B[2J"));
 }
+
 void EscColor(byte color){
   
   if (!color){
     // Reset to Terminal Default
     color = 39;
   }
-  
-  if (color < 40 || (color > fgBlackB && color < 100)){
-    // Save ForeColor
-    escFaintDeleteColor = color;
-  }
-  
+
+  #if ESC_CAN_FAINT
+  #else  
+    if (escFaintIsActive == 0){
+      if(color < 40){
+        // It's a ForeColor
+        escFaintDeleteColor = color;
+      }
+    }
+  #endif
+
   Serial.print(F("\x1B["));
   Serial.print(color);
   Serial.print(F("m"));
-  
+
   if (color == 39){
     // Reset Background, too.
     EscColor(49);
   }
-  
+
 }
+
 void EscFaint(byte set){
 
-  if (set){
-    EscColor(fgBlackB);
-  }
-  else{
-    EscColor(escFaintDeleteColor);
-  }
-
-/*
-// Just Linux
-  if (set){
-    Serial.print(F("\x1B[2m"));
-  }
-  else{
-    EscBold(0);
-  }
-*/ 
+  #if ESC_CAN_FAINT
+    if (set){
+      Serial.print(F("\x1B[2m"));
+    }
+    else{
+      EscBold(0);
+    }
+  #else
+    if (set){
+      escFaintIsActive = -1;
+      EscColor(fgFaint);
+      escFaintIsActive = 1;
+    }
+    else{
+      escFaintIsActive = -2;
+      EscColor(escFaintDeleteColor);
+      escFaintIsActive = 0;
+    }
+  #endif
 
 }
+
 void EscBold(byte set){
+
+  #if ESC_CAN_FAINT
+  #else
+    if (escFaintIsActive && !set){
+      // We need to disable the color based faint realization
+      EscFaint(0);
+    }
+  #endif
+
   if (set){
     Serial.print(F("\x1B[1m"));
   }
   else{
     Serial.print(F("\x1B[22m"));
-  } 
-  // We need to disable the color based faint realization
-  EscFaint(0);
+  }   
 }
+
 void EscInverse(byte set){
  	if (set) {
 		// Set

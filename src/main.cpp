@@ -36,15 +36,17 @@ void loop() {
     EscLocate(66,1);
     EscInverse(1);
     PrintRunTime();
-    EscInverse(0);    
+    //EscInverse(0);    
     
     // Realtime
-    EscColor(bgBlueB);
-    EscColor(fgBlack);
+    
+    //EscColor(bgBlueB);
+    //EscColor(fgBlack);
     EscLocate(61,24);
     PrintDateTime();
     Serial.print(F(" "));
-    EscColor(0);
+    //EscColor(0);
+    EscInverse(0);    
 
     //Read EZO's
     if (EzoDoNext() == 1){

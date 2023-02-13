@@ -162,25 +162,26 @@ long tooHigh_O2 = 100001L;
 #define CAL_DiO2_MID 0L
 #define CAL_DiO2_HIGH 0L
 
-
-void PrintErrorOK(byte err, char ezo, char *strIN){
+void PrintErrorOK(char err, char ezo, char *strIN){
 
   // Err: 0 = info, -1 = err, 1 = OK
   // Err: 0 = black, -1 = red, 1 = green
 
   byte len = strlen(strIN) + 48;
 
-  EscColor(bgBlueB);
+  EscInverse(1);
   EscLocate(1,24);
 
   if (err == -1){
-    EscColor(fgRed);
+    // Error
+    EscColor(bgRed);
   }
   else if(err == 1){
-    EscColor(fgBlackB);
+    // OK
+    EscColor(bgGreen);
   }
   else{
-    EscColor(fgBlack);
+    // Info
     EscBold(1);
   }
   
@@ -190,13 +191,13 @@ void PrintErrorOK(byte err, char ezo, char *strIN){
   
   if (ezo > -1){
     Serial.print(F(" - on: "));
-    EscColor(fgBlack);
+    EscColor(49);
     EzoIntToStr((long)ezoProbe[(int)ezo].address * 1000,3,0,'0');
     Serial.print(strHLP);
     len += strlen(strHLP);
   }
   else{
-    EscColor(fgBlack);
+    EscColor(49);
     len -= 7;
   }
     
@@ -209,25 +210,25 @@ void PrintErrorOK(byte err, char ezo, char *strIN){
   }
   
   PrintDateTime();
-  EscColor(0);
+  EscInverse(0);
 
 }
 
 void SetAvgColor(long avg, long tooLow, long low, long high, long tooHigh){
   if (avg < tooLow){
-    EscColor(fgBlue);
+    EscColor(fgCyan);
   }
   else if (avg < low){
-    EscColor(fgGreen);
-  }
-  else if (avg > high){
-    EscColor(fgRedB);
+    EscColor(fgBlue);
   }
   else if (avg > tooHigh){
     EscColor(fgRed);
   }
+  else if (avg > high){
+    EscColor(fgYellow);
+  }
   else{
-    EscColor(fgCyan);
+    EscColor(fgGreen);
   }
 }
 

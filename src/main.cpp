@@ -30,8 +30,7 @@ void loop() {
   if (DoTimer()){
     // A Second is over...
 
-    int err = 1;
-    int errCnt = 0;
+    char err = 1;
 
     // Runtime
     EscLocate(66,1);

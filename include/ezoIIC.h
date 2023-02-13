@@ -163,12 +163,12 @@ long tooHigh_O2 = 100001L;
 #define CAL_DiO2_HIGH 0L
 
 
-void PrintErrorOK(int err, int ezo, char *strIN){
+void PrintErrorOK(byte err, char ezo, char *strIN){
 
   // Err: 0 = info, -1 = err, 1 = OK
   // Err: 0 = black, -1 = red, 1 = green
 
-  int len = strlen(strIN) + 48;
+  byte len = strlen(strIN) + 48;
 
   EscColor(bgBlueB);
   EscLocate(1,24);
@@ -191,7 +191,7 @@ void PrintErrorOK(int err, int ezo, char *strIN){
   if (ezo > -1){
     Serial.print(F(" - on: "));
     EscColor(fgBlack);
-    EzoIntToStr((long)ezoProbe[ezo].address * 1000,3,0,'0');
+    EzoIntToStr((long)ezoProbe[(int)ezo].address * 1000,3,0,'0');
     Serial.print(strHLP);
     len += strlen(strHLP);
   }
@@ -231,7 +231,6 @@ void SetAvgColor(long avg, long tooLow, long low, long high, long tooHigh){
   }
 }
 
-
 long exp10(int e){
   long x = 1;
   for (int i = 0; i < e; i++) {
@@ -240,7 +239,7 @@ long exp10(int e){
   return x;
 }
 
-long StrToInt(char *strIN, int next){
+long StrToInt(char *strIN, byte next){
 
     // "1.234" , 1000  ==> 1234
     // mul == 0 search next
@@ -296,15 +295,15 @@ long StrToInt(char *strIN, int next){
     return r;
 }
 
-int EzoStartValues(int ezo){
+char EzoStartValues(byte ezo){
     return IIcSetStr(ezoProbe[ezo].address, (char*)"R", 0);
 }
 
-void EzoWaitValues(int ezo){
+void EzoWaitValues(byte ezo){
     delay((int)pgm_read_word(&(ezoWait[ezoProbe[ezo].type])));
 }
 
-int EzoGetValues(int ezo){
+byte EzoGetValues(byte ezo){
     if (IIcGetAtlas((int)ezoProbe[ezo].address) > 0){
         ezoProbe[ezo].value[0] = StrToInt(iicStr, 0);
         for (int i = 1; i < (int)pgm_read_word(&(ezoValCnt[ezoProbe[ezo].type])); i++){
@@ -317,7 +316,7 @@ int EzoGetValues(int ezo){
     }
 }
 
-int EzoCheckOnSet(int ezo, int all, int i){
+byte EzoCheckOnSet(byte ezo, byte all, byte i){
     // Check, if Module on i is valid in a EzoSetXYZ() function...
     if (i == ezo || (all == 1 && ezoProbe[i].type == ezoProbe[ezo].type) || (all == 2)){
         return 1;
@@ -325,11 +324,11 @@ int EzoCheckOnSet(int ezo, int all, int i){
     return 0;
 }
 
-void EzoSetName(char *strIN, int ezo, int all, int autoName){
+void EzoSetName(char *strIN, byte ezo, byte all, byte autoName){
     
     char cnt[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
-    int len = 0;
+    byte len = 0;
 
     for (int i = 0; i < ezoCnt; i++){
 
@@ -364,12 +363,12 @@ void EzoSetName(char *strIN, int ezo, int all, int autoName){
     }
 }
 
-void EzoReset(int ezo, int all){
+void EzoReset(byte ezo, byte all){
     // 'Factory' Reset
     // All = 1 = all of type ezo
     // All = 2 = all types
 
-    int cntSetup;           // count of setup-lines to send
+    byte cntSetup;           // count of setup-lines to send
     char strSetup[6][9];
 
     for (int i = 0; i < ezoCnt; i++){
@@ -447,7 +446,7 @@ void EzoReset(int ezo, int all){
     }   
 }
 
-void EzoSetCal(char *strCmd, int ezo, int all){
+void EzoSetCal(char *strCmd, byte ezo, byte all){
     for (int i = 0; i < ezoCnt; i++){
         if (EzoCheckOnSet(ezo,all, i)){
             if ((int)pgm_read_word(&(ezoHasCal[ezoProbe[ezo].type]))){
@@ -459,7 +458,7 @@ void EzoSetCal(char *strCmd, int ezo, int all){
     }
 }
 
-void EzoSetAddress(int ezo, int addrNew, int all){
+void EzoSetAddress(byte ezo, byte addrNew, byte all){
     for (int i = 0; i < ezoCnt; i++){
         if (EzoCheckOnSet(ezo,all, i)){
             strcpy(strHLP, "I2C,");
@@ -689,10 +688,11 @@ void EzoScan(){
     }
 }
 
-int EzoDoNext(){
+char EzoDoNext(){
 
-    int err = 1;
-    int errCnt = 0;
+    char err = 1;
+    char errInfo[] = "'?'";
+    byte errCnt = 0;
 
     switch (ezoAction){
     case 0:
@@ -710,13 +710,14 @@ int EzoDoNext(){
             errCnt++;
             if (errCnt > 3){
               // Fatal for this Probe
-              PrintErrorOK(-1,ezoAct,(char*)"'T'");
+              errInfo[1] = 'T';
+              errCnt = ezoAct;
               break;
             }
             delay(333);
           }
           else{
-              PrintErrorOK(1,ezoAct,(char*)"'T'");
+              // errCnt = ezoAct;
           }          
         }
       }
@@ -733,13 +734,14 @@ int EzoDoNext(){
           errCnt++;
           if (errCnt > 3){
             // Fatal for this Probe
-            PrintErrorOK(-1,ezoAct,(char*)"'R'");
+            errInfo[1] = 'R';
+            errCnt = ezoAct;
             break;
           }
           delay(333);
         }
         else{
-          PrintErrorOK(1,ezoAct,(char*)"'R'");
+          // errCnt = ezoAct;
         }          
       }
     
@@ -751,11 +753,12 @@ int EzoDoNext(){
 
       if (err == 0){
         // Immediately Fatal for this Probe
-        PrintErrorOK(-1,ezoAct,(char*)"Data");
+        errInfo[1] = 'D';
+        errCnt = ezoAct;
         err = - 1;
       }
       else{
-        PrintErrorOK(1,ezoAct,(char*)"Data");
+        // errCnt = ezoAct;
       }          
       break;
 
@@ -782,9 +785,11 @@ int EzoDoNext(){
     }
 
     if (err < 0){
+        PrintErrorOK(-1, errCnt, errInfo);
         return -1;
     }
     else{
+        // PrintErrorOK(1, errCnt, errInfo);
         return 0;
     }
 

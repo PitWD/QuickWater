@@ -843,6 +843,7 @@ byte PrintWaterValsHlp(byte pos, byte posX, byte ezotype, byte lz, byte dp, long
       EscFaint(1);
       Serial.print(strUnit);
       EscFaint(0);
+      Serial.print(F("   "));
     }
   }
 
@@ -964,7 +965,7 @@ byte PrintWaterVals(byte pos){
   }
 */
 
-  posAct = PrintWaterValsHlp(pos, 48, ezoORP, 4, 2, &avg_ORP, (char*)"mV");
+  posAct = PrintWaterValsHlp(pos, 49, ezoORP, 4, 2, &avg_ORP, (char*)"mV");
   if (posAct > posMax){
     posMax = posAct;
   }
@@ -992,7 +993,7 @@ byte PrintWaterVals(byte pos){
   }
 */
 
-  posAct = PrintWaterValsHlp(pos, 63, ezoDiO2, 3, 2, &avg_O2, (char*)"mV");
+  posAct = PrintWaterValsHlp(pos, 63, ezoDiO2, 3, 2, &avg_O2, (char*)"r%");
   if (posAct > posMax){
     posMax = posAct;
   }
@@ -1004,34 +1005,34 @@ byte PrintWaterVals(byte pos){
 byte PrintAVGs(byte pos){
   
   SetAvgColor(avg_RTD, tooLow_RTD, low_RTD, high_RTD, tooHigh_RTD);
-  EscLocate(10, pos);
+  EscLocate(11, pos);
   PrintBoldValue(avg_RTD,2,2,' ');
   EscColor(0);
-  Serial.print(F("°C"));
+  Serial.print(F("°C   "));
 
   SetAvgColor(avg_EC, tooLow_EC, low_EC, high_EC, tooHigh_EC);
   EscLocate(27, pos);
   PrintBoldValue(avg_EC,4,0,' ');
   EscColor(0);
-  Serial.print(F("µS"));
+  Serial.print(F("µS   "));
 
   SetAvgColor(avg_pH, tooLow_pH, low_pH, high_pH, tooHigh_pH);
   EscLocate(40, pos);
   PrintBoldValue(avg_pH,2,2,' ');
   EscColor(0);
-  Serial.print(F("pH"));
+  Serial.print(F("pH   "));
 
   SetAvgColor(avg_ORP, tooLow_ORP, low_ORP, high_ORP, tooHigh_ORP);
-  EscLocate(51, pos);
+  EscLocate(52, pos);
   PrintBoldValue(avg_ORP,4,2,' ');
   EscColor(0);
-  Serial.print(F("mV"));
+  Serial.print(F("mV   "));
 
   SetAvgColor(avg_O2, tooLow_O2, low_O2, high_O2, tooHigh_O2);
   EscLocate(66, pos++);
   PrintBoldValue(avg_O2,3,2,' ');
   EscColor(0);
-  Serial.print(F("r%"));
+  Serial.print(F("r%   "));
 
   return pos;
 
@@ -1052,7 +1053,7 @@ void PrintLoopMenu(){
   pos = PrintLine(pos, 6, 70);
   EscBold(0);
 
-  PrintErrorOK(0,-1,(char*)"Read Loop started...");
+  PrintErrorOK(0, -1 ,(char*)"Read Loop started...");
 
   pos = PrintWaterVals(pos);
 

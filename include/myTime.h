@@ -20,7 +20,7 @@
   // Seconds between RTC sync's (0 disables sync
   #define syncRTCinterval 0
 
-int EzoIntToStr(long val, int lz, int dp, char lc){
+char EzoIntToStr(long val, char lz, byte dp, char lc){
 
     // dp = decimal places
     // lz = leading zero's
@@ -29,7 +29,7 @@ int EzoIntToStr(long val, int lz, int dp, char lc){
 
     // int (scaled by 1000)
     ltoa(val, strHLP, 10);
-    int len = strlen(strHLP);
+    byte len = strlen(strHLP);
 
     if (len < 4){
         // value is < 1 (1000)
@@ -42,7 +42,7 @@ int EzoIntToStr(long val, int lz, int dp, char lc){
     lz -= (len - 3);
     if (lz > 0){
         // space for missing zeros
-        memmove(&strHLP[lz], &strHLP[0], len);
+        memmove(&strHLP[(int)lz], &strHLP[0], len);
         // set missing zeros
         memset(&strHLP[0], lc, lz);
         // correct len
@@ -83,7 +83,7 @@ int EzoIntToStr(long val, int lz, int dp, char lc){
     return lz;
 }
 
-void PrintHlpTime(unsigned char hourIN, unsigned char minIN, unsigned char secIN){
+void PrintHlpTime(byte hourIN, byte minIN, byte secIN){
     EzoIntToStr((long)hourIN * 1000,2,0,'0');
     Serial.print(strHLP);
     Serial.print(F(":"));
@@ -94,7 +94,7 @@ void PrintHlpTime(unsigned char hourIN, unsigned char minIN, unsigned char secIN
     Serial.print(strHLP);
 }
 
-void PrintHlpDate(unsigned char dayIN, unsigned char monthIN, unsigned int yearIN){
+void PrintHlpDate(byte dayIN, byte monthIN, unsigned int yearIN){
     EzoIntToStr((long)dayIN * 1000,2,0,'0');
     Serial.print(strHLP);
     Serial.print(F("."));
@@ -123,7 +123,7 @@ void PrintDateTime(){
     PrintHlpTime(myHour, myMin, mySec);
 }
 
-int IsLeapYear(){
+byte IsLeapYear(){
   if (!(myYear % 4) && (myYear % 100)){
     // Leap
     return 1;
@@ -215,7 +215,7 @@ void DoRealTime(){
   }
 }
 
-int DoTimer(){
+byte DoTimer(){
   
   static unsigned long last_mS = 0;
   static unsigned long lost_mS = 0;

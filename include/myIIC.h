@@ -12,7 +12,7 @@ char strHLP[IIC_HLP_LEN];
 char strHLP2[IIC_HLP_LEN];
 char strDefault[IIC_HLP_LEN];
 
-int IICgETsTRING(int address, int atlasValidity){
+char IICgETsTRING(byte address, byte atlasValidity){
 
     // returns
     //          >0 = successful read (count of chars)
@@ -23,14 +23,14 @@ int IICgETsTRING(int address, int atlasValidity){
     //          -3 = IIC error
     //          -4 = unknown error (atlas)
   
-    int count = 0;
+    byte count = 0;
     int i2c_error;
-    int firstChar = 1;
+    byte firstChar = 1;
 
     iicStr[0] = 0;
 
     // Request up to IIC_STR_LEN bytes
-    Wire.requestFrom(address, IIC_STR_LEN, 1);
+    Wire.requestFrom(address, (int)IIC_STR_LEN);
 
     while (Wire.available() && count < IIC_STR_LEN - 1){
 
@@ -94,9 +94,9 @@ int IICgETsTRING(int address, int atlasValidity){
 #define IIcGetStr(address) IICgETsTRING(address, 0)
 #define IIcGetAtlas(address) IICgETsTRING(address, 1)
 
-int IIcSetStr(int address, char *strIN, int term){
+char IIcSetStr(int address, char *strIN, char term){
 
-    int length = strlen(strIN);
+    char length = strlen(strIN);
 
     if (!length){
         return 0;

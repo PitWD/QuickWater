@@ -34,6 +34,8 @@
 #define bgCyanB 106
 #define bgWhiteB 107
 
+byte escFaintDeleteColor = 39;
+
 void EscLocate(byte x, byte y){
   Serial.print(F("\x1B["));
   Serial.print(y);
@@ -44,6 +46,48 @@ void EscLocate(byte x, byte y){
 void EscCls(){
   Serial.print(F("\x1B[2J"));
 }
+void EscColor(byte color){
+  
+  if (!color){
+    // Reset to Terminal Default
+    color = 39;
+  }
+  
+  if (color < 40 || (color > fgBlackB && color < 100)){
+    // Save ForeColor
+    escFaintDeleteColor = color;
+  }
+  
+  Serial.print(F("\x1B["));
+  Serial.print(color);
+  Serial.print(F("m"));
+  
+  if (color == 39){
+    // Reset Background, too.
+    EscColor(49);
+  }
+  
+}
+void EscFaint(byte set){
+
+  if (set){
+    EscColor(fgBlackB);
+  }
+  else{
+    EscColor(escFaintDeleteColor);
+  }
+
+/*
+// Just Linux
+  if (set){
+    Serial.print(F("\x1B[2m"));
+  }
+  else{
+    EscBold(0);
+  }
+*/ 
+
+}
 void EscBold(byte set){
   if (set){
     Serial.print(F("\x1B[1m"));
@@ -51,26 +95,8 @@ void EscBold(byte set){
   else{
     Serial.print(F("\x1B[22m"));
   } 
-}
-void EscFaint(byte set){
-  if (set){
-    Serial.print(F("\x1B[2m"));
-  }
-  else{
-    EscBold(0);
-  } 
-}
-void EscColor(byte color){
-  if (!color){
-    color = 39;
-  }
-  Serial.print(F("\x1B["));
-  Serial.print(color);
-  Serial.print(F("m"));
-  if (color == 39){
-    EscColor(49);
-  }
-  
+  // We need to disable the color based faint realization
+  EscFaint(0);
 }
 void EscInverse(byte set){
  	if (set) {

@@ -34,20 +34,20 @@
 #define bgCyanB 106
 #define bgWhiteB 107
 
-#define ESC_CAN_FAINT 1
+#define ESC_CAN_FAINT 0
 #define ESC_SOLARIZED 1
 
 #if ESC_CAN_FAINT
 #else
   byte escFaintDeleteColor = 39;
   char escFaintIsActive = 0;
+  #if ESC_SOLARIZED
+    #define fgFaint 92
+  #else
+    #define fgFaint 90
+  #endif
 #endif
 
-#if ESC_SOLARIZED
-  #define fgFaint 92
-#else
-  #define fgFaint 90
-#endif
 
 void EscBold(byte set);
 void EscLocate(byte x, byte y){

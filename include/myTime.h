@@ -1,24 +1,259 @@
 #include <Arduino.h>
 
+struct TimerSTRUCT{
+  uint16_t onTime;
+  uint16_t offTime;
+  uint16_t onTime2;
+  uint16_t offTime2;
+  uint16_t offset;
+  union stateUNION{
+    byte automatic    :1;
+    byte permOff      :1;
+    byte permOn       :1;
+    byte tempOn       :1;
+    byte tempOff      :1;
+    byte interrupted  :1;
+    byte dayTimer     :1;
+  }state;
+  
+    //   0 = Disabled
+    //   1 = Automatic  
+    //   2 = perm. Off
+    //   4 = perm. On
+    //   8 = temp. Off
+    //  16 = temp. On
+    //  32 = Use as 24h Timer
+    //  64 = Use as Interrupted Interval
+  uint32_t tempUntil;
+  char name[17];
+}RunningTimers[12];
+
+
 
 // global RunTime Timing
-  unsigned char myRunSec = 0;
-  unsigned char myRunMin = 0;
-  unsigned char myRunHour = 0;
-  unsigned int myRunDay = 0;
-  unsigned long myRunTime = 0;
+  byte myRunSec = 0;
+  byte myRunMin = 0;
+  byte myRunHour = 0;
+  uint16_t myRunDay = 0;
+  byte myRunTime = 0;
 
 // global RealTime Timing
-  unsigned char mySec = 0;
-  unsigned char myMin = 0;
-  unsigned char myHour = 0;
-  unsigned char myDay = 1;
-  unsigned char myMonth = 1;
-  unsigned int myYear = 1970;
+  byte mySec = 0;
+  byte myMin = 0;
+  byte myHour = 0;
+  byte myDay = 1;
+  byte myMonth = 1;
+  unsigned int myYear = 2023;
   unsigned long myTime = 0;
+
+// RTC-Temp
+  long myRtcTemp = 0;
+
+// Seconds between RTC sync's (0 disables sync
+#define syncRTCinterval 86400L
+
+char ByteToChar(byte valIN){
+    // Keep Bit-Pattern
+    if (valIN > 127){
+        return (char)(valIN - 256);
+    }
+    return (char)valIN;
+}
+
+byte GetWeekDay(unsigned long serialTime){
+  // 01.01.2023 (start of 'myTime') was a Sunday
+  // Sunday is day 1
+
+  byte r = 1;
+  unsigned long hlp = serialTime % 604800;    // remove full weeks
   
-  // Seconds between RTC sync's (0 disables sync
-  #define syncRTCinterval 0
+  r += (byte)(hlp / 86400);                   // add full days
+  if (hlp % 86400){
+    r++;                                      // one more...    
+  }
+  
+  return r;
+
+}
+
+byte IsLeapYear(uint16_t yearIN){
+  if (!(yearIN % 4) && (yearIN % 100)){
+    // Leap
+    return 1;
+  }
+  else if(!(yearIN % 100) && (yearIN % 400)){
+    // No Leap
+    return 0;
+  }
+  else if(!(yearIN % 400)){
+    // Leap
+    return 1;
+  }
+  else{
+    // No Leap
+    return 0;
+  }
+}
+
+byte GetDaysOfMonth(char monthIN, uint16_t yearIN){
+
+  byte r = 31;
+
+  // Regular months
+  switch (monthIN){
+  case 2:
+    r = 28;
+    if (IsLeapYear(yearIN)){
+      r++;
+    }
+    break;
+  case 4:
+  case 6:
+  case 9:
+  case 11:
+    r = 30;
+  default:
+    // r = 31;
+    break;
+  }
+
+return r;
+
+}
+
+unsigned long SerializeTime(byte dayIN, byte monthIN, uint16_t yearIN, byte hourIN, byte minIN, byte secIN){
+    // Do Serialized Time (Start from 01.01.2023)
+    unsigned long serializedTime = 0;
+    // Years
+    for (uint16_t i = 2023; i < yearIN; i++){
+      serializedTime += 31536000; // 365 * 86400
+      if (IsLeapYear(i)){
+        serializedTime += 86400;
+      }
+    }
+    // Months
+    for (int i = 1; i < monthIN; i++){
+      serializedTime += GetDaysOfMonth(monthIN, yearIN) * 86400;
+    }
+    // Days
+    serializedTime += (dayIN - 1) * 86400;
+    // Hours
+    serializedTime += hourIN * 3600;
+    // Minutes
+    serializedTime += minIN * 60;
+    // Seconds
+    return serializedTime + secIN;
+}
+
+void DeSerializeTime(unsigned long serializedIN, byte *dayIN, byte *monthIN, uint16_t *yearIN, byte *hourIN, byte *minIN, byte *secIN){
+
+
+  unsigned long nextSeconds = 31535999L;
+  *yearIN = 2023;
+
+  // Year
+  while (serializedIN > nextSeconds){
+    // actual year is full
+    
+    *yearIN++;
+    serializedIN -= nextSeconds;
+    
+    nextSeconds = 31535999L;
+    if (IsLeapYear(*yearIN)){
+      nextSeconds += 86400L;
+    }
+    
+  }
+  
+  // Month
+  nextSeconds = 2678400L;
+  *monthIN = 1;
+  while (serializedIN > nextSeconds){
+    *monthIN++;
+    serializedIN -= nextSeconds;
+    nextSeconds = GetDaysOfMonth(*monthIN, *yearIN) * 86400L;
+  }
+
+  // Day
+  *dayIN = (serializedIN / 86400) + 1;
+  serializedIN = serializedIN % 86400;
+
+  // Hour
+  *hourIN = serializedIN / 3600;
+  serializedIN = serializedIN % 3600;
+
+  // Min
+  *minIN = serializedIN / 60;
+
+  // Sec
+  *secIN = serializedIN % 60;
+
+}
+
+byte ToBCD (byte val){
+  return ((val / 10) << 4) + (val % 10);
+}
+byte FromBCD (byte bcd){
+  return (10 * ((bcd & 0xf0) >> 4)) + (bcd & 0x0f);
+}
+
+void RTC_GetTemp(){
+  IIcSetBytes(0x68, (char*)"\x11", 1);
+  if (IIcGetBytes(0x68, 2) == 2){
+    // Full Read success
+    myRtcTemp = iicStr[0] * 1000;
+    myRtcTemp += (iicStr[1] >> 6) * 250;
+  }
+}
+
+long RTC_GetDateTime(){
+  
+  long r = 0;
+
+  IIcSetBytes(0x68, (char*)"\0", 1);
+  if (IIcGetBytes(0x68, 7) == 7){
+    // Full Read Succeed
+    mySec = FromBCD(iicStr[0]);
+    myMin = FromBCD(iicStr[1]);
+    myHour = FromBCD(iicStr[2]);
+    myDay = FromBCD(iicStr[4]);
+    myMonth = FromBCD(iicStr[5]);
+    myYear = FromBCD(iicStr[6]) + 2000;
+
+    if (myYear < 2023){
+      myYear = 2023;
+    }
+    
+    r = myTime;    // save for diff calculation   
+    myTime = SerializeTime(myDay, myMonth, myYear, myHour, myMin, mySec);
+    r -= myTime;
+
+  }
+    return r;   // positive = µC is faster 
+}
+
+char RTC_SetDateTime(){
+  
+  char r = 0;
+
+  strHLP[0] = 0;
+  strHLP[1] = ByteToChar(ToBCD(mySec));
+  strHLP[2] = ByteToChar(ToBCD(myMin));
+  strHLP[3] = ByteToChar(ToBCD(myHour));
+  r = IIcSetBytes(0x68, strHLP, 4);
+    
+  if (r > 0){
+    strHLP[0] = 4;
+    strHLP[1] = ByteToChar(ToBCD(myDay));
+    strHLP[2] = ByteToChar(ToBCD(myMonth));
+    strHLP[3] = ByteToChar(ToBCD((byte)(myYear - 2000)));
+    r = IIcSetBytes(0x68, strHLP, 4);
+
+  }
+
+  return r;
+
+}
 
 char EzoIntToStr(long val, char lz, byte dp, char lc){
 
@@ -123,30 +358,12 @@ void PrintDateTime(){
     PrintHlpTime(myHour, myMin, mySec);
 }
 
-byte IsLeapYear(){
-  if (!(myYear % 4) && (myYear % 100)){
-    // Leap
-    return 1;
-  }
-  else if(!(myYear % 100) && (myYear % 400)){
-    // No Leap
-    return 0;
-  }
-  else if(!(myYear % 400)){
-    // Leap
-    return 1;
-  }
-  else{
-    // No Leap
-    return 0;
-  }
-}
-
 void DoRealTime(){
   // need to get called every second...
 
   //Trigger for RTC sync
-  static unsigned int triggerRTC = 0;
+  static unsigned long triggerRTC = 0;
+  static long rtcSyncDiff = 0;
 
   // Overflow day (default 32 = more months with 31 days)
   char overflowDay = 32;
@@ -170,7 +387,7 @@ void DoRealTime(){
     if (myMonth == 2){
       // February
       if (myDay > 28){
-        if (!IsLeapYear()){
+        if (!IsLeapYear(myYear)){
           // It's not a leap-year
           myDay = 1;
           myMonth = 3;
@@ -207,7 +424,10 @@ void DoRealTime(){
   if (syncRTCinterval){
     if (!triggerRTC){
       // sync with RTC
-
+      rtcSyncDiff = RTC_GetDateTime();
+      if (rtcSyncDiff){
+        // Update stuff which has 'LastActionTime" dependencies...
+      }
       // reset trigger
       triggerRTC = syncRTCinterval;
     }
@@ -267,4 +487,67 @@ byte DoTimer(){
   
   return 0;
   
+}
+
+// TIMER
+
+unsigned long CurrentIntervalPos(unsigned long timerIN, unsigned int onTime, unsigned int offTime, unsigned int offset){
+  // Calculate the current position within the interval
+  return (timerIN + (long)offset) % (long)(onTime + offTime);
+}
+
+byte IntervalTimer(unsigned long timerIN, unsigned int onTime, unsigned int offTime, unsigned int offset) {
+    // Check if the current position is within the "on" interval
+    if (CurrentIntervalPos(timerIN, onTime, offTime, offset) < onTime){
+        return 1; // "on" interval
+    }
+    return 0;     // "off" interval
+}
+
+unsigned long LastInterval(unsigned long timerIN, unsigned int onTime, unsigned int offTime, unsigned int offset) {
+
+    unsigned long currentPosition = CurrentIntervalPos(timerIN, onTime, offTime, offset);
+
+    if (currentPosition < onTime){
+        return currentPosition + offTime;
+    }
+    return currentPosition - onTime;
+
+}
+
+unsigned long NextInterval(unsigned long timerIN, unsigned int onTime, unsigned int offTime, unsigned int offset){
+
+  return (long)(onTime + offTime) - LastInterval(timerIN, onTime, offTime, offset);
+
+}
+
+byte InterruptedIntervalTimer(unsigned long timerIN, unsigned int onTime, unsigned int offTime, unsigned int offset, unsigned int onTime2, unsigned int offTime2){
+  // Check if 1st interval is valid
+  if (IntervalTimer(timerIN, onTime, offTime, offset)){
+    // Check if 2nd interval is valid
+    if (IntervalTimer(LastInterval(timerIN, onTime, offTime, offset), onTime2, offTime2, 0)){
+      return 1;
+    }
+  }
+  return 0;
+}
+
+byte DayTimer (unsigned long timerIN, unsigned int onTime, unsigned int offTime){
+
+  // ordinary 24h timer
+
+  unsigned int onDuration;
+
+  if (offTime < onTime){
+    // Jump over Midnight
+    onDuration = 86400 - onTime + offTime;
+  }
+  else{
+    onDuration = offTime - onTime;
+  }
+  
+  unsigned int offDuration = 86400 - onDuration;
+
+  return IntervalTimer(timerIN, onDuration, offDuration, onTime);
+
 }

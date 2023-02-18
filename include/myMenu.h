@@ -860,138 +860,22 @@ byte PrintWaterVals(byte pos){
   byte posMax = 0;
   byte posAct = 0;
 
-
-/*
-  pos1st = pos;
-  posAct = 0;
-  for (int i = 0; i < ezoCnt; i++){
-    if (ezoProbe[i].type == ezoRTD){
-      posAct++;
-      EscLocate(7, pos++);
-      Serial.print(i + 1);
-      Serial.print(F(": "));
-      PrintBoldValue((long)ezoProbe[i].value[0],2,2,' ');
-      avg += ezoProbe[i].value[0];
-      EscFaint(1);
-      Serial.print(F("°C"));
-      EscFaint(0);
-    }
-  }
-
-  posMax = posAct;
-  if (posAct){
-    avg_RTD = avg / (long)posAct;
-  }
-*/  
-
   posMax = PrintWaterValsHlp(pos, 8, ezoRTD, 2, 2, &avg_RTD, (char*)"°C");
 
-
-/*
-  pos = pos1st;
-  posAct = 0;
-  avg = 0;
-  for (int i = 0; i < ezoCnt; i++){
-    if (ezoProbe[i].type == ezoEC){
-      posAct++;
-      EscLocate(24, pos++);
-      Serial.print(i + 1);
-      Serial.print(F(": "));
-      PrintBoldValue((long)ezoProbe[i].value[0],4,0,' ');
-      avg += ezoProbe[i].value[0];
-      EscFaint(1);
-      Serial.print(F("µS"));
-      EscFaint(0);
-    }
-  }
-  if (posAct){
-    avg_EC = avg / (long)posAct;
-  }
-*/
-
-  posAct = PrintWaterValsHlp(pos, 24, ezoEC, 4, 0, &avg_EC, (char*)"µS");
+  posAct = PrintWaterValsHlp(pos, 23, ezoEC, 4, 0, &avg_EC, (char*)"µS");
   if (posAct > posMax){
     posMax = posAct;
   }
-
-  
-/*
-  pos = pos1st;
-  posAct = 0;
-  avg = 0;
-  for (int i = 0; i < ezoCnt; i++){
-    if (ezoProbe[i].type == ezoPH){
-      posAct++;
-      EscLocate(37, pos++);
-      Serial.print(i + 1);
-      Serial.print(F(": "));
-      PrintBoldValue((long)ezoProbe[i].value[0],2,2,' ');
-      avg += ezoProbe[i].value[0];
-      EscFaint(1);
-      Serial.print(F("pH"));
-      EscFaint(0);
-    }
-  }
-  if (posAct){
-    avg_pH = avg / (long)posAct;
-  }
-*/
 
   posAct = PrintWaterValsHlp(pos, 37, ezoPH, 2, 2, &avg_pH, (char*)"pH");
   if (posAct > posMax){
     posMax = posAct;
   }
 
-
-/*
-  pos = pos1st;
-  posAct = 0;
-  avg = 0;
-  for (int i = 0; i < ezoCnt; i++){
-    if (ezoProbe[i].type == ezoORP){
-      posAct++;
-      EscLocate(48, pos++);
-      Serial.print(i + 1);
-      Serial.print(F(": "));
-      PrintBoldValue((long)ezoProbe[i].value[0],4,2,' ');
-      avg += ezoProbe[i].value[0];
-      EscFaint(1);
-      Serial.print(F("mV"));
-      EscFaint(0);
-    }
-  }
-  if (posAct){
-    avg_ORP = avg / (long)posAct;
-  }
-*/
-
   posAct = PrintWaterValsHlp(pos, 49, ezoORP, 4, 2, &avg_ORP, (char*)"mV");
   if (posAct > posMax){
     posMax = posAct;
   }
-
-
-/*
-  pos = pos1st;
-  posAct = 0;
-  avg = 0;
-  for (int i = 0; i < ezoCnt; i++){
-    if (ezoProbe[i].type == ezoDiO2){
-      posAct++;
-      EscLocate(63, pos++);
-      Serial.print(i + 1);
-      Serial.print(F(": "));
-      PrintBoldValue((long)ezoProbe[i].value[0],3,2,' ');
-      avg += ezoProbe[i].value[0];
-      EscFaint(1);
-      Serial.print(F("r%"));
-      EscFaint(0);
-    }
-  }
-  if (posAct){
-    avg_O2 = avg / (long)posAct;
-  }
-*/
 
   posAct = PrintWaterValsHlp(pos, 63, ezoDiO2, 3, 2, &avg_O2, (char*)"r%");
   if (posAct > posMax){
@@ -1011,7 +895,7 @@ byte PrintAVGs(byte pos){
   Serial.print(F("°C   "));
 
   SetAvgColor(avg_EC, tooLow_EC, low_EC, high_EC, tooHigh_EC);
-  EscLocate(27, pos);
+  EscLocate(26, pos);
   PrintBoldValue(avg_EC,4,0,' ');
   EscColor(0);
   Serial.print(F("µS   "));

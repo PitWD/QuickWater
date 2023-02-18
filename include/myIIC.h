@@ -12,7 +12,9 @@ char strHLP[IIC_HLP_LEN];
 char strHLP2[IIC_HLP_LEN];
 char strDefault[IIC_HLP_LEN];
 
-char IICgETsTRING(byte address, byte atlasValidity){
+char ByteToChar(byte valIN);
+
+char IICgETsTRING(byte address, byte atlasValidity, byte readBin, byte readBinBytes){
 
     // returns
     //          >0 = successful read (count of chars)
@@ -23,18 +25,18 @@ char IICgETsTRING(byte address, byte atlasValidity){
     //          -3 = IIC error
     //          -4 = unknown error (atlas)
   
-    byte count = 0;
+    char count = 0;
     int i2c_error;
     byte firstChar = 1;
 
     iicStr[0] = 0;
 
     // Request up to IIC_STR_LEN bytes
-    Wire.requestFrom(address, (int)IIC_STR_LEN);
+    Wire.requestFrom(address, readBinBytes);
 
-    while (Wire.available() && count < IIC_STR_LEN - 1){
+    while (Wire.available() && count < IIC_STR_LEN - 1 && count < readBinBytes){
 
-        char c = Wire.read();
+        byte c = Wire.read();
 
         if (firstChar && atlasValidity){
             // 1st char in a atlas answer indicates the answers "quality"
@@ -69,9 +71,9 @@ char IICgETsTRING(byte address, byte atlasValidity){
         else{
             // regular chars
 
-            iicStr[count] = c;
+            iicStr[count] = ByteToChar(c);
 
-            if (c == 0){
+            if (c == 0 && !readBin){
                 // regular End Of String
                 break;
             }
@@ -91,21 +93,28 @@ char IICgETsTRING(byte address, byte atlasValidity){
         return -3;
     }
 }
-#define IIcGetStr(address) IICgETsTRING(address, 0)
-#define IIcGetAtlas(address) IICgETsTRING(address, 1)
+#define IIcGetStr(address) IICgETsTRING(address, 0, 0, IIC_STR_LEN - 1)
+#define IIcGetAtlas(address) IICgETsTRING(address, 1, 0, IIC_STR_LEN - 1)
+#define IIcGetBytes(address, byteCnt) IICgETsTRING(address, 0, 1, byteCnt)
 
-char IIcSetStr(int address, char *strIN, char term){
+char IICsEtSTR(byte address, char *strIN, byte term, byte setBin, byte setBinBytes){
 
-    char length = strlen(strIN);
+    byte length = strlen(strIN);
 
-    if (!length){
-        return 0;
+    if (!setBin){
+        if (!length){
+            return 0;
+        }
     }
-
+    else{
+        length = setBinBytes;
+    }
+    
     Wire.beginTransmission(address);
 
-    for (int i = 0; i < length + term; i++){
-        Wire.write(strIN[i]);
+
+    for (byte i = 0; i < length + term; i++){
+        Wire.write((byte)strIN[i]);
     }
 
     int i2c_error = Wire.endTransmission();
@@ -117,3 +126,6 @@ char IIcSetStr(int address, char *strIN, char term){
         return -1;
     }
 }
+#define IIcSetStr(address, strIN, term) IICsEtSTR(address, strIN, term, 0 ,0)
+#define IIcSetBytes(address, strIN, byteCnt) IICsEtSTR(address, strIN, 0, 1 ,byteCnt)
+

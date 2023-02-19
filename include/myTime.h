@@ -1,32 +1,36 @@
 #include <Arduino.h>
 
+#define RUNNING_TIMERS_CNT 12
+
 struct TimerSTRUCT{
   uint16_t onTime;
   uint16_t offTime;
   uint16_t onTime2;
   uint16_t offTime2;
   uint16_t offset;
+  union typeUNION{
+    byte interval     :1;
+    byte interrupted  :1;
+    byte dayTimer     :1;
+    byte invert       :1;
+  }type;
+  byte weekDays;
+    // 0 = all
+    // 2nd Bit = Sunday
+    // 3rd Bit = Monday
+    // 4th...
   union stateUNION{
     byte automatic    :1;
     byte permOff      :1;
     byte permOn       :1;
     byte tempOn       :1;
     byte tempOff      :1;
-    byte interrupted  :1;
-    byte dayTimer     :1;
+    byte lastVal      :1;
+    byte hasChanged   :1;
   }state;
-  
-    //   0 = Disabled
-    //   1 = Automatic  
-    //   2 = perm. Off
-    //   4 = perm. On
-    //   8 = temp. Off
-    //  16 = temp. On
-    //  32 = Use as 24h Timer
-    //  64 = Use as Interrupted Interval
   uint32_t tempUntil;
   char name[17];
-}RunningTimers[12];
+}runningTimers[RUNNING_TIMERS_CNT];
 
 
 
@@ -495,6 +499,7 @@ unsigned long CurrentIntervalPos(unsigned long timerIN, unsigned int onTime, uns
   // Calculate the current position within the interval
   return (timerIN + (long)offset) % (long)(onTime + offTime);
 }
+#define LastInterval(timerIN, onTime, offTime, offset) CurrentIntervalPos(timerIN, onTime, offTime, offset)
 
 byte IntervalTimer(unsigned long timerIN, unsigned int onTime, unsigned int offTime, unsigned int offset) {
     // Check if the current position is within the "on" interval
@@ -504,20 +509,9 @@ byte IntervalTimer(unsigned long timerIN, unsigned int onTime, unsigned int offT
     return 0;     // "off" interval
 }
 
-unsigned long LastInterval(unsigned long timerIN, unsigned int onTime, unsigned int offTime, unsigned int offset) {
-
-    unsigned long currentPosition = CurrentIntervalPos(timerIN, onTime, offTime, offset);
-
-    if (currentPosition < onTime){
-        return currentPosition + offTime;
-    }
-    return currentPosition - onTime;
-
-}
-
 unsigned long NextInterval(unsigned long timerIN, unsigned int onTime, unsigned int offTime, unsigned int offset){
 
-  return (long)(onTime + offTime) - LastInterval(timerIN, onTime, offTime, offset);
+  return (long)(onTime + offTime) - CurrentIntervalPos(timerIN, onTime, offTime, offset);
 
 }
 
@@ -525,7 +519,7 @@ byte InterruptedIntervalTimer(unsigned long timerIN, unsigned int onTime, unsign
   // Check if 1st interval is valid
   if (IntervalTimer(timerIN, onTime, offTime, offset)){
     // Check if 2nd interval is valid
-    if (IntervalTimer(LastInterval(timerIN, onTime, offTime, offset), onTime2, offTime2, 0)){
+    if (IntervalTimer(CurrentIntervalPos(timerIN, onTime, offTime, offset), onTime2, offTime2, 0)){
       return 1;
     }
   }
@@ -550,4 +544,90 @@ byte DayTimer (unsigned long timerIN, unsigned int onTime, unsigned int offTime)
 
   return IntervalTimer(timerIN, onDuration, offDuration, onTime);
 
+}
+
+// Returns the state of the bit at position 'bitToGet' in 'byteIN'
+byte getBit(byte byteIN, byte bitToGet) {
+    return (byteIN >> bitToGet) & 0x01;
+}
+
+// Sets the bit at position 'bitToSet' in 'byteIN' to 'setTo' 
+uint8_t setBit(byte byteIN, byte bitToSet, byte setTo) {
+    if (setTo) {
+        byteIN |= (1 << bitToSet);
+    } else {
+        byteIN &= ~(1 << bitToSet);
+    }
+    return byteIN;
+}
+
+byte RunTimers(){
+  // Returns true if one ore more states have changed
+
+  byte r = 0; // Helper
+  byte r2 = 0;
+
+  for (byte i = 0; i < RUNNING_TIMERS_CNT; i++){
+    if (runningTimers[i].type.dayTimer){
+      // 24h DayTimer...
+      r = DayTimer (myTime, runningTimers[i].onTime, runningTimers[i].offTime);
+    }
+    else if (runningTimers[i].type.interval){
+      // Interval Timers
+      if (runningTimers[i].type.interrupted){
+        // Interrupted version
+        r = InterruptedIntervalTimer(myTime, runningTimers[i].onTime, runningTimers[i].offTime, runningTimers[i].offset, runningTimers[i].onTime2, runningTimers[i].offTime2);
+      }
+      else{
+        // Regular
+        r = IntervalTimer(myTime, runningTimers[i].onTime, runningTimers[i].offTime, runningTimers[i].offset);
+      }      
+    }
+    // Check on valid weekdays
+    if (!getBit(runningTimers[i].weekDays, GetWeekDay(myTime)) && runningTimers[i].weekDays){
+      // Day is not valid
+      r = 0;
+    }
+    // Check on permanent & temporary state
+    if (runningTimers[i].state.permOff){
+      r = 0;
+    }
+    else if (runningTimers[i].state.permOn){
+      r = 1;
+    }
+    else if (runningTimers[i].state.tempOff && myTime < runningTimers[i].tempUntil){
+      r = 0;
+    }
+    else if (runningTimers[i].state.tempOn && myTime < runningTimers[i].tempUntil){
+      r = 1;
+    }
+    else if (runningTimers[i].state.automatic){
+      // r = r;
+    }
+    else{
+      // Totally disabled
+      r = 0;
+    }
+    // Clear Temp-Times and States if possible
+    if (runningTimers[i].tempUntil && (myTime >= runningTimers[i].tempUntil)){
+      runningTimers[i].tempUntil = 0;
+      runningTimers[i].state.tempOn = 0;
+      runningTimers[i].state.tempOff = 0;
+    }
+    // Invert if needed
+    if (runningTimers[i].type.invert){
+      r = !r;
+    }
+    // Check on change
+    if (r != runningTimers[i].state.lastVal){
+      // Is changed
+      runningTimers[i].state.lastVal = r;
+      runningTimers[i].state.hasChanged = 1;
+      r2 = 1;
+    }
+    else{
+      runningTimers[i].state.hasChanged = 0;
+    }
+  }
+  return r2;
 }

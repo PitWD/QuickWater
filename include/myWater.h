@@ -1,5 +1,5 @@
-#include "myIIC.h"
-#include "myTime.h"
+#include "quicklib.h"
+#include <EEPROM.h>
 
 #define EZO_MAX_PROBES 8
 #define EZO_MAX_VALUES 3        // 5 just for full RGB...
@@ -160,57 +160,6 @@ long tooHigh_O2 = 100001L;
 #define CAL_DiO2_MID 0L
 #define CAL_DiO2_HIGH 0L
 
-void PrintErrorOK(char err, char ezo, char *strIN){
-
-  // Err: 0 = info, -1 = err, 1 = OK
-  // Err: 0 = black, -1 = red, 1 = green
-
-  byte len = strlen(strIN) + 48;
-
-  EscInverse(1);
-  EscLocate(1,24);
-
-  if (err == -1){
-    // Error
-    EscColor(bgRed);
-  }
-  else if(err == 1){
-    // OK
-    EscColor(bgGreen);
-  }
-  else{
-    // Info
-    EscBold(1);
-  }
-  
-  Serial.print(F("    "));
-  Serial.print(strIN);
-  EscBold(0);
-  
-  if (ezo > -1){
-    Serial.print(F(" - on: "));
-    EscColor(49);
-    EzoIntToStr((long)ezoProbe[(int)ezo].address * 1000,3,0,'0');
-    Serial.print(strHLP);
-    len += strlen(strHLP);
-  }
-  else{
-    EscColor(49);
-    len -= 7;
-  }
-    
-  Serial.print(F(" @ "));
-  PrintRunTime();
-
-  len = 80 - len;
-  for (int i = 0; i < len; i++){
-    Serial.print(F(" "));
-  }
-  
-  PrintDateTime();
-  EscInverse(0);
-
-}
 
 void SetAvgColor(long avg, long tooLow, long low, long high, long tooHigh){
   if (avg < tooLow){
@@ -230,70 +179,6 @@ void SetAvgColor(long avg, long tooLow, long low, long high, long tooHigh){
   }
 }
 
-long exp10(int e){
-  long x = 1;
-  for (int i = 0; i < e; i++) {
-    x = x * 10;
-  }
-  return x;
-}
-
-long StrToInt(char *strIN, byte next){
-
-    // "1.234" , 1000  ==> 1234
-    // mul == 0 search next
-
-    long r = 0;
-
-    static char *nextVal = NULL;
-    static char *actVal = NULL;
-
-    long preDot = 0;
-    long afterDot = 0;
-    
-    if (next){
-        // Next Val
-        actVal = nextVal;
-    }
-    else{
-        // New Val
-        actVal = strIN;
-    }
-
-    preDot = atol(actVal) * 1000;
-
-    // decimal dot
-    char *dot = strchr(actVal, '.');
-    
-    // (probably) next number
-    nextVal = strchr(actVal, ',');
-    
-    if (dot){
-        if (nextVal == NULL){
-            nextVal = strchr(actVal, '\0');
-        }
-        // count of missing digits after dot
-        r = 3 - (long)(nextVal - dot);
-        r = exp10(r + 1);
-        for (nextVal -= 1; nextVal > dot; nextVal--){
-            afterDot += r * (nextVal[0] - 48);
-            r *= 10;
-        }
-    }
-    if (nextVal){
-        nextVal++;
-    }
-
-    if (preDot >= 0){
-        r = preDot + afterDot;
-    }
-    else{
-        r = preDot - afterDot;
-    }
-
-    return r;
-}
-
 char EzoStartValues(byte ezo){
     return IIcSetStr(ezoProbe[ezo].address, (char*)"R", 0);
 }
@@ -304,9 +189,9 @@ void EzoWaitValues(byte ezo){
 
 byte EzoGetValues(byte ezo){
     if (IIcGetAtlas((int)ezoProbe[ezo].address) > 0){
-        ezoProbe[ezo].value[0] = StrToInt(iicStr, 0);
+        ezoProbe[ezo].value[0] = StrTokFloatIntToInt(iicStr);
         for (int i = 1; i < (int)pgm_read_word(&(ezoValCnt[ezoProbe[ezo].type])); i++){
-            ezoProbe[ezo].value[i] = StrToInt(iicStr, 1);
+            ezoProbe[ezo].value[i] = StrTokFloatIntToInt(NULL);
         }
         return 1;        
     }
@@ -594,7 +479,7 @@ void EzoScan(){
                             ezoProbe[ezoCnt].type = recEzo;
                             
                             // Extract Version
-                            ezoProbe[ezoCnt].version = StrToInt(&iicStr[verPos], 0);
+                            ezoProbe[ezoCnt].version = StrTokFloatIntToInt(iicStr);
                             // Calibration
                             if (hasCal){
                                 IIcSetStr(i,(char*)"Cal,?", 0);
@@ -701,7 +586,7 @@ char EzoDoNext(){
     switch (ezoAction){
     case 0:
       // Set Avg-RTD to EC & pH probes
-      EzoIntToStr(avg_RTD,2,2,'0');
+      IntToFloatStr(avg_RTD,2,2,'0');
       strcpy(&iicStr[2], strHLP);
       iicStr[0] = 'T'; iicStr[1] = ',';
 
@@ -798,3 +683,87 @@ char EzoDoNext(){
     }
 
 }
+
+/*
+c99 compatible C.
+We need a function:
+long StrToFloatInt(char *strIN, byte firstVal){
+    // "strIN" has an content like "?I,ABC,9876,1.23,XYZ,4.5678,abc-1.23,xyz-4.567"
+    // "," is the only valid separator.
+    // Values can have leading text - or not.
+    // Values with a "." are floating values we scale by 1000
+    // Values without a "." are integer - we do not scale.
+    // Return is a long with the value.
+    // If "firstVal" is true we return the first value.
+    // If "firstVal" is false we return the next value.
+    // If there is no first or next value we return 0.
+    static char *nextToken = NULL;     // Pointer on nextToken
+}
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+
+long StrToFloatInt(char *strIN, byte firstVal){
+    static char *nextToken = NULL;  // Pointer on nextToken
+    char *token;
+
+    if (firstVal) {
+        nextToken = strIN;
+    }
+    firstVal = 1;
+
+    while ((token = strtok(nextToken, ",")) != NULL) {
+        nextToken = NULL;  // reset nextToken for subsequent calls to strtok()
+
+        // check if token starts with a valid number or a minus sign
+        if (isdigit(*token) || *token == '-') {
+            // check if token contains a decimal point
+            char *decimal = strchr(token, '.');
+            if (decimal != NULL) {
+                // convert floating value to scaled integer
+                double value = strtod(token, NULL);
+                long scaled = (long)(value * 1000);
+                if (firstVal) {
+                    return scaled;
+                }
+            } else {
+                // convert integer value
+                long value = strtol(token, NULL, 10);
+                if (firstVal) {
+                    return value;
+                }
+            }
+            firstVal = 0;
+        }
+    }
+
+    // no more tokens
+    return 0;
+}
+
+long StrFloatToInt(char *strIN) {
+    // find the decimal point
+    char *decimal = strchr(strIN, '.');
+    if (decimal == NULL) {
+        // no decimal point, so it's an integer value
+        return strtol(strIN, NULL, 10);
+    } else {
+        // convert floating value to scaled integer
+        *decimal = '\0';  // temporarily replace decimal point with null terminator
+        long value = strtol(strIN, NULL, 10);
+        long scaled = value * 1000;
+        char *fraction = decimal + 1;
+        int factor = 100;
+        while (*fraction != '\0' && factor > 0) {
+            if (isdigit(*fraction)) {
+                scaled += (*fraction - '0') * factor;
+                factor /= 10;
+            }
+            fraction++;
+        }
+        return scaled;
+    }
+}
+*/

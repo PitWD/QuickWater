@@ -1,55 +1,31 @@
-#define fgBlack 30
-#define fgRed 31
-#define fgGreen 32
-#define fgYellow 33
-#define fgBlue 34
-#define fgMagenta 35
-#define fgCyan 36
-#define fgWhite 37
+#include "quickESC.h"
 
-#define bgBlack 40
-#define bgRed 41
-#define bgGreen 42
-#define bgYellow 43
-#define bgBlue 44
-#define bgMagenta 45
-#define bgCyan 46
-#define bgWhite 47
+// ESC / Terminal hacks
+byte escFaintDeleteColor = 39;
+char escFaintIsActive = 0;
+byte fgFaint = 90;
 
-#define fgBlackB 90
-#define fgRedB 91
-#define fgGreenB 92
-#define fgYellowB 93
-#define fgBlueB 94
-#define fgMagentaB 95
-#define fgCyanB 96
-#define fgWhiteB 97
+void EscItalic(byte set) {
+	if (set) {
+		// Set
+		Serial.print(F("\x1B[3m"));
+	}
+	else {
+		// Reset
+		Serial.print(F("\x1B[23m"));
+	}
+}
+void EscUnder(byte set) {
+	if (set) {
+		// Set
+		Serial.print(F("\x1B[4m"));
+	}
+	else {
+		// Reset
+		Serial.print(F("\x1B[24m"));
+	}
+}
 
-#define bgBlackB 100
-#define bgRedB 101
-#define bgGreenB 102
-#define bgYellowB 103
-#define bgBlueB 104
-#define bgMagentaB 105
-#define bgCyanB 106
-#define bgWhiteB 107
-
-#define ESC_CAN_FAINT 0
-#define ESC_SOLARIZED 1
-
-#if ESC_CAN_FAINT
-#else
-  byte escFaintDeleteColor = 39;
-  char escFaintIsActive = 0;
-  #if ESC_SOLARIZED
-    #define fgFaint 92
-  #else
-    #define fgFaint 90
-  #endif
-#endif
-
-
-void EscBold(byte set);
 void EscLocate(byte x, byte y){
   Serial.print(F("\x1B["));
   Serial.print(y);
@@ -58,6 +34,7 @@ void EscLocate(byte x, byte y){
   Serial.print(F("H"));
 }
 void EscCls(){
+  EscColor(0);
   Serial.print(F("\x1B[2J"));
 }
 
@@ -117,7 +94,8 @@ void EscBold(byte set){
 
   #if ESC_CAN_FAINT
   #else
-    if (escFaintIsActive && !set){
+    //if (escFaintIsActive && !set){
+    if (escFaintIsActive){
       // We need to disable the color based faint realization
       EscFaint(0);
     }
@@ -141,19 +119,41 @@ void EscInverse(byte set){
 		Serial.print(F("\x1B[27m"));
 	}
 }
-void EscCursorVisible(byte set){
-	Serial.print(F("\x1B?25"));
-	if (set){
-		// visible
-		Serial.print(F("h"));
-	}
-	else{
-		// invisible
-		Serial.print(F("l"));
-	}	
-}
 void EscCursorLeft(byte cnt){
     Serial.print(F("\x1B["));
     Serial.print(cnt);
     Serial.print(F("D"));
 }
+void EscCursorRight(byte cnt){
+    Serial.print(F("\x1B["));
+    Serial.print(cnt);
+    Serial.print(F("C"));
+}
+void EscCursorUp(byte cnt){
+    Serial.print(F("\x1B["));
+    Serial.print(cnt);
+    Serial.print(F("A"));
+}
+void EscCursorDown(byte cnt){
+    Serial.print(F("\x1B["));
+    Serial.print(cnt);
+    Serial.print(F("B"));
+}
+void EscCursorUp1st(byte cnt){
+    Serial.print(F("\x1B["));
+    Serial.print(cnt);
+    Serial.print(F("F"));
+}
+void EscCursorDown1st(byte cnt){
+    Serial.print(F("\x1B["));
+    Serial.print(cnt);
+    Serial.print(F("E"));
+}
+
+void EscSaveCursor(){
+  Serial.print(F("\0337"));
+}
+void EscRestoreCursor(){
+  Serial.print(F("\0338"));
+}
+

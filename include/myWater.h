@@ -189,9 +189,9 @@ void EzoWaitValues(byte ezo){
 
 byte EzoGetValues(byte ezo){
     if (IIcGetAtlas((int)ezoProbe[ezo].address) > 0){
-        ezoProbe[ezo].value[0] = StrTokFloatIntToInt(iicStr);
+        ezoProbe[ezo].value[0] = StrTokFloatToInt(iicStr);
         for (int i = 1; i < (int)pgm_read_word(&(ezoValCnt[ezoProbe[ezo].type])); i++){
-            ezoProbe[ezo].value[i] = StrTokFloatIntToInt(NULL);
+            ezoProbe[ezo].value[i] = StrTokFloatToInt(NULL);
         }
         return 1;        
     }
@@ -479,7 +479,7 @@ void EzoScan(){
                             ezoProbe[ezoCnt].type = recEzo;
                             
                             // Extract Version
-                            ezoProbe[ezoCnt].version = StrTokFloatIntToInt(iicStr);
+                            ezoProbe[ezoCnt].version = StrTokFloatToInt(iicStr);
                             // Calibration
                             if (hasCal){
                                 IIcSetStr(i,(char*)"Cal,?", 0);

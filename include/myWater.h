@@ -2,7 +2,7 @@
 #include <EEPROM.h>
 
 #define EZO_MAX_PROBES 8
-#define EZO_MAX_VALUES 3        // 5 just for full RGB...
+#define EZO_MAX_VALUES 3        // 3 for full HUM / 5 for full RGB...
 #define EZO_1st_ADDRESS 32
 #define EZO_LAST_ADDRESS 127
 
@@ -19,7 +19,6 @@ static byte ezoAct = 0;
 // How many ezo's we have
 static byte ezoCnt = 0;
 
-byte myAddress = 123;
 
 #define ezoRTD 1
 #define ezoPH 2
@@ -27,9 +26,9 @@ byte myAddress = 123;
 #define ezoORP 4
 #define ezoHUM 5
 #define ezoCO2 6
-#define ezoFLOW 7
-#define ezoRGB 8
-#define ezoDiO2 9
+#define ezoDiO2 7
+#define ezoFLOW 8
+#define ezoRGB 9
 #define ezoPRES 10
 
 const char ezoStrType_0[] PROGMEM = "N/A";
@@ -39,11 +38,10 @@ const char ezoStrType_3[] PROGMEM = "EC";
 const char ezoStrType_4[] PROGMEM = "ORP";
 const char ezoStrType_5[] PROGMEM = "HUM";
 const char ezoStrType_6[] PROGMEM = "CO2";
-const char ezoStrType_7[] PROGMEM = "Flow";
-const char ezoStrType_8[] PROGMEM = "RGB";
-const char ezoStrType_9[] PROGMEM = "D.O.";
+const char ezoStrType_7[] PROGMEM = "D.O.";
+const char ezoStrType_8[] PROGMEM = "Flow";
+const char ezoStrType_9[] PROGMEM = "RGB";
 const char ezoStrType_10[] PROGMEM = "Pres";
-
 PGM_P const ezoStrType[] PROGMEM = {
     ezoStrType_0,
     ezoStrType_1,
@@ -58,14 +56,33 @@ PGM_P const ezoStrType[] PROGMEM = {
     ezoStrType_10
 };
 
+const char ezoStrUnit_0[] PROGMEM = "°C";
+const char ezoStrUnit_1[] PROGMEM = "°C";
+const char ezoStrUnit_2[] PROGMEM = "pH";
+const char ezoStrUnit_3[] PROGMEM = "µS";
+const char ezoStrUnit_4[] PROGMEM = "mV";
+const char ezoStrUnit_5[] PROGMEM = "r%";
+const char ezoStrUnit_6[] PROGMEM = "ppm";
+const char ezoStrUnit_7[] PROGMEM = "%";
+PGM_P const ezoStrUnit[] PROGMEM = {
+    ezoStrUnit_0,
+    ezoStrUnit_1,
+    ezoStrUnit_2,
+    ezoStrUnit_3,
+    ezoStrUnit_4,
+    ezoStrUnit_5,
+    ezoStrUnit_6,
+    ezoStrUnit_7
+};
+
 // Waittime for readings...
-const int ezoWait[11] PROGMEM = {0, 600, 900, 600, 900, 300, 900, 300, 300, 600, 900};
+const int ezoWait[11] PROGMEM = {0, 600, 900, 600, 900, 300, 900, 600, 300, 300, 900};
 
 // Count of vals of probe
-const int ezoValCnt[11] PROGMEM = {0, 1, 1, 1, 1, 3, 2, 2, 5, 2, 1};
+const byte ezoValCnt[11] PROGMEM = {0, 1, 1, 1, 1, 3, 2, 2, 2, 5, 1};
 
 // if type has a calibration
-const int ezoHasCal[11] PROGMEM = {0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0};
+const byte ezoHasCal[11] PROGMEM = {0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0};
 
 typedef struct ezoProbeSTRUCT{
     byte type;
@@ -98,41 +115,45 @@ long avg_pH = 6000L;
 long avg_ORP = 225000L;
 long avg_O2 = 99000L;
 
-long tooLow_HUM = 40000L;
-long tooLow_TMP = 16000L;
-long tooLow_CO2 = 350000L;
-long tooLow_RTD = 15000L;
-long tooLow_EC = 1000000L;
-long tooLow_pH = 5500L;
-long tooLow_ORP = -750000L;
-long tooLow_O2 = 50000L;
+long tooLow[] = {16000L, 15000L, 5500L, 1000000L, -750000L, 40000L, 350000L, 50000L};
+#define tooLow_TMP tooLow[0]    // 2nd Val ezoHUM
+#define tooLow_RTD tooLow[1]
+#define tooLow_pH tooLow[2]
+#define tooLow_EC tooLow[3]
+#define tooLow_ORP tooLow[4]
+#define tooLow_HUM tooLow[5]
+#define tooLow_CO2 tooLow[6]
+#define tooLow_O2 tooLow[7]
 
-long low_HUM = 50000L;
-long low_TMP = 19000L;
-long low_CO2 = 400000L;
-long low_RTD = 17000L;
-long low_EC = 1250000L;
-long low_pH = 6000L;
-long low_ORP = -500000L;
-long low_O2 = 66666L;
+long low[] = {19000L, 17000L, 6000L, 1250000L, -500000L, 50000L, 400000L, 66666L};
+#define low_TMP low[0]      // 2nd Val ezoHUM
+#define low_RTD low[1]
+#define low_pH low[2]
+#define low_EC low[3]
+#define low_ORP low[4]
+#define low_HUM low[5]
+#define low_CO2 low[6]
+#define low_O2 low[7]
 
-long high_HUM = 66666L;
-long high_TMP = 25000L;
-long high_CO2 = 1250000L;
-long high_RTD = 20000L;
-long high_EC = 1750000L;
-long high_pH = 6800L;
-long high_ORP = 500000L;
-long high_O2 = 100001L;
+long high[] = {25000L, 20000L, 6800L, 1750000L, 500000L, 66666L, 1250000L, 100001L};
+#define high_TMP high[0]    // 2nd Val ezoHUM
+#define high_RTD high[1]
+#define high_pH high[2]
+#define high_EC high[3]
+#define high_ORP high[4]
+#define high_HUM high[5]
+#define high_CO2 high[6]
+#define high_O2 high[7]
 
-long tooHigh_HUM = 75000L;
-long tooHigh_TMP = 27000L;
-long tooHigh_CO2 = 1500000L;
-long tooHigh_RTD = 22000L;
-long tooHigh_EC = 2000000L;
-long tooHigh_pH = 7000L;
-long tooHigh_ORP = 750000L;
-long tooHigh_O2 = 100001L;
+long tooHigh[] = {27000L, 22000L, 7000L, 2000000L, 750000L, 75000L, 1500000L, 100001L};
+#define tooHigh_TMP tooHigh[0]    // 2nd Val ezoHUM
+#define tooHigh_RTD tooHigh[1]
+#define tooHigh_pH tooHigh[2]
+#define tooHigh_EC tooHigh[3]
+#define tooHigh_ORP tooHigh[4]
+#define tooHigh_HUM tooHigh[5]
+#define tooHigh_CO2 tooHigh[6]
+#define tooHigh_O2 tooHigh[7]
 
 
 #define CAL_RTD_RES -1L         // Value for Reset
@@ -160,7 +181,6 @@ long tooHigh_O2 = 100001L;
 #define CAL_DiO2_MID 0L
 #define CAL_DiO2_HIGH 0L
 
-
 void SetAvgColor(long avg, long tooLow, long low, long high, long tooHigh){
   if (avg < tooLow){
     EscColor(fgCyan);
@@ -179,18 +199,25 @@ void SetAvgColor(long avg, long tooLow, long low, long high, long tooHigh){
   }
 }
 
+// #define SetAvgColorEZO(avgVal, ezoType) SetAvgColor(avgVal, tooLow[ezoType], low[ezoType], high[ezoType], tooHigh[ezoType])
+void SetAvgColorEZO(long avgVal, byte ezoType){
+    // - 46 Flash (5x used)
+    // +128 Ram
+    SetAvgColor(avgVal, tooLow[ezoType], low[ezoType], high[ezoType], tooHigh[ezoType]);
+}
+
 char EzoStartValues(byte ezo){
     return IIcSetStr(ezoProbe[ezo].address, (char*)"R", 0);
 }
 
 void EzoWaitValues(byte ezo){
-    delay((int)pgm_read_word(&(ezoWait[ezoProbe[ezo].type])));
+    delay(Fi(ezoWait[ezoProbe[ezo].type]));
 }
 
 byte EzoGetValues(byte ezo){
     if (IIcGetAtlas((int)ezoProbe[ezo].address) > 0){
         ezoProbe[ezo].value[0] = StrTokFloatToInt(iicStr);
-        for (int i = 1; i < (int)pgm_read_word(&(ezoValCnt[ezoProbe[ezo].type])); i++){
+        for (byte i = 1; i < Fb(ezoValCnt[ezoProbe[ezo].type]); i++){
             ezoProbe[ezo].value[i] = StrTokFloatToInt(NULL);
         }
         return 1;        
@@ -210,7 +237,7 @@ byte EzoCheckOnSet(byte ezo, byte all, byte i){
 
 void EzoSetName(char *strIN, byte ezo, byte all, byte autoName){
     
-    char cnt[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    byte cnt[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
     byte len = 0;
 
@@ -259,20 +286,20 @@ void EzoReset(byte ezo, byte all){
 
         if (EzoCheckOnSet(ezo,all, i)){
         
-            strcpy(strSetup[0],"L,1");  // Indicator LED
+            strcpy_P(strSetup[0],(PGM_P)F("L,1"));  // Indicator LED
             cntSetup = 1;
 
             switch (ezoProbe[i].type){
             case ezoRTD:
-                strcpy(strSetup[1],"S,c");  // Celsius (k = kelvin / f = fahrenheit)
+                strcpy_P(strSetup[1],(PGM_P)F("S,c"));  // Celsius (k = kelvin / f = fahrenheit)
                 cntSetup = 2;
                 break;
             case ezoEC:
-                strcpy(strSetup[1],"O,EC,1");
-                strcpy(strSetup[2],"O,TDS,0");
-                strcpy(strSetup[3],"O,S,0");
-                strcpy(strSetup[4],"O,SG,0");
-                strcpy(strSetup[5],"K,1.0");
+                strcpy_P(strSetup[1],(PGM_P)F("O,EC,1"));
+                strcpy_P(strSetup[2],(PGM_P)F("O,TDS,0"));
+                strcpy_P(strSetup[3],(PGM_P)F("O,S,0"));
+                strcpy_P(strSetup[4],(PGM_P)F("O,SG,0"));
+                strcpy_P(strSetup[5],(PGM_P)F("K,1.0"));
                 cntSetup = 6;
                 break;
             case ezoPH:
@@ -280,40 +307,40 @@ void EzoReset(byte ezo, byte all){
             case ezoORP:
                 break;
             case ezoDiO2:
-                strcpy(strSetup[1],"O,mg,1");
-                strcpy(strSetup[2],"O,%,1");
+                strcpy_P(strSetup[1],(PGM_P)F("O,mg,1"));
+                strcpy_P(strSetup[2],(PGM_P)F("O,%,1"));
                 cntSetup = 3;
                 break;
             case ezoHUM:
-                strcpy(strSetup[1],"O,HUM,1"); // Humidity
-                strcpy(strSetup[2],"O,T,1");   // Temperature 
-                strcpy(strSetup[3],"O,Dew,1"); // Dewing point
-                strcpy(strSetup[4],"Alarm,en,0");
+                strcpy_P(strSetup[1],(PGM_P)F("O,HUM,1")); // Humidity
+                strcpy_P(strSetup[2],(PGM_P)F("O,T,1"));   // Temperature 
+                strcpy_P(strSetup[3],(PGM_P)F("O,Dew,1")); // Dewing point
+                strcpy_P(strSetup[4],(PGM_P)F("Alarm,en,0"));
                 cntSetup = 5;
                 break;
             case ezoFLOW:
-                strcpy(strSetup[1],"Frp,m");    // FlowRate/minute (s = second / h = hour)
-                strcpy(strSetup[2],"CF,0.001"); // Liter (1 would be ml)
-                strcpy(strSetup[3],"O,TV,1");   // Output Total Volume
-                strcpy(strSetup[4],"O,FR,1");   // Output Flow Rate
+                strcpy_P(strSetup[1],(PGM_P)F("Frp,m"));    // FlowRate/minute (s = second / h = hour)
+                strcpy_P(strSetup[2],(PGM_P)F("CF,0.001")); // Liter (1 would be ml)
+                strcpy_P(strSetup[3],(PGM_P)F("O,TV,1"));   // Output Total Volume
+                strcpy_P(strSetup[4],(PGM_P)F("O,FR,1"));   // Output Flow Rate
                 cntSetup = 5;
                 break;
             case ezoPRES:
-                strcpy(strSetup[1],"Dec,3");
-                strcpy(strSetup[2],"U,bar");
-                strcpy(strSetup[3],"Alarm,en,0");
+                strcpy_P(strSetup[1],(PGM_P)F("Dec,3"));
+                strcpy_P(strSetup[2],(PGM_P)F("U,bar"));
+                strcpy_P(strSetup[3],(PGM_P)F("Alarm,en,0"));
                 cntSetup = 4;
                 break;
             case ezoRGB:
-                strcpy(strSetup[0],"iL,1");
-                strcpy(strSetup[1],"O,RGB,1");
-                strcpy(strSetup[2],"O,LUX,1");
-                strcpy(strSetup[3],"O,CIE,1");
-                strcpy(strSetup[4],"L,33,T");
+                strcpy_P(strSetup[0],(PGM_P)F("iL,1"));
+                strcpy_P(strSetup[1],(PGM_P)F("O,RGB,1"));
+                strcpy_P(strSetup[2],(PGM_P)F("O,LUX,1"));
+                strcpy_P(strSetup[3],(PGM_P)F("O,CIE,1"));
+                strcpy_P(strSetup[4],(PGM_P)F("L,33,T"));
                 cntSetup = 5;
                 break;
             case ezoCO2:
-                strcpy(strSetup[1],"O,t,1");   // Output Internal Temp
+                strcpy_P(strSetup[1],(PGM_P)F("O,t,1"));   // Output Internal Temp
                 cntSetup = 2;
                 break;
             
@@ -333,7 +360,7 @@ void EzoReset(byte ezo, byte all){
 void EzoSetCal(char *strCmd, byte ezo, byte all){
     for (int i = 0; i < ezoCnt; i++){
         if (EzoCheckOnSet(ezo,all, i)){
-            if ((int)pgm_read_word(&(ezoHasCal[ezoProbe[ezo].type]))){
+            if (Fb(ezoHasCal[ezoProbe[ezo].type])){
                 // Has set-able calibration
                 IIcSetStr(ezoProbe[i].address, strCmd, 0);
                 ezoProbe[i].calibrated = 0;
@@ -498,8 +525,8 @@ void EzoScan(){
 
                             // Output (in RAM)
                             Serial.print(F("Found: "));
-                            strcpy_P(strHLP,(PGM_P)pgm_read_word(&(ezoStrType[recEzo])));
-                            Serial.print(strHLP);
+                            //strcpy_P(strHLP,(PGM_P)pgm_read_word(&(ezoStrType[recEzo])));
+                            Serial.print(Fa(ezoStrType[recEzo]));
                             Serial.print(F(" @: "));
                             Serial.println(i);
 
@@ -555,7 +582,7 @@ void EzoScan(){
                             EzoWaitValues(ezoCnt);
                             if (EzoGetValues(ezoCnt)){
                                 Serial.print(ezoProbe[ezoCnt].value[0]);
-                                for (int i2 = 1; i2 < (int)pgm_read_word(&(ezoValCnt[recEzo])); i2++){
+                                for (byte i2 = 1; i2 < Fb(ezoValCnt[recEzo]); i2++){
                                     Serial.print(F(" , "));
                                     Serial.print(ezoProbe[ezoCnt].value[i2]);
                                 }          

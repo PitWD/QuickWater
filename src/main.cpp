@@ -24,15 +24,16 @@ uint32_t myTime = 0;
 void setup() {
   // put your setup code here, to run once:
 
-  Serial.begin(9600);
+  Serial.begin(115200);
 
   Wire.setClock(31000L);
   Wire.begin();
 
+  delay(300);
+
   RTC_GetDateTime();
 
-
-
+  delay(300);
 
   EzoScan();
 
@@ -53,7 +54,7 @@ void loop() {
     byte err = 1;
 
     // Print Runtime
-    EscLocate(66,1);
+    EscLocate(67,1);
     EscInverse(1);
     PrintRunTime();    
     // Print Realtime

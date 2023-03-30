@@ -24,6 +24,17 @@
 #define ESC_CAN_FAINT 0
 #define ESC_SOLARIZED 1
 
+// Access PROGMEM variables like F() for Serial.print
+// array of strings (char[][])
+#define Fa(var) strcpy_P(strHLP, (PGM_P)pgm_read_word(&(var)))
+// single string (char[])
+#define Fc(var) (__FlashStringHelper*)(var)
+// byte[]
+#define Fb(var) (byte)pgm_read_byte(&(var))
+// int[]
+#define Fi(var) (int)pgm_read_word(&(var))
+
+
 // Declarations Declarations Declarations Declarations Declarations Declarations Declarations Declarations
 
 byte IsSerialSpeedValid(uint32_t speed);
@@ -32,9 +43,9 @@ byte IsSerialSpeedValid(uint32_t speed);
   byte IntToStr_SMALL(long val, char cntLeadingChar, char leadingChar);
   #define IntToIntStr(val, cntLeadingChar, leadingChar) IntToStr_SMALL(val, cntLeadingChar, leadingChar)
 #else
-  byte IntToStr_BIG(long val, char lz, byte dp, char lc);
-  #define IntToIntStr(val, cntLeadingChar, leadingChar) IntToStr_BIG(val * 1000, cntLeadingChar, 0, leadingChar)
-  #define IntToFloatStr(val, cntLeadingChar, cntDecimalPlaces, leadingChar) IntToStr_BIG(val, cntLeadingChar, cntDecimalPlaces, leadingChar)
+  byte IntToStr_BIG(long val, int8_t lz, byte dp, char lc);
+  #define IntToIntStr(val, cntLeadingChar, leadingChar) IntToStr_BIG((long)((long)(val) * 1000), (uint8_t)(cntLeadingChar), 0, (char)(leadingChar))
+  #define IntToFloatStr(val, cntLeadingChar, cntDecimalPlaces, leadingChar) IntToStr_BIG((long)(val), (uint8_t)(cntLeadingChar), (byte)(cntDecimalPlaces), (char)(leadingChar))
 #endif
 
 byte getBit(byte byteIN, byte bitToGet);
@@ -81,6 +92,7 @@ extern char iicStr[IIC_STR_LEN];
 extern char strHLP[STR_HLP_LEN];
 extern char strHLP2[STR_HLP_LEN];
 extern char strDefault[STR_HLP_LEN];
+extern byte adrDefault;
 
 // ModBusAddress
 extern byte myAddress;

@@ -10,33 +10,66 @@ byte myBoot = 0;    // 0 = Terminal  /  1 = Slave
 uint32_t mySpeed = 9600;
 byte mySolarized = 0;
 byte myAddress = 123;
+byte myDefault = 0;
+byte myCnt = 0;
 
+void myToRom(){
+  EEPROM.put(1000, myBoot);       // byte
+  EEPROM.put(1001, mySolarized);  // byte
+  EEPROM.put(1002, myAddress);    // byte
+  EEPROM.put(1003, mySpeed);      // 4 byte
+  EEPROM.put(1007, myDefault);    // byte
+  EEPROM.put(1008, ezoCnt);       // byte
+  // 1009 is next...
+}
+void myFromRom(){
+  EEPROM.get(1000, myBoot);
+  EEPROM.get(1001, mySolarized);
+  EEPROM.get(1002, myAddress);
+  EEPROM.get(1003, mySpeed);
+  EEPROM.get(1007, myDefault);
+  EEPROM.get(1008, myCnt);
+  // 1009 is next...
 
+  if (!IsSerialSpeedValid(mySpeed)){
+    mySpeed = 9600;
+  }
+  if (!myAddress || myAddress > 254){
+    myAddress = 123;
+  }
+  if (mySolarized){
+    fgFaint = 92;
+  }
+  else{
+    fgFaint = 90;
+  }
+
+}
 
 byte PrintAllMenuOpt1(byte pos){
 
   EscLocate(5, pos);
-  PrintMenuKeyStd('A'); Serial.print(F("'Factory' Reset"));
-  EscLocate(26, pos);
+  PrintMenuKeyStd('A'); Serial.print(F("Reset"));
+  EscLocate(18, pos);
   PrintMenuKeyStd('B'); Serial.print(F("Clear Calibration(s)"));
-  EscLocate(52, pos++);
+  EscLocate(46, pos++);
   PrintMenuKeyStd('C'); Serial.print(F("Delete Name(s)"));
+  PrintShortLine(pos++, 8);
   EscLocate(5, pos);
   PrintMenuKeyStd('D'); Serial.print(F("(Auto-)Name = "));
   EscBold(1);
   Serial.print((char*)strDefault);
-  EscLocate(41, pos++);
+  EscLocate(42, pos++);
   PrintMenuKeyStd('E'); Serial.print(F("Set (Auto-)Name(s)"));
+  PrintShortLine(pos++, 8);
   EscLocate(5, pos);
   PrintMenuKeyStd('F'); Serial.print(F("(1st) (Auto-)Address = "));
   EscBold(1);
   IntToIntStr(adrDefault, 3, '0');
   Serial.print((char*)strHLP);
-  EscLocate(38, pos++);
+  EscLocate(40, pos++);
   PrintMenuKeyStd('G'); Serial.print(F("Set (Auto-)Address(es)"));
-  EscLocate(5, pos++);
-   
-  
+    
   return pos;
 
 }
@@ -48,7 +81,7 @@ void PrintAllMenu(){
 
 Start:
 
-  byte pos = PrintMenuTop((char*)"- ALL Menu -");
+  int8_t pos = PrintMenuTop((char*)"- ALL Menu -");
   pos = PrintAllMenuOpt1(pos + 1);
 
   PrintMenuEnd(pos + 1);
@@ -65,21 +98,21 @@ Start:
     // Factory Reset for All
     EzoReset(0,2);
     break;
-  case 'b':
+  case 'c':
     // Delete all names
     EzoSetName((char*)"", 0, 2, 0);
     break;
-  case 'c':
+  case 'd':
     // Edit Auto Name
     if (GetUserString(strDefault)){
       strcpy(strDefault, strHLP);
     }
     break;
-  case 'd':
+  case 'e':
     // Set AutoNames
     EzoSetName(strDefault,0,2,1);
     break;
-  case 'e':
+  case 'f':
     // Edit 1st Address
     adrDefault = GetUserInt(adrDefault);
     if (adrDefault > 127 - ezoCnt){
@@ -89,7 +122,7 @@ Start:
       adrDefault = 32;
     }
     break;
-  case 'f':
+  case 'g':
     // Set Addresses
     EzoSetAddress(0, adrDefault, 2);
     // wait 4 reboots done
@@ -99,7 +132,7 @@ Start:
     // direct back to main
     pos = 0;
     break;
-  case 'g':
+  case 'b':
     // Clear calibration
     EzoSetCal((char*)"Cal,clear", 0, 2);
     break;
@@ -114,24 +147,23 @@ Start:
 
 }
 
-void PrintProbeLine(byte ezo, byte pos){
+void PrintProbeLine(byte ezo, byte pos, byte bold){
     EscLocate(5, pos);
-    PrintMenuKey((char)(ezo + 49), 0, '(', 0, 0, 1, 0);
+    PrintMenuKey((char)(ezo + 49), 0, '(', 0, 0, bold, !bold);
     // Name
     EscLocate(10, pos);
     Serial.print((char*)ezoProbe[ezo].name);
     EscLocate(26, pos);
-    PrintSpacer(1);
+    PrintSpacer(bold);
     // Value
-    int divisor = 1;
-    if (ezoProbe[ezo].type == ezoDiO2){
-      divisor = 1000;
+    IntToFloatStr(ezoProbe[ezo].value[0], 5, 2, ' ');
+    SetAvgColorEZO(ezoProbe[ezo].value[0], ezoProbe[ezo].type);
+    if (!bold){
+      EscFaint(1);
     }
-    IntToFloatStr(ezoProbe[ezo].value[0] / divisor, 5, 2, ' ');
-    SetAvgColorEZO(ezoProbe[ezo].value[0] / divisor, ezoProbe[ezo].type);
     Serial.print(strHLP);
-    EscColor(0);
     EscBold(0);
+    EscColor(0);
     EscFaint(1);
     Print1Space();
     Serial.print(Fa(ezoStrUnit[ezoProbe[ezo].type]));
@@ -369,16 +401,8 @@ void PrintCalMenu(byte ezo, byte all){
   for (int i = 0; i < ezoCnt; i++){  
     if (ezoProbe[i].type == ezoProbe[ezo].type) {
       // Right Probe Type
-      if (i == ezo || all){
-        // Selected
-        EscFaint(0);
-      }
-      else{
-        // Not selected
-        EscFaint(1);
-      } 
       pos++;
-      PrintProbeLine(i, pos);
+      PrintProbeLine(i, pos, (i == ezo) || all);
     }    
   }
   EscFaint(0);
@@ -508,32 +532,39 @@ Start:
   for (int i = 0; i < ezoCnt; i++){  
     if (ezoProbe[i].type == ezoProbe[ezo].type) {
       // Right Probe Type
-      if (i == ezo || all){
-        // Selected
-        EscFaint(0);
-      }
-      else{
-        // Not selected
-        EscFaint(1);
-      } 
       pos++;
-      PrintProbeLine(i, pos);
+      PrintProbeLine(i, pos, (i == ezo) || all);
     }    
   }
   EscFaint(0);
   pos++;
   PrintLine(pos++, 5, 63);
 
-  pos = PrintAllMenuOpt1(pos);
-  EscLocate(5, pos++);
-  Serial.print(F("H): Calibration(s)..."));
-  pos = PrintShortLine(pos, 8);
-  EscLocate(5, pos++);
-  Serial.print(F("I): Select Single"));
-  EscLocate(5, pos++);
-  Serial.print(F("J): Select ALL"));
+  pos = PrintAllMenuOpt1(pos + 1);
+  PrintShortLine(pos++, 8);
+  EscLocate(5, pos);
+  PrintMenuKeyStd('H'); Serial.print(F("Calibration(s)..."));
+  EscLocate(30, pos);
+  PrintMenuKeyStd('I'); 
+  if (!all){
+    EscBold(1);
+  }
+  else{
+    EscFaint(1);
+  }
+  Serial.print(F("Select Single"));
+  EscLocate(51, pos++);
+  PrintMenuKeyStd('J');
+  if (all){
+    EscBold(1);
+  }
+  else{
+    EscFaint(1);
+  }
+  Serial.print(F("Select ALL"));
+  EscBold(0);
 
-  PrintMenuEnd(pos + 1);
+  PrintMenuEnd(pos);
 
   pos = GetUserKey('j', 9);
   switch (pos){
@@ -741,7 +772,7 @@ byte PrintAVGs(byte pos){
 
   SetAvgColorEZO(avg_O2, ezoDiO2);
   EscLocate(66, pos++);
-  PrintBoldFloat(avg_O2 / 1000,3,2,' ');
+  PrintBoldFloat(avg_O2,3,2,' ');
   EscColor(0);
   Serial.print(F("r%   "));
 
@@ -784,9 +815,11 @@ Start:
 
   int pos = PrintMenuTop((char*)"- Main Menu QuickWater 1.01 -");
   
+  uint32_t hlpTime = 0;
+
   for (int i = 0; i < ezoCnt; i++){
     pos++;
-    PrintProbeLine(i, pos);
+    PrintProbeLine(i, pos, 1);
   }
 
   pos = PrintShortLine(pos + 1, 8);
@@ -804,7 +837,7 @@ Start:
   PrintMenuKeyStd('E'); Serial.print(F("Speed = "));
   EscBold(1);
   Serial.print(mySpeed);
-  
+  PrintShortLine(pos++, 8);
   EscLocate(5, pos);
   PrintMenuKeyStd('F'); Serial.print(F("Boot4Terminal = "));
   if (myBoot){
@@ -835,14 +868,13 @@ Start:
   pos = PrintShortLine(pos++, 8);
 //****************************************************
   EscLocate(5, pos);
-  PrintMenuKeyStd('I'); Serial.print(F("Select All..."));
-  EscLocate(26, pos);
-  PrintMenuKeyStd('J'); Serial.print(F("SetAs Default"));
-  EscLocate(47, pos++);
-  PrintMenuKeyStd('K'); Serial.print(F("Erase Default"));
-  pos = PrintShortLine(pos++, 8);
-  EscLocate(5, pos);
-  PrintMenuKeyStd('L'); Serial.print(F("FailSafe Values..."));
+  PrintMenuKeyStd('I'); Serial.print(F("SelectAll..."));
+  EscLocate(25, pos);
+  PrintMenuKey('J', 0, 0, 0, 1, (myDefault), (!myDefault)); Serial.print(F("SetDefault"));
+  EscLocate(43, pos);
+  PrintMenuKeyStd('K'); Serial.print(F("DelDefault"));
+  EscLocate(60, pos);
+  PrintMenuKeyStd('L'); Serial.print(F("FailSafe..."));
   
   PrintMenuEnd(pos + 1);
 
@@ -863,11 +895,55 @@ Start:
     EscLocate(1,1);
     EzoScan();
     break;
+  case 'b':
+    // Date
+    hlpTime = SerializeTime(1, 1, 2023, myHour, myMin, mySec);    // Time of now
+    DeSerializeTime(hlpTime + GetUserDate(myTime), &myDay, &myMonth, &myYear, &myHour, &myMin, &mySec);
+    RTC_SetDateTime();
+    myTime = SerializeTime(myDay, myMonth, myYear, myHour, myMin, mySec);
+    break;
+  case 'c':
+    // Time
+    hlpTime = SerializeTime(myDay, myMonth, myYear, 0, 0, 0);    // Midnight of today
+    DeSerializeTime(hlpTime + GetUserTime(myTime), &myDay, &myMonth, &myYear, &myHour, &myMin, &mySec);
+    RTC_SetDateTime();
+    myTime = SerializeTime(myDay, myMonth, myYear, myHour, myMin, mySec);
+    break;
+  case 'd':
+    // Address
+    myAddress = GetUserInt(myAddress);
+    if (!myAddress || myAddress > 254){
+      // illegal address - reload from eeprom
+      myFromRom();
+    }
+    else{
+      // save to eeprom...
+      myToRom();
+    }
+    break;
+  case 'e':
+    // Speed
+    // Set Speed
+    mySpeed = GetUserInt(mySpeed);
+    if (IsSerialSpeedValid(mySpeed)){ 
+      // valid - save to eeprom
+      myToRom();
+    }
+    else{
+      // illegal - reload from eeprom
+      myFromRom();
+    }
+    break;
   case 'j':
     // Save as default
+    myDefault = 1;
+    myToRom();
+    DefaultProbesToRom();
     break;
   case 'k':
     // Erase Defaults
+    myDefault = 0;
+    myToRom();
     break;
   case 'l':
     // FailSafe Values
@@ -881,8 +957,11 @@ Start:
     // Boot for Slave
     myBoot = 1;
     break;
-  case 'd':
-    // Slave Address
+  case 'h':
+    // Solarized
+    mySolarized = !mySolarized;
+    fgFaint = 90 + (mySolarized * 2);
+    myToRom();
     break;
   default:
     // Single Probe/Type

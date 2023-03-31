@@ -151,7 +151,7 @@ char ByteToChar(byte valIN){
     }
   #else
     // floating's, too
-    long GetUserVal(long defVal, uint8_t type){
+    long GetUserVal(long defVal, int8_t type){
         // type:  0 = int as it is
         //        1 = float (*1000)
         if (type){
@@ -169,8 +169,7 @@ char ByteToChar(byte valIN){
           if (type){
             type = -1;
           }
-          
-          defVal = StrFloatIntToInt(strHLP2, type);
+          defVal = StrFloatIntToInt(strHLP, type);
         }
         return defVal;  
     }

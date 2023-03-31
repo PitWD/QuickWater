@@ -24,7 +24,9 @@ uint32_t myTime = 0;
 void setup() {
   // put your setup code here, to run once:
 
-  Serial.begin(115200);
+  myFromRom();
+
+  Serial.begin(mySpeed);
 
   Wire.setClock(31000L);
   Wire.begin();
@@ -35,14 +37,16 @@ void setup() {
 
   delay(300);
 
-  EzoScan();
-
-  if (ezoCnt){
-    // at least 1 ezo got found
-    Serial.println(F(""));
+  if (myDefault == 1 && myCnt && myCnt <= EZO_MAX_PROBES){ 
+    DefaultProbesFromRom();
+    ezoCnt = myCnt;
+    PrintLoopMenu();
+  }
+  else{
+    EzoScan();
     PrintMainMenu();
   }
-
+  
 }
 
 void loop() {
@@ -77,6 +81,5 @@ void loop() {
     Serial.read();
     PrintMainMenu();
   }
-
 
 }

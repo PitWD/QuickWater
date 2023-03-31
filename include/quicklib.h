@@ -55,7 +55,7 @@ byte setBit(byte byteIN, byte bitToSet, byte setTo);
     // just integer
     long GetUserInt(long valIN);
 #else
-    long GetUserVal(long defVal, byte type);
+    long GetUserVal(long defVal, int8_t type);
     #define GetUserInt(valIN) GetUserVal(valIN, 0)
     #define GetUserFloat(valIN) GetUserVal(valIN, 1)
 #endif      

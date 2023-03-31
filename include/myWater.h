@@ -1,8 +1,8 @@
 #include "quicklib.h"
 #include <EEPROM.h>
 
-#define EZO_MAX_PROBES 8
-#define EZO_MAX_VALUES 3        // 3 for full HUM / 5 for full RGB...
+#define EZO_MAX_PROBES 14
+#define EZO_MAX_VALUES 2        // 3 for full HUM / 5 for full RGB...
 #define EZO_1st_ADDRESS 32
 #define EZO_LAST_ADDRESS 127
 
@@ -89,7 +89,7 @@ typedef struct ezoProbeSTRUCT{
     byte calibrated;
     byte error;            // 0=OK, 1=processing, 2=syntax, 3=IIC, unknown
     byte address;
-    unsigned int version; 
+    uint16_t version; 
     char name[17];
     long value[EZO_MAX_VALUES];
     //long valueLast[EZO_MAX_VALUES];
@@ -180,6 +180,14 @@ long tooHigh[] = {27000L, 22000L, 7000L, 2000000L, 750000L, 75000L, 1500000L, 10
 #define CAL_DiO2_LOW 0L 
 #define CAL_DiO2_MID 0L
 #define CAL_DiO2_HIGH 0L
+
+void DefaultProbesToRom(){
+    // Save actual probe-constellation as Standard to Eeprom
+    EEPROM.put(0, ezoProbe);
+}
+void DefaultProbesFromRom(){
+    EEPROM.get(0, ezoProbe);
+}
 
 void SetAvgColor(long avg, long tooLow, long low, long high, long tooHigh){
   if (avg < tooLow){

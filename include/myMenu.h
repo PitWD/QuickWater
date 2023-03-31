@@ -952,10 +952,12 @@ Start:
   case 'f':
     // Boot for Terminal
     myBoot = 0;
+    myToRom();
     break;
   case 'g':
     // Boot for Slave
     myBoot = 1;
+    myToRom();
     break;
   case 'h':
     // Solarized

@@ -223,7 +223,7 @@ void EzoWaitValues(byte ezo){
 }
 
 byte EzoGetValues(byte ezo){
-    if (IIcGetAtlas((int)ezoProbe[ezo].address) > 0){
+    if (IIcGetAtlas(ezoProbe[ezo].address) > 0){
         ezoProbe[ezo].value[0] = StrTokFloatToInt(iicStr);
         for (byte i = 1; i < Fb(ezoValCnt[ezoProbe[ezo].type]); i++){
             ezoProbe[ezo].value[i] = StrTokFloatToInt(NULL);
@@ -258,8 +258,8 @@ void EzoSetName(char *strIN, byte ezo, byte all, byte autoName){
             if (autoName){
                 cnt[ezoProbe[i].type]++;
                 // Type
-                strcpy_P(strHLP,(PGM_P)pgm_read_word(&(ezoStrType[ezoProbe[i].type])));
-                strcpy(&iicStr[5], strHLP);
+                //strcpy_P(strHLP,(PGM_P)pgm_read_word(&(ezoStrType[ezoProbe[i].type])));
+                strcpy(&iicStr[5], Fa(ezoStrType[ezoProbe[i].type]));
             }
             
             strcpy(&iicStr[strlen(iicStr)], strIN);
@@ -390,6 +390,320 @@ void EzoSetAddress(byte ezo, byte addrNew, byte all){
     }
 }
 
+char EzoDoNext(){
+
+    char err = 1;
+    char errInfo[] = "'?'";
+    byte errCnt = 0;
+
+    switch (ezoAction){
+    case 0:
+      // Set Avg-RTD to EC & pH probes
+      IntToFloatStr(avg_RTD,2,2,'0');
+      strcpy(&iicStr[2], strHLP);
+      iicStr[0] = 'T'; iicStr[1] = ',';
+
+      if (ezoProbe[ezoAct].type == ezoPH || ezoProbe[ezoAct].type == ezoEC){
+        errCnt = 0;
+        err = -1;
+        while (err < 0){
+          err = IIcSetStr(ezoProbe[ezoAct].address, iicStr, 0);
+          if (err < 0){
+            errCnt++;
+            if (errCnt > 3){
+              // Fatal for this Probe
+              errInfo[1] = 'T';
+              errCnt = ezoAct;
+              break;
+            }
+            delay(333);
+          }
+          else{
+              // errCnt = ezoAct;
+          }          
+        }
+      }
+
+      break;
+    
+    case 1:
+      // Ask for Data
+      errCnt = 0;
+      err = -1;
+      while (err < 0){
+        err = EzoStartValues(ezoAct);
+        if (err < 0){
+          errCnt++;
+          if (errCnt > 3){
+            // Fatal for this Probe
+            errInfo[1] = 'R';
+            errCnt = ezoAct;
+            break;
+          }
+          delay(333);
+        }
+        else{
+          // errCnt = ezoAct;
+        }          
+      }
+    
+      break;
+    
+    case 2:
+      // Get Data
+      err = EzoGetValues(ezoAct);
+
+      if (err == 0){
+        // Immediately Fatal for this Probe
+        errInfo[1] = 'D';
+        errCnt = ezoAct;
+        err = - 1;
+      }
+      else{
+        // errCnt = ezoAct;
+      }          
+      break;
+
+    default:
+      ezoAction = 0;
+      ezoAct = 0;
+      return 0;
+      break;
+    }
+
+    if (ezoAction == 2){
+        // Actions done for this Module
+        ezoAct++;
+        ezoAction = 0;
+        if (ezoAct == ezoCnt){
+            // All Modules Read
+            ezoAct = 0;
+            return 1;
+        }
+    }
+    else{
+      // Next Module  
+      ezoAction++;
+    }
+
+    if (err < 0){
+        PrintErrorOK(-1, errCnt, errInfo);
+        return -1;
+    }
+    else{
+        // PrintErrorOK(1, errCnt, errInfo);
+        return 0;
+    }
+
+}
+
+void EzoScan(){
+    // Scan for Ezo's
+
+    int err;
+    int recEzo;         // recognized EzoProbe[ezoCnt].module.version
+    int verPos;         // 'pointer' on 1st char of version
+    int hasCal;         // has a calibration
+    
+    ezoCnt = 0;
+    Serial.println("");
+
+    for (int i = EZO_1st_ADDRESS; i < EZO_LAST_ADDRESS + 1 && ezoCnt < EZO_MAX_PROBES; i++){
+        
+        //Exclude known stuff
+        if (!(i > 79 && i < 88) && !(i == 104)){        
+
+            Wire.beginTransmission(i);
+            err = Wire.endTransmission();
+            if (!err){
+                Serial.print(F("Slave @: "));
+                Serial.print(i);
+                Serial.print(F(" : "));
+                // Slave found... looking for EZO-ID
+                err = IIcSetStr(i, (char*)"i", 0);
+                Serial.print(err);
+                Serial.print(F(" : "));
+                delay(333);
+                err = IIcGetAtlas(i);
+                Serial.print(err);
+                Serial.print(F(" : "));
+                switch (err){
+                case 0:
+                    // nothing received
+                    break;
+                case -1:
+                case -2:
+                case -4:
+                    // ezo errors
+                    break;
+                case -3:
+                    // IIC error
+                    break;
+                default:
+                    // something received
+                    Serial.print(iicStr);
+                    Serial.print(F(" : "));
+                    if (iicStr[0] == '?' && iicStr[1] == 'I'){
+                        // It's an ezo...
+
+                        recEzo = 0;
+                        verPos = 7;
+                        hasCal = 1;
+                        ezoProbe[ezoCnt].calibrated = 0;
+                        ezoProbe[ezoCnt].name[0] = 0;
+
+                        switch (iicStr[3]){
+                        case 'R':
+                            // RGB or RTD
+                            switch (iicStr[4]){
+                            case 'G':
+                                // RGB
+                                recEzo = ezoRGB;
+                                hasCal = 0;
+                                break;
+                            case 'T':
+                                // RTD
+                                recEzo = ezoRTD;
+                                break;
+                            default:
+                                // LATE ERROR
+                                break;
+                            }
+                            break;
+                        case 'F':
+                            // FLO(W)
+                            recEzo = ezoFLOW;
+                            hasCal = 0;
+                            break;
+                        case 'O':
+                            // ORP
+                            recEzo = ezoORP;
+                            break;
+                        case 'C':
+                            // CO2
+                            recEzo = ezoCO2;
+                            hasCal = 0;
+                            break;
+                        case 'H':
+                            // HUM
+                            recEzo = ezoHUM;
+                            hasCal = 0;
+                            break;    
+                        case 'E':
+                            // EC
+                            recEzo = ezoEC;
+                            verPos = 6;
+                            break;           
+                        case 'p':
+                            // pH
+                            recEzo = ezoPH;
+                            verPos = 6;
+                            break;
+                        case 'D':
+                            // dissolved oxygen
+                            recEzo = ezoDiO2;
+                            verPos = 8;
+                            break;
+                        case 'P':
+                            // Embedded Pressure
+                            recEzo = ezoPRES;
+                            break;
+                        default:
+                            // LATE ERROR
+                            break;
+                        }
+                        Serial.println(recEzo);
+                        if (recEzo){
+                            // Valid Probe found
+                            
+                            // Save address and type
+                            ezoProbe[ezoCnt].address = i;
+                            ezoProbe[ezoCnt].type = recEzo;
+                            
+                            // Extract Version
+                            ezoProbe[ezoCnt].version = StrTokFloatToInt(iicStr);
+                            // Calibration
+                            if (hasCal){
+                                IIcSetStr(i,(char*)"Cal,?", 0);
+                                delay(333);
+                                if (IIcGetAtlas(i) > 0){
+                                    ezoProbe[ezoCnt].calibrated = iicStr[5] - 48;
+                                }                            
+                            }
+                            
+                            // Name
+                            IIcSetStr(i,(char*)"Name,?", 0);
+                            delay(333);
+                            if (IIcGetAtlas(i) > 0){
+                                strcpy(ezoProbe[ezoCnt].name, &iicStr[6]);
+                            }
+// ********************
+                            // Output (only stored in Module)
+                            // Status
+                            IIcSetStr(i, (char*)"Status", 0);
+                            Serial.print(F("State: "));
+                            delay(300);
+                            if (IIcGetAtlas(i) > 0){
+                                switch (iicStr[8]){
+                                case 'P':
+                                    // powered off
+                                    Serial.print(F("PoweredOff"));
+                                    break;
+                                case 'S':
+                                    // software reset
+                                    Serial.print(F("SoftReset"));
+                                    break;
+                                case 'B':
+                                    // brown out
+                                    Serial.print(F("BrownOut"));
+                                    break;
+                                case 'W':
+                                    // watchdog
+                                    Serial.print(F("Watchdog"));
+                                    break;
+                                case 'U':
+                                    // Unknown
+                                default:
+                                    Serial.print(F("N/A"));
+                                    break;
+                                }             
+                                Serial.print(F(" @ "));
+                                Serial.print(&iicStr[10]);
+                                Serial.println(F(" V"));
+                            }
+                            else{
+                                Serial.println(F("ERROR"));
+                            }
+                            
+                            // Value(s)
+                            Serial.print(F("Value(s): "));
+                            EzoStartValues(ezoCnt);
+                            EzoWaitValues(ezoCnt);
+                            if (EzoGetValues(ezoCnt)){
+                                Serial.print(ezoProbe[ezoCnt].value[0]);
+                                for (byte i2 = 1; i2 < Fb(ezoValCnt[recEzo]); i2++){
+                                    Serial.print(F(" , "));
+                                    Serial.print(ezoProbe[ezoCnt].value[i2]);
+                                }          
+                                Serial.println(F(""));
+                            }
+                            else{
+                                Serial.println(F("ERROR"));
+                            }
+                            Serial.println(F(""));
+                            
+                            // done
+                            ezoCnt++;
+                        }
+                    } 
+                    break;
+                }
+            }
+        }
+    }   
+}
+
+/*
 void EzoScan(){
     // Scan for Ezo's
 
@@ -610,195 +924,5 @@ void EzoScan(){
             }
         }
     }   
-}
-
-char EzoDoNext(){
-
-    char err = 1;
-    char errInfo[] = "'?'";
-    byte errCnt = 0;
-
-    switch (ezoAction){
-    case 0:
-      // Set Avg-RTD to EC & pH probes
-      IntToFloatStr(avg_RTD,2,2,'0');
-      strcpy(&iicStr[2], strHLP);
-      iicStr[0] = 'T'; iicStr[1] = ',';
-
-      if (ezoProbe[ezoAct].type == ezoPH || ezoProbe[ezoAct].type == ezoEC){
-        errCnt = 0;
-        err = -1;
-        while (err < 0){
-          err = IIcSetStr(ezoProbe[ezoAct].address, iicStr, 0);
-          if (err < 0){
-            errCnt++;
-            if (errCnt > 3){
-              // Fatal for this Probe
-              errInfo[1] = 'T';
-              errCnt = ezoAct;
-              break;
-            }
-            delay(333);
-          }
-          else{
-              // errCnt = ezoAct;
-          }          
-        }
-      }
-
-      break;
-    
-    case 1:
-      // Ask for Data
-      errCnt = 0;
-      err = -1;
-      while (err < 0){
-        err = EzoStartValues(ezoAct);
-        if (err < 0){
-          errCnt++;
-          if (errCnt > 3){
-            // Fatal for this Probe
-            errInfo[1] = 'R';
-            errCnt = ezoAct;
-            break;
-          }
-          delay(333);
-        }
-        else{
-          // errCnt = ezoAct;
-        }          
-      }
-    
-      break;
-    
-    case 2:
-      // Get Data
-      err = EzoGetValues(ezoAct);
-
-      if (err == 0){
-        // Immediately Fatal for this Probe
-        errInfo[1] = 'D';
-        errCnt = ezoAct;
-        err = - 1;
-      }
-      else{
-        // errCnt = ezoAct;
-      }          
-      break;
-
-    default:
-      ezoAction = 0;
-      ezoAct = 0;
-      return 0;
-      break;
-    }
-
-    if (ezoAction == 2){
-        // Actions done for this Module
-        ezoAct++;
-        ezoAction = 0;
-        if (ezoAct == ezoCnt){
-            // All Modules Read
-            ezoAct = 0;
-            return 1;
-        }
-    }
-    else{
-      // Next Module  
-      ezoAction++;
-    }
-
-    if (err < 0){
-        PrintErrorOK(-1, errCnt, errInfo);
-        return -1;
-    }
-    else{
-        // PrintErrorOK(1, errCnt, errInfo);
-        return 0;
-    }
-
-}
-
-/*
-c99 compatible C.
-We need a function:
-long StrToFloatInt(char *strIN, byte firstVal){
-    // "strIN" has an content like "?I,ABC,9876,1.23,XYZ,4.5678,abc-1.23,xyz-4.567"
-    // "," is the only valid separator.
-    // Values can have leading text - or not.
-    // Values with a "." are floating values we scale by 1000
-    // Values without a "." are integer - we do not scale.
-    // Return is a long with the value.
-    // If "firstVal" is true we return the first value.
-    // If "firstVal" is false we return the next value.
-    // If there is no first or next value we return 0.
-    static char *nextToken = NULL;     // Pointer on nextToken
-}
-
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <ctype.h>
-
-long StrToFloatInt(char *strIN, byte firstVal){
-    static char *nextToken = NULL;  // Pointer on nextToken
-    char *token;
-
-    if (firstVal) {
-        nextToken = strIN;
-    }
-    firstVal = 1;
-
-    while ((token = strtok(nextToken, ",")) != NULL) {
-        nextToken = NULL;  // reset nextToken for subsequent calls to strtok()
-
-        // check if token starts with a valid number or a minus sign
-        if (isdigit(*token) || *token == '-') {
-            // check if token contains a decimal point
-            char *decimal = strchr(token, '.');
-            if (decimal != NULL) {
-                // convert floating value to scaled integer
-                double value = strtod(token, NULL);
-                long scaled = (long)(value * 1000);
-                if (firstVal) {
-                    return scaled;
-                }
-            } else {
-                // convert integer value
-                long value = strtol(token, NULL, 10);
-                if (firstVal) {
-                    return value;
-                }
-            }
-            firstVal = 0;
-        }
-    }
-
-    // no more tokens
-    return 0;
-}
-
-long StrFloatToInt(char *strIN) {
-    // find the decimal point
-    char *decimal = strchr(strIN, '.');
-    if (decimal == NULL) {
-        // no decimal point, so it's an integer value
-        return strtol(strIN, NULL, 10);
-    } else {
-        // convert floating value to scaled integer
-        *decimal = '\0';  // temporarily replace decimal point with null terminator
-        long value = strtol(strIN, NULL, 10);
-        long scaled = value * 1000;
-        char *fraction = decimal + 1;
-        int factor = 100;
-        while (*fraction != '\0' && factor > 0) {
-            if (isdigit(*fraction)) {
-                scaled += (*fraction - '0') * factor;
-                factor /= 10;
-            }
-            fraction++;
-        }
-        return scaled;
-    }
 }
 */

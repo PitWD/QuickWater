@@ -210,7 +210,8 @@ byte PrintCal_B(byte faint, byte pos){
     PrintCal_Faint();
   }
   else{
-    Serial.print(F("B):"));
+    PrintMenuKeyStd('B');
+    //Serial.print(F("B):"));
   }
   Serial.print(F(" Do 1-Point Cal..."));
   EscFaint(0);
@@ -225,7 +226,7 @@ byte PrintCal_C(byte faint, byte pos){
     PrintCal_Faint();
   }
   else{
-    Serial.print(F("C):"));
+    PrintMenuKeyStd('C');
   }
   Serial.print(F(" Do 2-Point Cal..."));
   EscFaint(0);
@@ -240,7 +241,7 @@ byte PrintCal_D(byte faint, byte pos){
     PrintCal_Faint();
   }
   else{
-    Serial.print(F("D):"));
+    PrintMenuKeyStd('D');
   }
   Serial.print(F(" Do 3-Point Cal..."));
   EscFaint(0);
@@ -255,7 +256,7 @@ byte PrintCal_E(byte faint, byte pos, long val){
     PrintCal_Faint();
   }
   else{
-    Serial.print(F("E):"));
+    PrintMenuKeyStd('E');
   }
   Serial.print(F(" Set Single/Mid Point    = "));
   PrintCal_Value(val, faint);  
@@ -270,7 +271,7 @@ byte PrintCal_F(byte faint, byte pos, long val){
     PrintCal_Faint();
   }
   else{
-    Serial.print(F("F):"));
+    PrintMenuKeyStd('F');
   }
   Serial.print(F(" Avg As Single/Mid Point = "));
   PrintCal_Value(val, faint);  
@@ -287,7 +288,7 @@ byte PrintCal_G(byte faint, byte pos, long val){
     PrintCal_Faint();
   }
   else{
-    Serial.print(F("G):"));
+    PrintMenuKeyStd('G');
   }
   Serial.print(F(" Set Low Point           = "));
   PrintCal_Value(val, faint);  
@@ -302,7 +303,7 @@ byte PrintCal_H(byte faint, byte pos, long val){
     PrintCal_Faint();
   }
   else{
-    Serial.print(F("H):"));
+    PrintMenuKeyStd('H');
   }
   Serial.print(F(" Set High Point          = "));
   PrintCal_Value(val, faint);  

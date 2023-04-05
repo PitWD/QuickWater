@@ -60,15 +60,15 @@ byte PrintAllMenuOpt1(byte pos){
   EscBold(1);
   Serial.print((char*)strDefault);
   EscLocate(42, pos++);
-  PrintMenuKeyStd('E'); Serial.print(F("Set (Auto-)Name(s)"));
+  PrintMenuKeyStd('E'); Serial.print(F("Do Name(s)"));
   PrintShortLine(pos++, 8);
   EscLocate(5, pos);
   PrintMenuKeyStd('F'); Serial.print(F("(1st) (Auto-)Address = "));
   EscBold(1);
   IntToIntStr(adrDefault, 3, '0');
   Serial.print((char*)strHLP);
-  EscLocate(40, pos++);
-  PrintMenuKeyStd('G'); Serial.print(F("Set (Auto-)Address(es)"));
+  EscLocate(42, pos++);
+  PrintMenuKeyStd('G'); Serial.print(F("Do Address(es)"));
     
   return pos;
 
@@ -189,127 +189,35 @@ void PrintProbeLine(byte ezo, byte pos, byte bold){
     PrintSpacer(0);
 
 }
+int8_t PrintProbesOfType(byte ezo, byte all, int8_t pos){
 
-void PrintCal_Faint(){
-    EscFaint(1);
-    Serial.print(F("NA:"));
-}
-void PrintCal_Value(long val, byte faint){
+  byte veryAll = 0;
+  if (ezo == 255){
+    // Print all types
+    veryAll = 1;
+    ezo = 0;
+  }
+  
+  PrintLine(pos, 5, 63);
+
+  for (int i = 0; i < ezoCnt; i++){  
+    if ((ezoProbe[i].type == ezoProbe[ezo].type) || veryAll) {
+      // Right Probe Type
+      pos++;
+      PrintProbeLine(i, pos, (i == ezo) || all);
+    }    
+  }
   EscFaint(0);
-  if (faint){
-    Serial.print(F("NA"));
-  }
-  else{
-    PrintBoldFloat(val, 4, 2, ' ');
-  }
-}
-byte PrintCal_B(byte faint, byte pos){
-
-  EscLocate(5, pos++);
-  if (faint){
-    PrintCal_Faint();
-  }
-  else{
-    PrintMenuKeyStd('B');
-    //Serial.print(F("B):"));
-  }
-  Serial.print(F(" Do 1-Point Cal..."));
-  EscFaint(0);
-  
-  return pos;
-
-}
-byte PrintCal_C(byte faint, byte pos){
-
-  EscLocate(5, pos++);
-  if (faint){
-    PrintCal_Faint();
-  }
-  else{
-    PrintMenuKeyStd('C');
-  }
-  Serial.print(F(" Do 2-Point Cal..."));
-  EscFaint(0);
-
-  return pos;
-  
-}
-byte PrintCal_D(byte faint, byte pos){
-
-  EscLocate(5, pos++);
-  if (faint){
-    PrintCal_Faint();
-  }
-  else{
-    PrintMenuKeyStd('D');
-  }
-  Serial.print(F(" Do 3-Point Cal..."));
-  EscFaint(0);
-  pos = PrintShortLine(pos, 0);
+  pos++;
+  PrintLine(pos++, 5, 63);
   
   return pos;
 }
-byte PrintCal_E(byte faint, byte pos, long val){
 
-  EscLocate(5, pos++);
-  if (faint){
-    PrintCal_Faint();
-  }
-  else{
-    PrintMenuKeyStd('E');
-  }
-  Serial.print(F(" Set Single/Mid Point    = "));
-  PrintCal_Value(val, faint);  
-
-  return pos;
-  
-}
-byte PrintCal_F(byte faint, byte pos, long val){
-
-  EscLocate(5, pos++);
-  if (faint){
-    PrintCal_Faint();
-  }
-  else{
-    PrintMenuKeyStd('F');
-  }
-  Serial.print(F(" Avg As Single/Mid Point = "));
-  PrintCal_Value(val, faint);  
-
-  pos = PrintShortLine(pos, 0);
-  
-  return pos;
-
-}
-byte PrintCal_G(byte faint, byte pos, long val){
-
-  EscLocate(5, pos++);
-  if (faint){
-    PrintCal_Faint();
-  }
-  else{
-    PrintMenuKeyStd('G');
-  }
-  Serial.print(F(" Set Low Point           = "));
-  PrintCal_Value(val, faint);  
-  
-  return pos;
-
-}
-byte PrintCal_H(byte faint, byte pos, long val){
-
-  EscLocate(5, pos++);
-  if (faint){
-    PrintCal_Faint();
-  }
-  else{
-    PrintMenuKeyStd('H');
-  }
-  Serial.print(F(" Set High Point          = "));
-  PrintCal_Value(val, faint);  
-  
-  return pos;
-
+void PrintPointEqual(uint8_t pos){
+  Serial.print (F("-Pt. "));
+  EscLocate(29, pos);
+  Serial.print (F("= "));
 }
 
 void PrintCalMenu(byte ezo, byte all){
@@ -320,9 +228,9 @@ void PrintCalMenu(byte ezo, byte all){
   long calMid = 0;      // Value for MidPoint
   long calHigh = 0;     // Value for HighPoint
   long calRes = 0;      // Value for Reset
-  
-  union myMenu
-  {
+  long calAvg = 0;      // Actual avg of actual ezoType
+
+  struct myMenu{
     byte b:1;
     byte c:1;
     byte d:1;
@@ -342,78 +250,139 @@ void PrintCalMenu(byte ezo, byte all){
 
   Start:
 
+  strcpy(iicStr, "- Calibrate ");
+
   switch (ezoProbe[ezo].type){
   case ezoRTD:
     /* code */
-    strcpy(iicStr, "          - Calibrate RTD (°C) -");
+    strcpy(&iicStr[12], "RTD -");
     if (!ImInside){
+      myMenu.c = 0;
+      myMenu.d = 0;
+      myMenu.g = 0;
+      myMenu.h = 0;
       calLow = CAL_RTD_LOW;
       calMid = CAL_RTD_MID;
       calHigh = CAL_RTD_HIGH;
       calRes = CAL_RTD_RES;
+      calAvg = avg_RTD;
     }
     break;
   case ezoEC:
     /* code */
-    strcpy(iicStr, "          - Calibrate EC  (µS) -");
+    strcpy(&iicStr[12], "EC -");
     if (!ImInside){
+      myMenu.d = 0;
+      myMenu.h = 0;
       calLow = CAL_EC_LOW;
       calMid = CAL_EC_MID;
       calHigh = CAL_EC_HIGH;
       calRes = CAL_EC_RES;
+      calAvg = avg_EC;
     }
     break;
   case ezoPH:
     /* code */
-    strcpy(iicStr, "          - Calibrate pH  (pH) -");
+    strcpy(&iicStr[12], "pH -");
     if (!ImInside){
       calLow = CAL_PH_LOW;
       calMid = CAL_PH_MID;
       calHigh = CAL_PH_HIGH;
       calRes = CAL_PH_RES;
+      calAvg = avg_pH;
     }
     break;
   case ezoORP:
     /* code */
-    strcpy(iicStr, "          - Calibrate ORP (mV) -");
+    strcpy(&iicStr[12], "ORP -");
     if (!ImInside){
+      myMenu.c = 0;
+      myMenu.d = 0;
+      myMenu.g = 0;
+      myMenu.h = 0;
       calLow = CAL_ORP_LOW;
       calMid = CAL_ORP_MID;
       calHigh = CAL_ORP_HIGH;
       calRes = CAL_ORP_RES;
+      calAvg = avg_ORP;
     }
     break;
   case ezoDiO2:
     /* code */
-    strcpy(iicStr, "          - Calibrate O2  (r%) -");
+    strcpy(&iicStr[12], "O2 -");
     if (!ImInside){
+      myMenu.d = 0;
+      myMenu.e = 0;
+      myMenu.f = 0;
+      myMenu.g = 0;
+      myMenu.h = 0;
       calLow = CAL_DiO2_LOW;
       calMid = CAL_DiO2_MID;
       calHigh = CAL_DiO2_HIGH;
       calRes = CAL_DiO2_RES;
+      calAvg = avg_O2;
     }
     break;  
   default:
     break;
   }
-  byte pos = PrintMenuTop(iicStr);
+  int8_t pos = PrintMenuTop(iicStr);
   ImInside = 1;
 
-  for (int i = 0; i < ezoCnt; i++){  
-    if (ezoProbe[i].type == ezoProbe[ezo].type) {
-      // Right Probe Type
-      pos++;
-      PrintProbeLine(i, pos, (i == ezo) || all);
-    }    
-  }
-  EscFaint(0);
-
-  pos = PrintShortLine(pos + 1, 0);
-
+  pos = PrintProbesOfType(ezo, all, pos);
+  pos++;
   EscLocate(5, pos++);
-  Serial.print(F("A): Clear Calibration"));
-  pos = PrintShortLine(pos, 0);
+  PrintMenuKeyStd('A'); Serial.print(F("Clear Cal."));
+  pos = PrintShortLine(pos, 8);
 
+  if (myMenu.b){
+    // 1-Point Cal.
+    EscLocate(5, pos);
+    PrintMenuKeyStd('B'); Serial.print(F("Do 1-Pt. Cal."));
+  }
+  if (myMenu.c){
+    // 3-Point Cal.
+    EscLocate(26, pos);
+    PrintMenuKeyStd('C'); Serial.print(F("Do 2-Pt. Cal."));
+  }
+  if (myMenu.d){
+    // 3-Point Cal.
+    EscLocate(47, pos);
+    PrintMenuKeyStd('D'); Serial.print(F("Do 3-Pt. Cal."));
+  }
+  pos++;
+  pos = PrintShortLine(pos, 8);
+
+  if (myMenu.e){
+    // Set Single/Mid Point
+    EscLocate(5, pos);
+    PrintMenuKeyStd('E'); Serial.print(F("Set Single/Mid"));
+    PrintPointEqual(pos++);
+    PrintBoldFloat(calMid, 4, 2, ' ');
+  }
+  if (myMenu.f){
+    // Use Avg as Single/Mid Point
+    EscLocate(5, pos);
+    PrintMenuKeyStd('F'); Serial.print(F("Set AVG As Mid"));
+    PrintPointEqual(pos++);
+    PrintBoldFloat(calAvg, 4, 2, ' ');
+  }
+  if (myMenu.g){
+    // Set Low Point
+    EscLocate(5, pos);
+    PrintMenuKeyStd('G'); Serial.print(F("Set Low"));
+    PrintPointEqual(pos++);
+    PrintBoldFloat(calLow, 4, 2, ' ');
+}
+  if (myMenu.h){
+    // Set High Point
+    EscLocate(5, pos);
+    PrintMenuKeyStd('H'); Serial.print(F("Set High"));
+    PrintPointEqual(pos++);
+    PrintBoldFloat(calHigh, 4, 2, ' ');
+  }
+  
+  /*
   switch (ezoProbe[ezo].type){
   case ezoRTD:
     pos = PrintCal_B(0, pos);
@@ -463,10 +432,11 @@ void PrintCalMenu(byte ezo, byte all){
   default:
     break;
   }
+  */
 
   PrintMenuEnd(pos + 1);
 
-  pos = GetUserKey('h', ezoProbe[ezo].type);
+  pos = GetUserKey('h', 0);
   switch (pos){
   case 'a':
     break;
@@ -528,6 +498,10 @@ void PrintProbeMenu(byte ezo){
 Start:
 
   int8_t pos = PrintMenuTop((char*)"- Probe(Type) Menu -");
+  
+  pos = PrintProbesOfType(ezo, all, pos);
+
+  /*
   PrintLine(pos, 5, 63);
 
   for (int i = 0; i < ezoCnt; i++){  
@@ -540,6 +514,7 @@ Start:
   EscFaint(0);
   pos++;
   PrintLine(pos++, 5, 63);
+  */
 
   pos = PrintAllMenuOpt1(pos + 1);
   PrintShortLine(pos++, 8);
@@ -702,7 +677,7 @@ byte PrintWaterValsHlp(byte pos, byte posX, byte ezotype, byte lz, byte dp, int 
       EscFaint(1);
       Serial.print(strUnit);
       EscFaint(0);
-      Serial.print(F("   "));
+      PrintSpaces(3);
     }
   }
 
@@ -752,6 +727,7 @@ byte PrintAVGs(byte pos){
   PrintBoldFloat(avg_RTD,2,2,' ');
   EscColor(0);
   Serial.print(F("°C   "));
+  
 
   SetAvgColorEZO(avg_EC, ezoEC);
   EscLocate(26, pos);
@@ -818,12 +794,17 @@ Start:
   
   uint32_t hlpTime = 0;
 
+/*
+  PrintLine(pos, 5, 63);
   for (int i = 0; i < ezoCnt; i++){
     pos++;
     PrintProbeLine(i, pos, 1);
   }
+  pos++;
+  PrintLine(pos++, 5, 63);
+*/
 
-  pos = PrintShortLine(pos + 1, 8);
+  pos = PrintProbesOfType(255, 1, pos);
 
   EscLocate(5, pos);
   PrintMenuKeyStd('A'); Serial.print(F("ReBoot"));

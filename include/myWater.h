@@ -190,21 +190,20 @@ void DefaultProbesFromRom(){
 }
 
 void SetAvgColor(long avg, long tooLow, long low, long high, long tooHigh){
+  byte color = fgGreen;
   if (avg < tooLow){
-    EscColor(fgCyan);
+    color = fgCyan;
   }
   else if (avg < low){
-    EscColor(fgBlue);
+    color = fgBlue;
   }
   else if (avg > tooHigh){
-    EscColor(fgRed);
+    color = fgRed;
   }
   else if (avg > high){
-    EscColor(fgYellow);
+    color = fgYellow;
   }
-  else{
-    EscColor(fgGreen);
-  }
+  EscColor(color);
 }
 
 // #define SetAvgColorEZO(avgVal, ezoType) SetAvgColor(avgVal, tooLow[ezoType], low[ezoType], high[ezoType], tooHigh[ezoType])

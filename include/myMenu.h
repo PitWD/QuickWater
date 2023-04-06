@@ -661,6 +661,23 @@ Start:
   
 }
 
+void PrintUnit (byte ezotype, byte faint, byte leadingSpaces, byte trailingSpaces){
+  // Prints Unit of ezoType
+  // Adds optional leading and trailing spaces
+  // Sets and resets faint
+  PrintSpaces(leadingSpaces);
+  if (faint){
+    EscFaint(1);
+  }
+  else{
+    EscColor(0);
+  }
+  
+  Serial.print(Fa(ezoStrUnit[ezotype]));
+  PrintSpaces(trailingSpaces);
+  EscFaint(0);
+}
+
 byte PrintWaterValsHlp(byte pos, byte posX, byte ezotype, byte lz, byte dp, int divisor, long *avgExt){
 
   byte posAct = 0;
@@ -674,11 +691,12 @@ byte PrintWaterValsHlp(byte pos, byte posX, byte ezotype, byte lz, byte dp, int 
       Serial.print(F(": "));
       PrintBoldFloat(ezoProbe[i].value[0] / divisor, lz, dp, ' ');
       avg += ezoProbe[i].value[0];
-      EscFaint(1);
-      Serial.print(Fa(ezoStrUnit[ezotype]));
+      PrintUnit(ezotype, 1, 0, 3);
+      //EscFaint(1);
+      //Serial.print(Fa(ezoStrUnit[ezotype]));
       //Serial.print(strUnit);
-      EscFaint(0);
-      PrintSpaces(3);
+      //EscFaint(0);
+      //PrintSpaces(3);
     }
   }
 
@@ -726,34 +744,28 @@ byte PrintAVGs(byte pos){
   SetAvgColorEZO(avg_RTD, ezoRTD);
   EscLocate(11, pos);
   PrintBoldFloat(avg_RTD,2,2,' ');
-  EscColor(0);
-  Serial.print(F("°C   "));
-  
+  PrintUnit(ezoRTD, 0, 0, 3);
 
   SetAvgColorEZO(avg_EC, ezoEC);
   EscLocate(26, pos);
   PrintBoldInt(avg_EC / 1000, 4, ' ');
-  EscColor(0);
-  Serial.print(F("µS   "));
-
+  PrintUnit(ezoEC, 0, 0, 3);
+  
   SetAvgColorEZO(avg_pH, ezoPH);
   EscLocate(40, pos);
   PrintBoldFloat(avg_pH,2,2,' ');
-  EscColor(0);
-  Serial.print(F("pH   "));
-
+  PrintUnit(ezoPH, 0, 0, 3);
+  
   SetAvgColorEZO(avg_ORP, ezoORP);
   EscLocate(52, pos);
   PrintBoldFloat(avg_ORP,4,2,' ');
-  EscColor(0);
-  Serial.print(F("mV   "));
-
+  PrintUnit(ezoORP, 0,  0 , 3);
+  
   SetAvgColorEZO(avg_O2, ezoDiO2);
   EscLocate(66, pos++);
   PrintBoldFloat(avg_O2,3,2,' ');
-  EscColor(0);
-  Serial.print(F("r%   "));
-
+  PrintUnit(ezoDiO2, 0, 0, 3);
+  
   return pos;
 
 }
@@ -767,8 +779,22 @@ void PrintLoopMenu(){
   pos++;
 
   EscLocate(5, pos++);
-  EscBold(1);
-  Serial.print(F(" | Temperature | Conductivity |     pH     |    Redox    |     O2     |"));
+
+  PrintSpacer(1);
+  PrintCentered(Fa(ezoStrLongType[ezoRTD]),11);
+  PrintSpacer(1);
+  PrintCentered(Fa(ezoStrLongType[ezoEC]),12);
+  PrintSpacer(1);
+  PrintCentered(Fa(ezoStrLongType[ezoPH]),10);
+  PrintSpacer(1);
+  PrintCentered(Fa(ezoStrLongType[ezoORP]),11);
+  PrintSpacer(1);
+  PrintCentered(Fa(ezoStrLongType[ezoDiO2]),10);
+  PrintSpacer(0);
+
+
+  //EscBold(1);
+  //Serial.print(F(" | Temperature | Conductivity |     pH     |    Redox    |     O2     |"));
   pos = PrintLine(pos, 6, 70);
   EscBold(0);
 

@@ -137,19 +137,23 @@ void PrintErrorOK(char err, char ezo, char *strIN){
   EscInverse(0);
 
 }
-byte PrintMenuTop(char *strIN){
 
-  byte spaces = 80 - strlen(strIN);
+void PrintCentered(char *strIN, byte centerLen){
+  byte spaces = centerLen - strlen(strIN);
   byte frontSpaces = spaces / 2;
   spaces -= frontSpaces;
+  PrintSpaces(frontSpaces);
+  Serial.print(strIN);
+  PrintSpaces(spaces);
+}
+
+byte PrintMenuTop(char *strIN){
 
   EscCls();
   EscInverse(1);
   EscLocate(1, 1);
   EscBold(1);
-  PrintSpaces(frontSpaces);
-  Serial.print(strIN);
-  PrintSpaces(spaces);
+  PrintCentered(strIN, 80);
   EscBold(0);
   EscInverse(0);
   return 2;

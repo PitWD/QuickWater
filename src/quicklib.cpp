@@ -595,3 +595,6 @@ char GetUserKey(byte maxChar, byte noCnt){
 
 }
 
+char *Fa(PGM_P var){
+  return FaDEF(var);
+}

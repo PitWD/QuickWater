@@ -31,12 +31,12 @@ static byte ezoCnt = 0;
 #define ezoRGB 9
 #define ezoPRES 10
 
-const char ezoStrType_0[] PROGMEM = "N/A";
+const char ezoStrType_0[] PROGMEM = "HumT";
 const char ezoStrType_1[] PROGMEM = "RTD";
 const char ezoStrType_2[] PROGMEM = "pH";
 const char ezoStrType_3[] PROGMEM = "EC";
 const char ezoStrType_4[] PROGMEM = "ORP";
-const char ezoStrType_5[] PROGMEM = "HUM";
+const char ezoStrType_5[] PROGMEM = "HUM%";
 const char ezoStrType_6[] PROGMEM = "CO2";
 const char ezoStrType_7[] PROGMEM = "D.O.";
 const char ezoStrType_8[] PROGMEM = "Flow";
@@ -56,7 +56,27 @@ PGM_P const ezoStrType[] PROGMEM = {
     ezoStrType_10
 };
 
-const char ezoStrUnit_0[] PROGMEM = "°C";
+const char ezoStrLongType_0[] PROGMEM = "Air-Temp.";
+const char ezoStrLongType_1[] PROGMEM = "H2O-Temp.";
+// pH
+// EC
+const char ezoStrLongType_4[] PROGMEM = "Redox";
+const char ezoStrLongType_5[] PROGMEM = "Humidity";
+// CO2
+const char ezoStrLongType_7[] PROGMEM = "H2O-O2";
+PGM_P const ezoStrLongType[] PROGMEM = {
+    ezoStrLongType_0,
+    ezoStrLongType_1,
+    ezoStrType_2,
+    ezoStrType_3,
+    ezoStrLongType_4,
+    ezoStrLongType_5,
+    ezoStrType_6,
+    ezoStrLongType_7,   
+};
+
+
+//const char ezoStrUnit_0[] PROGMEM = "°C";
 const char ezoStrUnit_1[] PROGMEM = "°C";
 const char ezoStrUnit_2[] PROGMEM = "pH";
 const char ezoStrUnit_3[] PROGMEM = "µS";
@@ -65,7 +85,7 @@ const char ezoStrUnit_5[] PROGMEM = "r%";
 const char ezoStrUnit_6[] PROGMEM = "ppm";
 const char ezoStrUnit_7[] PROGMEM = "%";
 PGM_P const ezoStrUnit[] PROGMEM = {
-    ezoStrUnit_0,
+    ezoStrUnit_1,
     ezoStrUnit_1,
     ezoStrUnit_2,
     ezoStrUnit_3,
@@ -256,7 +276,6 @@ void EzoSetName(char *strIN, byte ezo, byte all, byte autoName){
             if (autoName){
                 cnt[ezoProbe[i].type]++;
                 // Type
-                //strcpy_P(strHLP,(PGM_P)pgm_read_word(&(ezoStrType[ezoProbe[i].type])));
                 strcpy(&iicStr[5], Fa(ezoStrType[ezoProbe[i].type]));
             }
             

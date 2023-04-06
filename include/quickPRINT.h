@@ -27,6 +27,7 @@ byte PrintLine(byte pos, byte start, byte len);
 #endif
 
 void PrintErrorOK(char err, char ezo, char *strIN);
+void PrintCentered(char *strIN, byte centerLen);
 byte PrintMenuTop(char *strIN);
 void PrintMenuEnd(byte pos);
 

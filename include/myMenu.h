@@ -661,7 +661,7 @@ Start:
   
 }
 
-byte PrintWaterValsHlp(byte pos, byte posX, byte ezotype, byte lz, byte dp, int divisor, long *avgExt, char *strUnit){
+byte PrintWaterValsHlp(byte pos, byte posX, byte ezotype, byte lz, byte dp, int divisor, long *avgExt){
 
   byte posAct = 0;
   long avg = 0;
@@ -675,7 +675,8 @@ byte PrintWaterValsHlp(byte pos, byte posX, byte ezotype, byte lz, byte dp, int 
       PrintBoldFloat(ezoProbe[i].value[0] / divisor, lz, dp, ' ');
       avg += ezoProbe[i].value[0];
       EscFaint(1);
-      Serial.print(strUnit);
+      Serial.print(Fa(ezoStrUnit[ezotype]));
+      //Serial.print(strUnit);
       EscFaint(0);
       PrintSpaces(3);
     }
@@ -694,24 +695,24 @@ byte PrintWaterVals(byte pos){
   byte posMax = 0;
   byte posAct = 0;
 
-  posMax = PrintWaterValsHlp(pos, 8, ezoRTD, 2, 2, 1, &avg_RTD, (char*)"°C");
+  posMax = PrintWaterValsHlp(pos, 8, ezoRTD, 2, 2, 1, &avg_RTD);
 
-  posAct = PrintWaterValsHlp(pos, 23, ezoEC, 4, 0, 1000, &avg_EC, (char*)"µS");
+  posAct = PrintWaterValsHlp(pos, 23, ezoEC, 4, 0, 1000, &avg_EC);
   if (posAct > posMax){
     posMax = posAct;
   }
 
-  posAct = PrintWaterValsHlp(pos, 37, ezoPH, 2, 2, 1, &avg_pH, (char*)"pH");
+  posAct = PrintWaterValsHlp(pos, 37, ezoPH, 2, 2, 1, &avg_pH);
   if (posAct > posMax){
     posMax = posAct;
   }
 
-  posAct = PrintWaterValsHlp(pos, 49, ezoORP, 4, 2, 1, &avg_ORP, (char*)"mV");
+  posAct = PrintWaterValsHlp(pos, 49, ezoORP, 4, 2, 1, &avg_ORP);
   if (posAct > posMax){
     posMax = posAct;
   }
 
-  posAct = PrintWaterValsHlp(pos, 63, ezoDiO2, 3, 2, 1000, &avg_O2, (char*)"r%");
+  posAct = PrintWaterValsHlp(pos, 63, ezoDiO2, 3, 2, 1000, &avg_O2);
   if (posAct > posMax){
     posMax = posAct;
   }

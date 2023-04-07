@@ -73,11 +73,12 @@ byte PrintLine(byte posY, byte posX, byte len){
     return r;
   }
 #else
-  byte PrintBoldValue(long val, byte cntLeadingZeros, byte cntDecimalPlaces, char leadingChar){
+
+  byte PrintValue(long val, byte cntLeadingZeros, byte cntDecimalPlaces, char leadingChar, byte bold){
     
     byte r = 0;
     
-    EscBold(1);
+    EscBold(bold);
     
     if (cntDecimalPlaces){
       r = IntToFloatStr(val, cntLeadingZeros, cntDecimalPlaces, leadingChar);
@@ -91,6 +92,7 @@ byte PrintLine(byte posY, byte posX, byte len){
 
     return r;
   }
+
 #endif
 
 

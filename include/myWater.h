@@ -19,7 +19,7 @@ static byte ezoAct = 0;
 // How many ezo's we have
 static byte ezoCnt = 0;
 
-
+#define ezoHumT 0
 #define ezoRTD 1
 #define ezoPH 2
 #define ezoEC 3
@@ -115,8 +115,6 @@ typedef struct ezoProbeSTRUCT{
 }ezoProbeSTRUCT;
 ezoProbeSTRUCT ezoProbe[EZO_MAX_PROBES];
 
-
-
 long failSave[] = {25000L, 21000L, 6000L, 1250000L, 225000L, 50000L, 400000L, 99999};
 #define failSave_TMP failSave[0]
 #define failSave_RTD failSave[1]
@@ -136,8 +134,6 @@ long avgVal[] = {25000L, 21000L, 6000L, 1250000L, 225000L, 50000L, 400000L, 9999
 #define avg_HUM avgVal[5]
 #define avg_CO2 avgVal[6]
 #define avg_O2 avgVal[7]
-
-
 
 long tooLow[] = {16000L, 15000L, 5500L, 1000000L, -750000L, 40000L, 350000L, 50000L};
 #define tooLow_TMP tooLow[0]    // 2nd Val ezoHUM

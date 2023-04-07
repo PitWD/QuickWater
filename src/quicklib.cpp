@@ -575,7 +575,10 @@ char GetUserKey(byte maxChar, byte noCnt){
         // Valid Number selected
       }
       else if (charIN > 96 && charIN < maxChar + 1){
-        // Valid Letter selected
+        // Valid small Letter selected
+      }
+      else if (charIN > 64 && charIN < maxChar - 31){
+        // Valid BIG Letter selected
       }
       else if (charIN == 13){
         // Enter - Exit - Back

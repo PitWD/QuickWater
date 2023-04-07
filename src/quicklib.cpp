@@ -595,6 +595,10 @@ char GetUserKey(byte maxChar, byte noCnt){
 
 }
 
-char *Fa(PGM_P var){
-  return FaDEF(var);
+/*
+char *Fa(PGM_P strIN){
+  //return strcpy_P(buf, (PGM_P)pgm_read_word(&(strIN)));
+  static char buf[STR_HLP_LEN];
+  return strcpy_P(buf, (PGM_P)strIN);
 }
+*/

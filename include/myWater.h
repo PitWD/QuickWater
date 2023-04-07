@@ -75,10 +75,9 @@ PGM_P const ezoStrLongType[] PROGMEM = {
     ezoStrLongType_7,   
 };
 
-
 //const char ezoStrUnit_0[] PROGMEM = "°C";
 const char ezoStrUnit_1[] PROGMEM = "°C";
-const char ezoStrUnit_2[] PROGMEM = "pH";
+//const char ezoStrUnit_2[] PROGMEM = "pH";
 const char ezoStrUnit_3[] PROGMEM = "µS";
 const char ezoStrUnit_4[] PROGMEM = "mV";
 const char ezoStrUnit_5[] PROGMEM = "r%";
@@ -87,7 +86,7 @@ const char ezoStrUnit_7[] PROGMEM = "%";
 PGM_P const ezoStrUnit[] PROGMEM = {
     ezoStrUnit_1,
     ezoStrUnit_1,
-    ezoStrUnit_2,
+    ezoStrType_2,
     ezoStrUnit_3,
     ezoStrUnit_4,
     ezoStrUnit_5,
@@ -266,6 +265,7 @@ void EzoSetName(char *strIN, byte ezo, byte all, byte autoName){
     byte cnt[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
     byte len = 0;
+
 
     for (int i = 0; i < ezoCnt; i++){
 

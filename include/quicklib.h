@@ -26,8 +26,10 @@
 
 // Access PROGMEM variables like F() for Serial.print
 // array of strings (char[][])
-#define FaDEF(var) strcpy_P(strHLP, (PGM_P)pgm_read_word(&(var)))
-char *Fa(PGM_P var);
+#define Fa(var) strcpy_P(strHLP, (PGM_P)pgm_read_word(&(var)))
+#define FaStrange(var) strcpy_P(strHLP, (PGM_P)var)
+//char *Fa(PGM_P strIN);
+
 // single string (char[])
 #define Fc(var) (__FlashStringHelper*)(var)
 // byte[]

@@ -148,6 +148,7 @@ Start:
 }
 
 void PrintProbeLine(byte ezo, byte pos, byte bold){
+
     EscLocate(5, pos);
     PrintMenuKey((char)(ezo + 49), 0, '(', 0, 0, bold, !bold);
     // Name
@@ -166,11 +167,13 @@ void PrintProbeLine(byte ezo, byte pos, byte bold){
     EscColor(0);
     EscFaint(1);
     Print1Space();
-    Serial.print(Fa(ezoStrUnit[ezoProbe[ezo].type]));
+    Serial.print((char*)Fa(ezoStrUnit[ezoProbe[ezo].type]));
+    //PrintFa(Fa(ezoStrUnit[ezoProbe[ezo].type]));
     EscLocate(41, pos);
     PrintSpacer(0);
     // Type
-    Serial.print(Fa(ezoStrType[ezoProbe[ezo].type]));
+    Serial.print((char*)Fa(ezoStrType[ezoProbe[ezo].type]));
+    //PrintFa(Fa(ezoStrType[ezoProbe[ezo].type]));
     EscLocate(48, pos);
     PrintSpacer(0);
     // Version
@@ -673,7 +676,8 @@ void PrintUnit (byte ezotype, byte faint, byte leadingSpaces, byte trailingSpace
     EscColor(0);
   }
   
-  Serial.print(Fa(ezoStrUnit[ezotype]));
+  Serial.print((char*)Fa(ezoStrUnit[ezotype]));
+  //PrintFa(Fa(ezoStrUnit[ezotype]));
   PrintSpaces(trailingSpaces);
   EscFaint(0);
 }
@@ -770,7 +774,18 @@ byte PrintAVGs(byte pos){
 
 }
 
+void PrintCenteredWithSpacer(char *strIN, byte centerLen){
+  PrintSpacer(1);
+  PrintCentered(strIN, centerLen);
+}
+
+
 void PrintLoopMenu(){
+
+  /*
+  byte type[] = {1, 3, 2, 4, 7};
+  byte cnt[] = {11, 12, 10, 11, 10};
+  */
 
   EscCls();
   EscInverse(1);
@@ -780,18 +795,12 @@ void PrintLoopMenu(){
 
   EscLocate(5, pos++);
 
-  PrintSpacer(1);
-  PrintCentered(Fa(ezoStrLongType[ezoRTD]),11);
-  PrintSpacer(1);
-  PrintCentered(Fa(ezoStrLongType[ezoEC]),12);
-  PrintSpacer(1);
-  PrintCentered(Fa(ezoStrLongType[ezoPH]),10);
-  PrintSpacer(1);
-  PrintCentered(Fa(ezoStrLongType[ezoORP]),11);
-  PrintSpacer(1);
-  PrintCentered(Fa(ezoStrLongType[ezoDiO2]),10);
+  PrintCenteredWithSpacer(FaStrange(ezoStrLongType[ezoRTD]),11);
+  PrintCenteredWithSpacer(FaStrange(ezoStrLongType[ezoEC]),12);
+  PrintCenteredWithSpacer(FaStrange(ezoStrLongType[ezoPH]),10);
+  PrintCenteredWithSpacer(FaStrange(ezoStrLongType[ezoORP]),11);
+  PrintCenteredWithSpacer(FaStrange(ezoStrLongType[ezoDiO2]),10);
   PrintSpacer(0);
-
 
   //EscBold(1);
   //Serial.print(F(" | Temperature | Conductivity |     pH     |    Redox    |     O2     |"));

@@ -696,11 +696,6 @@ byte PrintWaterValsHlp(byte pos, byte posX, byte ezotype, byte lz, byte dp, int 
       PrintBoldFloat(ezoProbe[i].value[0] / divisor, lz, dp, ' ');
       avg += ezoProbe[i].value[0];
       PrintUnit(ezotype, 1, 0, 3);
-      //EscFaint(1);
-      //Serial.print(Fa(ezoStrUnit[ezotype]));
-      //Serial.print(strUnit);
-      //EscFaint(0);
-      //PrintSpaces(3);
     }
   }
 
@@ -778,8 +773,6 @@ void PrintCenteredWithSpacer(char *strIN, byte centerLen){
   PrintSpacer(1);
   PrintCentered(strIN, centerLen);
 }
-
-
 void PrintLoopMenu(){
 
   /*

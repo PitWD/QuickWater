@@ -115,23 +115,29 @@ typedef struct ezoProbeSTRUCT{
 }ezoProbeSTRUCT;
 ezoProbeSTRUCT ezoProbe[EZO_MAX_PROBES];
 
-long failSave_HUM = 50000L;
-long failSave_TMP = 25000L;
-long failSave_CO2 = 400000L;
-long failSave_RTD = 21000L;
-long failSave_EC = 1250000L;
-long failSave_pH = 6000L;
-long failSave_ORP = 225000L;
-long failSave_O2 = 99000L;
 
-long avg_HUM = 50000L;
-long avg_TMP = 25000L;
-long avg_CO2 = 400000L;
-long avg_RTD = 21000L;
-long avg_EC = 1250000L;
-long avg_pH = 6000L;
-long avg_ORP = 225000L;
-long avg_O2 = 99000L;
+
+long failSave[] = {25000L, 21000L, 6000L, 1250000L, 225000L, 50000L, 400000L, 99999};
+#define failSave_TMP failSave[0]
+#define failSave_RTD failSave[1]
+#define failSave_pH failSave[2]
+#define failSave_EC failSave[3]
+#define failSave_ORP failSave[4]
+#define failSave_HUM failSave[5]
+#define failSave_CO2 failSave[6]
+#define failSave_O2 failSave[7]
+
+long avgVal[] = {25000L, 21000L, 6000L, 1250000L, 225000L, 50000L, 400000L, 99999};
+#define avg_TMP avgVal[0]
+#define avg_RTD avgVal[1]
+#define avg_pH avgVal[2]
+#define avg_EC avgVal[3]
+#define avg_ORP avgVal[4]
+#define avg_HUM avgVal[5]
+#define avg_CO2 avgVal[6]
+#define avg_O2 avgVal[7]
+
+
 
 long tooLow[] = {16000L, 15000L, 5500L, 1000000L, -750000L, 40000L, 350000L, 50000L};
 #define tooLow_TMP tooLow[0]    // 2nd Val ezoHUM

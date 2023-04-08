@@ -115,6 +115,20 @@ typedef struct ezoProbeSTRUCT{
 }ezoProbeSTRUCT;
 ezoProbeSTRUCT ezoProbe[EZO_MAX_PROBES];
 
+// Delay & ActionTimes
+uint16_t delayTimes[] = {1800, 2700, 2400, 2400, 0, 1800, 3600, 0};
+uint16_t actionTooLow[] = {3600, 900, 6, 10, 0, 900, 450, 0};
+uint16_t actionLow[] = {1800, 450, 3, 5, 0, 450, 225, 0};
+uint16_t actionHigh[] = {1800, 900, 3, 30, 0, 900, 0, 0};
+uint16_t actionTooHigh[] = {3600, 1800, 6, 60, 0, 2700, 0, 0};
+
+// Counter for Low/High
+uint16_t tooLowSince[8];
+uint16_t lowSince[8];
+uint16_t highSince[8];
+uint16_t tooHighSince[8];
+
+
 long failSave[] = {25000L, 21000L, 6000L, 1250000L, 225000L, 50000L, 400000L, 99999};
 #define failSave_TMP failSave[0]
 #define failSave_RTD failSave[1]
@@ -145,7 +159,7 @@ long tooLow[] = {16000L, 15000L, 5500L, 1000000L, -750000L, 40000L, 350000L, 500
 #define tooLow_CO2 tooLow[6]
 #define tooLow_O2 tooLow[7]
 
-long low[] = {19000L, 17000L, 6000L, 1250000L, -500000L, 50000L, 400000L, 66666L};
+long low[] = {19000L, 17000L, 5800L, 1250000L, -500000L, 50000L, 400000L, 66666L};
 #define low_TMP low[0]      // 2nd Val ezoHUM
 #define low_RTD low[1]
 #define low_pH low[2]

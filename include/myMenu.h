@@ -593,6 +593,24 @@ void PrintFlexSpacer(byte leading, byte trailing){
   PrintSpacer(1);
   PrintSpaces(trailing);
 }
+void PrintSmallSpacer(){
+  PrintSpacer(0);
+  EscCursorLeft(1);
+}
+void PrintSmallMenuKey(char key){
+  PrintMenuKey(key, 0, 0, ' ', 0, 0, 0);
+}
+
+void PrintLowToHigh(){
+  Serial.print(F("tooLow"));
+  PrintFlexSpacer(2, 3);
+  Serial.print(F("Low"));
+  PrintFlexSpacer(4,3);
+  Serial.print(F("High"));
+  PrintFlexSpacer(3, 1);
+  Serial.print(F("tooHigh"));
+  PrintFlexSpacer(2,0);
+}
 
 void PrintValuesMenu(){
 
@@ -608,14 +626,7 @@ Start:
   PrintFlexSpacer(0, 1);
   Serial.print(F("FailSafe"));
   PrintFlexSpacer(1, 2);
-  Serial.print(F("tooLow"));
-  PrintFlexSpacer(2, 3);
-  Serial.print(F("Low"));
-  PrintFlexSpacer(4,3);
-  Serial.print(F("High"));
-  PrintFlexSpacer(3, 1);
-  Serial.print(F("tooHigh"));
-  PrintFlexSpacer(2,0);
+  PrintLowToHigh();
 
   PrintLine(pos++, 3, 76);
   EscLocate(3, pos++);
@@ -623,38 +634,26 @@ Start:
     EscBold(1);
     PrintCentered(Fa(ezoStrLongType[offset[i]]), 9);
     PrintSpacer(0);
-    PrintMenuKeyStd('a' + i);
-    PrintFloat(failSave[offset[i]], 4, 1, ' ');
+    PrintSmallMenuKey('a' + i);
+    PrintFloat(failSave[offset[i]], 4, 2, ' ');
     PrintSpacer(0);
-    PrintMenuKeyStd('i' + i);
-    PrintFloat(tooLow[offset[i]], 4, 1, ' ');
+    PrintSmallMenuKey('i' + i);
+    PrintFloat(tooLow[offset[i]], 4, 2, ' ');
     PrintSpacer(0);
-    PrintMenuKeyStd('q' + i);
-    PrintFloat(low[offset[i]], 4, 1, ' ');
+    PrintSmallMenuKey('q' + i);
+    PrintFloat(low[offset[i]], 4, 2, ' ');
     PrintSpacer(0);
-    PrintMenuKeyStd('I' + i);
-    PrintFloat(high[offset[i]], 4, 1, ' ');
+    PrintSmallMenuKey('I' + i);
+    PrintFloat(high[offset[i]], 4, 2, ' ');
     PrintSpacer(0);
-    PrintMenuKeyStd('Q' + i);
-    PrintFloat(tooHigh[offset[i]], 4, 1, ' ');
+    PrintSmallMenuKey('Q' + i);
+    PrintFloat(tooHigh[offset[i]], 4, 2, ' ');
     PrintSpacer(0);
     if (i == 2){
       pos = PrintShortLine(pos, 6);
     }   
     EscLocate(3, pos++);
   }
-
-  /*
-  for (i = 0; i < 8; i++){
-    PrintMenuKeyStd('A' + i);
-    PrintCentered(Fa(ezoStrLongType[offset[i]]), 9);
-    Serial.print(F(" = ")); PrintBoldFloat(failSave[offset[i]], 4, 2, ' ');
-    if (i == 2){
-      pos = PrintShortLine(pos, 8);
-    }   
-    EscLocate(5, pos++);
-  }
-  */
 
   PrintMenuEnd(pos + 1);
 
@@ -691,6 +690,93 @@ Start:
     // tooHigh
     pos = offset[pos - 'Q'];
     tooHigh[pos] = GetUserFloat(tooHigh[pos]);
+    pos = 1;
+  }
+
+  if (pos > 0){
+    goto Start;
+  }
+  
+}
+
+void PrintTimingsMenu(){
+
+Start:
+
+  int8_t pos = PrintMenuTop((char*)"- Set Timings -") + 1;
+  byte i = 0;
+  // Order to EzoType
+                // 0  1  2  3  4  5  6  7
+  byte offset[] = {0, 5, 6, 1, 2, 3, 4, 7};
+  
+  EscLocate(12, pos++);
+  PrintSpacer(1);
+  Serial.print(F("DelayTimes"));
+  PrintFlexSpacer(0, 2);
+  PrintLowToHigh();
+
+  PrintLine(pos++, 3, 76);
+  EscLocate(3, pos++);
+  for (i = 0; i < 8; i++){
+    EscBold(1);
+    PrintCentered(Fa(ezoStrLongType[offset[i]]), 9);
+    PrintSmallSpacer();
+    PrintSmallMenuKey('a' + i);
+    PrintSerTime(delayTimes[offset[i]], 0);
+    PrintSmallSpacer();
+    PrintSmallMenuKey('i' + i);
+    PrintSerTime(actionTooLow[offset[i]], 0);
+    PrintSmallSpacer();
+    PrintSmallMenuKey('q' + i);
+    PrintSerTime(actionLow[offset[i]], 0);
+    PrintSmallSpacer();
+    PrintSmallMenuKey('I' + i);
+    PrintSerTime(actionHigh[offset[i]], 0);
+    PrintSmallSpacer();
+    PrintSmallMenuKey('Q' + i);
+    PrintSerTime(actionTooHigh[offset[i]], 0);
+    PrintSmallSpacer();
+    if (i == 2){
+      pos = PrintShortLine(pos, 6);
+    }   
+    EscLocate(3, pos++);
+  }
+
+  PrintMenuEnd(pos + 1);
+
+  pos = GetUserKey('x', -1);
+
+  if (pos < 1){
+    // Exit & TimeOut
+  }
+  else if (pos >= 'a' && pos <= 'h'){
+    // FailSave
+    pos = offset[pos - 'a'];
+    delayTimes[pos] = GetUserTime(delayTimes[pos]);
+    pos = 1;
+  }
+  else if (pos >= 'i' && pos <= 'p'){
+    // tooLow
+    pos = offset[pos - 'i'];
+    actionTooLow[pos] = GetUserTime(actionTooLow[pos]);
+    pos = 1;
+  }
+  else if (pos >= 'q' && pos <= 'x'){
+    // Low
+    pos = offset[pos - 'q'];
+    actionLow[pos] = GetUserTime(actionLow[pos]);
+    pos = 1;
+  }
+  else if (pos >= 'I' && pos <= 'P'){
+    // High
+    pos = offset[pos - 'I'];
+    actionHigh[pos] = GetUserTime(actionHigh[pos]);
+    pos = 1;
+  }
+  else if (pos >= 'Q' && pos <= 'X'){
+    // tooHigh
+    pos = offset[pos - 'Q'];
+    actionTooHigh[pos] = GetUserTime(actionTooHigh[pos]);
     pos = 1;
   }
 
@@ -915,17 +1001,19 @@ Start:
   pos = PrintShortLine(pos++, 8);
 //****************************************************
   EscLocate(5, pos);
-  PrintMenuKeyStd('I'); Serial.print(F("SelectAll..."));
-  EscLocate(25, pos);
+  PrintMenuKeyStd('I'); Serial.print(F("All..."));
+  EscLocate(17, pos);
   PrintMenuKey('J', 0, 0, 0, 1, (myDefault), (!myDefault)); Serial.print(F("SetDefault"));
-  EscLocate(43, pos);
-  PrintMenuKeyStd('K'); Serial.print(F("DelDefault"));
-  EscLocate(60, pos);
+  EscLocate(34, pos);
+  PrintMenuKeyStd('K'); Serial.print(F("DelDef."));
+  EscLocate(47, pos);
   PrintMenuKeyStd('L'); Serial.print(F("Values..."));
+  EscLocate(62, pos);
+  PrintMenuKeyStd('M'); Serial.print(F("Times..."));
   
   PrintMenuEnd(pos + 1);
 
-  pos = GetUserKey('l', ezoCnt);
+  pos = GetUserKey('m', ezoCnt);
   switch (pos){
   case -1:
     // TimeOut
@@ -993,8 +1081,12 @@ Start:
     myToRom();
     break;
   case 'l':
-    // FailSafe Values
+    // Values
     PrintValuesMenu();
+    break;
+  case 'm':
+    // Values
+    PrintTimingsMenu();
     break;
   case 'f':
     // Boot for Terminal

@@ -39,9 +39,9 @@ const char ezoStrType_4[] PROGMEM = "ORP";
 const char ezoStrType_5[] PROGMEM = "HUM%";
 const char ezoStrType_6[] PROGMEM = "CO2";
 const char ezoStrType_7[] PROGMEM = "D.O.";
-const char ezoStrType_8[] PROGMEM = "Flow";
-const char ezoStrType_9[] PROGMEM = "RGB";
-const char ezoStrType_10[] PROGMEM = "Pres";
+// Remove-III const char ezoStrType_8[] PROGMEM = "Flow";
+// Remove-III const char ezoStrType_9[] PROGMEM = "RGB";
+// Remove-III const char ezoStrType_10[] PROGMEM = "Pres";
 PGM_P const ezoStrType[] PROGMEM = {
     ezoStrType_0,
     ezoStrType_1,
@@ -51,9 +51,9 @@ PGM_P const ezoStrType[] PROGMEM = {
     ezoStrType_5,
     ezoStrType_6,
     ezoStrType_7,
-    ezoStrType_8,
-    ezoStrType_9,
-    ezoStrType_10
+    // Remove-III ezoStrType_8,
+    // Remove-III ezoStrType_9,
+    // Remove-III ezoStrType_10
 };
 
 const char ezoStrLongType_0[] PROGMEM = "Air-Temp.";
@@ -95,13 +95,13 @@ PGM_P const ezoStrUnit[] PROGMEM = {
 };
 
 // Waittime for readings...
-const int ezoWait[11] PROGMEM = {0, 600, 900, 600, 900, 300, 900, 600, 300, 300, 900};
+const int ezoWait[] PROGMEM = {0, 600, 900, 600, 900, 300, 900, 600}; // Remove-III , 300, 300, 900};
 
 // Count of vals of probe
-const byte ezoValCnt[11] PROGMEM = {0, 1, 1, 1, 1, 3, 2, 2, 2, 5, 1};
+const byte ezoValCnt[] PROGMEM = {0, 1, 1, 1, 1, 3, 2, 2}; // Remove-III  2, 5, 1};
 
 // if type has a calibration
-const byte ezoHasCal[11] PROGMEM = {0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0};
+const byte ezoHasCal[] PROGMEM = {0, 1, 1, 1, 1, 0, 0, 0}; // Remove-III  0, 0, 0};
 
 typedef struct ezoProbeSTRUCT{
     byte type;
@@ -359,6 +359,7 @@ void EzoReset(byte ezo, byte all){
                 strcpy_P(strSetup[4],(PGM_P)F("Alarm,en,0"));
                 cntSetup = 5;
                 break;
+            /* // Remove-III 
             case ezoFLOW:
                 strcpy_P(strSetup[1],(PGM_P)F("Frp,m"));    // FlowRate/minute (s = second / h = hour)
                 strcpy_P(strSetup[2],(PGM_P)F("CF,0.001")); // Liter (1 would be ml)
@@ -380,6 +381,7 @@ void EzoReset(byte ezo, byte all){
                 strcpy_P(strSetup[4],(PGM_P)F("L,33,T"));
                 cntSetup = 5;
                 break;
+            */ // Remove-III 
             case ezoCO2:
                 strcpy_P(strSetup[1],(PGM_P)F("O,t,1"));   // Output Internal Temp
                 cntSetup = 2;
@@ -423,9 +425,9 @@ void EzoSetAddress(byte ezo, byte addrNew, byte all){
     }
 }
 
-char EzoDoNext(){
+uint8_t EzoDoNext(){
 
-    char err = 1;
+    uint8_t err = 1;
     char errInfo[] = "'?'";
     byte errCnt = 0;
 
@@ -589,11 +591,13 @@ void EzoScan(){
                         case 'R':
                             // RGB or RTD
                             switch (iicStr[4]){
+                            /* // Remove-III 
                             case 'G':
                                 // RGB
                                 recEzo = ezoRGB;
                                 hasCal = 0;
                                 break;
+                            */ // Remove-III 
                             case 'T':
                                 // RTD
                                 recEzo = ezoRTD;
@@ -603,11 +607,13 @@ void EzoScan(){
                                 break;
                             }
                             break;
+                        /* // Remove-III 
                         case 'F':
                             // FLO(W)
                             recEzo = ezoFLOW;
                             hasCal = 0;
                             break;
+                        */ // Remove-III 
                         case 'O':
                             // ORP
                             recEzo = ezoORP;
@@ -637,10 +643,12 @@ void EzoScan(){
                             recEzo = ezoDiO2;
                             verPos = 8;
                             break;
+                        /* // Remove-III 
                         case 'P':
                             // Embedded Pressure
                             recEzo = ezoPRES;
                             break;
+                        */ // Remove-III 
                         default:
                             // LATE ERROR
                             break;

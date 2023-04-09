@@ -46,6 +46,31 @@ void myFromRom(){
 
 }
 
+void DummyNameToStrDefault(void){
+  strcpy(strDefault, "-DummyName-");
+}
+void EditAutoName(){
+  if (GetUserString(strDefault)){
+    strcpy(strDefault, strHLP);
+  }
+}
+void EditAutoAddress(){
+  adrDefault = GetUserInt(adrDefault);
+  if (adrDefault > 127 - ezoCnt){
+    adrDefault = 127 - ezoCnt;
+  }
+  else if (adrDefault < 32){
+    adrDefault = 32;
+  }
+}
+void SetAutoAddress(){
+  EzoSetAddress(0, adrDefault, 2);
+  // wait 4 reboots done
+  delay(1000);
+  // Scan new
+  EzoScan();
+}
+
 byte PrintAllMenuOpt1(byte pos){
 
   EscLocate(5, pos);
@@ -77,7 +102,7 @@ byte PrintAllMenuOpt1(byte pos){
 void PrintAllMenu(){
 
   adrDefault = 33;
-  strcpy(strDefault, "-DummyName-");
+  DummyNameToStrDefault();
 
 Start:
 
@@ -104,9 +129,7 @@ Start:
     break;
   case 'd':
     // Edit Auto Name
-    if (GetUserString(strDefault)){
-      strcpy(strDefault, strHLP);
-    }
+    EditAutoName();
     break;
   case 'e':
     // Set AutoNames
@@ -114,21 +137,11 @@ Start:
     break;
   case 'f':
     // Edit 1st Address
-    adrDefault = GetUserInt(adrDefault);
-    if (adrDefault > 127 - ezoCnt){
-      adrDefault = 127 - ezoCnt;
-    }
-    else if (adrDefault < 32){
-      adrDefault = 32;
-    }
+    EditAutoAddress();
     break;
   case 'g':
     // Set Addresses
-    EzoSetAddress(0, adrDefault, 2);
-    // wait 4 reboots done
-    delay(1000);
-    // Scan new
-    EzoScan();
+    SetAutoAddress();
     // direct back to main
     pos = 0;
     break;
@@ -144,7 +157,6 @@ Start:
     goto Start;
   }
   
-
 }
 
 void PrintProbeLine(byte ezo, byte pos, byte bold){
@@ -490,11 +502,10 @@ void PrintCalMenu(byte ezo, byte all){
 }
 
 void PrintProbeMenu(byte ezo){
-
-
+  
   byte all = 0;
 
-    strcpy(strDefault, "-DummyName-");
+    DummyNameToStrDefault();
     adrDefault = 33;
     all = 0;
 
@@ -503,21 +514,6 @@ Start:
   int8_t pos = PrintMenuTop((char*)"- Probe(Type) Menu -");
   
   pos = PrintProbesOfType(ezo, all, pos);
-
-  /*
-  PrintLine(pos, 5, 63);
-
-  for (int i = 0; i < ezoCnt; i++){  
-    if (ezoProbe[i].type == ezoProbe[ezo].type) {
-      // Right Probe Type
-      pos++;
-      PrintProbeLine(i, pos, (i == ezo) || all);
-    }    
-  }
-  EscFaint(0);
-  pos++;
-  PrintLine(pos++, 5, 63);
-  */
 
   pos = PrintAllMenuOpt1(pos + 1);
   PrintShortLine(pos++, 8);
@@ -553,18 +549,25 @@ Start:
     // Return
     break;
   case 'a':
+    EzoReset(ezo, all);
     break;
   case 'b':
+    EzoSetCal((char*)"Cal,clear", ezo, all);
     break;
   case 'c':
+    EzoSetName((char*)"", ezo, all, 0);
     break;
   case 'd':
+    EditAutoName();
     break;
   case 'e':
+    EzoSetName(strDefault, ezo, all, 1);
     break;
   case 'f':
+    EditAutoAddress();
     break;
   case 'g':
+    SetAutoAddress();
     break;
   case 'h':
     PrintCalMenu(ezo, all);

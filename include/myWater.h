@@ -123,11 +123,12 @@ uint16_t actionHigh[] = {1800, 900, 3, 30, 0, 900, 0, 0};
 uint16_t actionTooHigh[] = {3600, 1800, 6, 60, 0, 2700, 0, 0};
 
 // Counter for Low/High
-uint16_t tooLowSince[8];
-uint16_t lowSince[8];
-uint16_t highSince[8];
-uint16_t tooHighSince[8];
-
+uint32_t tooLowSince[8];
+uint32_t lowSince[8];
+uint32_t highSince[8];
+uint32_t tooHighSince[8];
+// Time of last action 
+uint32_t lastAction[8];
 
 long failSave[] = {25000L, 21000L, 6000L, 1250000L, 225000L, 50000L, 400000L, 99999};
 #define failSave_TMP failSave[0]
@@ -223,28 +224,30 @@ void DefaultProbesFromRom(){
     EEPROM.get(0, ezoProbe);
 }
 
-void SetAvgColor(long avg, long tooLow, long low, long high, long tooHigh){
-  byte color = fgGreen;
+byte GetAvgState(long avg, long tooLow, long low, long high, long tooHigh){
   if (avg < tooLow){
-    color = fgCyan;
+    return fgCyan;
   }
   else if (avg < low){
-    color = fgBlue;
+    return fgBlue;
   }
   else if (avg > tooHigh){
-    color = fgRed;
+    return fgRed;
   }
   else if (avg > high){
-    color = fgYellow;
+    return fgYellow;
   }
-  EscColor(color);
+  return fgGreen;
+}
+void SetAvgColor(long avg, long tooLow, long low, long high, long tooHigh){
+  EscColor(GetAvgState(avg, tooLow, low, high, tooHigh));
 }
 
 // #define SetAvgColorEZO(avgVal, ezoType) SetAvgColor(avgVal, tooLow[ezoType], low[ezoType], high[ezoType], tooHigh[ezoType])
-void SetAvgColorEZO(long avgVal, byte ezoType){
+void SetAvgColorEZO(byte ezoType){
     // - 46 Flash (5x used)
     // +128 Ram
-    SetAvgColor(avgVal, tooLow[ezoType], low[ezoType], high[ezoType], tooHigh[ezoType]);
+    SetAvgColor(avgVal[ezoType], tooLow[ezoType], low[ezoType], high[ezoType], tooHigh[ezoType]);
 }
 
 char EzoStartValues(byte ezo){
@@ -425,9 +428,9 @@ void EzoSetAddress(byte ezo, byte addrNew, byte all){
     }
 }
 
-uint8_t EzoDoNext(){
+int8_t EzoDoNext(){
 
-    uint8_t err = 1;
+    int8_t err = 1;
     char errInfo[] = "'?'";
     byte errCnt = 0;
 

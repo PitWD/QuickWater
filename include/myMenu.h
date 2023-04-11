@@ -170,7 +170,7 @@ void PrintProbeLine(byte ezo, byte pos, byte bold){
     PrintSpacer(bold);
     // Value
     IntToFloatStr(ezoProbe[ezo].value[0], 5, 2, ' ');
-    SetAvgColorEZO(ezoProbe[ezo].value[0], ezoProbe[ezo].type);
+    SetAvgColorEZO(ezoProbe[ezo].type);
     if (!bold){
       EscFaint(1);
     }
@@ -454,41 +454,34 @@ void PrintCalMenu(byte ezo, byte all){
   pos = GetUserKey('h', 0);
   switch (pos){
   case 'a':
+    // Clear Cal
     break;
   case 'b':
     if (myMenu.b){
-      /* code */
+      // 1-Pt. Cal
     }  
     break;
   case 'c':
     if (myMenu.c){
-      /* code */
+      // 2-Pt. Cal
     }  
     break;
   case 'd':
     if (myMenu.d){
-      /* code */
+      // 3-Pt. Cal
     }  
     break;
   case 'e':
-    if (myMenu.e){
-      /* code */
-    }  
+    calMid = GetUserFloat(calMid);
     break;
   case 'f':
-    if (myMenu.f){
-      /* code */
-    }  
+    calMid = calAvg;
     break;
   case 'g':
-    if (myMenu.g){
-      /* code */
-    }  
+    calLow = GetUserFloat(calLow);
     break;
   case 'h':
-    if (myMenu.h){
-      /* code */
-    }  
+    calHigh = GetUserFloat(calHigh);
     break;
   default:
     break;
@@ -502,7 +495,7 @@ void PrintCalMenu(byte ezo, byte all){
 }
 
 void PrintProbeMenu(byte ezo){
-  
+
   byte all = 0;
 
     DummyNameToStrDefault();
@@ -807,7 +800,7 @@ void PrintUnit (byte ezotype, byte faint, byte leadingSpaces, byte trailingSpace
   EscFaint(0);
 }
 
-byte PrintWaterValsHlp(byte pos, byte posX, byte ezotype, byte lz, byte dp, int divisor, long *avgExt){
+byte PrintWaterValsHlp(byte pos, byte posX, byte ezotype, byte lz, byte dp, int divisor){ //, long *avgExt){
 
   byte posAct = 0;
   long avg = 0;
@@ -825,7 +818,7 @@ byte PrintWaterValsHlp(byte pos, byte posX, byte ezotype, byte lz, byte dp, int 
   }
 
   if (posAct){
-    *avgExt = avg / (long)posAct;
+    avgVal[ezotype] = avg / (long)posAct;
   }
 
   return posAct;
@@ -837,24 +830,24 @@ byte PrintWaterVals(byte pos){
   byte posMax = 0;
   byte posAct = 0;
 
-  posMax = PrintWaterValsHlp(pos, 8, ezoRTD, 2, 2, 1, &avg_RTD);
+  posMax = PrintWaterValsHlp(pos, 8, ezoRTD, 2, 2, 1); //, &avg_RTD);
 
-  posAct = PrintWaterValsHlp(pos, 23, ezoEC, 4, 0, 1000, &avg_EC);
+  posAct = PrintWaterValsHlp(pos, 23, ezoEC, 4, 0, 1000); //, &avg_EC);
   if (posAct > posMax){
     posMax = posAct;
   }
 
-  posAct = PrintWaterValsHlp(pos, 37, ezoPH, 2, 2, 1, &avg_pH);
+  posAct = PrintWaterValsHlp(pos, 37, ezoPH, 2, 2, 1); //, &avg_pH);
   if (posAct > posMax){
     posMax = posAct;
   }
 
-  posAct = PrintWaterValsHlp(pos, 49, ezoORP, 4, 2, 1, &avg_ORP);
+  posAct = PrintWaterValsHlp(pos, 49, ezoORP, 4, 2, 1); //, &avg_ORP);
   if (posAct > posMax){
     posMax = posAct;
   }
 
-  posAct = PrintWaterValsHlp(pos, 63, ezoDiO2, 3, 2, 1000, &avg_O2);
+  posAct = PrintWaterValsHlp(pos, 63, ezoDiO2, 3, 2, 1000); //, &avg_O2);
   if (posAct > posMax){
     posMax = posAct;
   }
@@ -865,31 +858,56 @@ byte PrintWaterVals(byte pos){
 
 byte PrintAVGs(byte pos){
   
-  SetAvgColorEZO(avg_RTD, ezoRTD);
+  /*
+  byte posX[] = {11, 26, 40, 52, 66};
+  byte leadingZeros[] = {2, 4, 2, 4, 3};
+  byte decimalPlaces[] = {2, 0, 2, 2, 2};
+  byte j;   //Shifted Version of loop's i
+  
+
+  for (byte i = 1; i < 6; i++){
+    EscLocate(posX[i], pos);
+    // type order is 1,2,3,4,7
+    j = i;
+    if (i == 5){
+      j = 7;
+    }
+    SetAvgColorEZO(avgVal[j], j);
+    PrintBoldFloat(avgVal[j], leadingZeros[i], decimalPlaces[i], ' ');
+    PrintUnit(j, 0, 0, 3);
+  }
+  pos++;
+  */
+
+// Looped Version:
+// Flash wins 18 byte
+// Ram loss 16 byte
+  
+  SetAvgColorEZO(ezoRTD);
   EscLocate(11, pos);
-  PrintBoldFloat(avg_RTD,2,2,' ');
+  PrintBoldFloat(avg_RTD, 2, 2, ' ');
   PrintUnit(ezoRTD, 0, 0, 3);
 
-  SetAvgColorEZO(avg_EC, ezoEC);
+  SetAvgColorEZO(ezoEC);
   EscLocate(26, pos);
   PrintBoldInt(avg_EC / 1000, 4, ' ');
   PrintUnit(ezoEC, 0, 0, 3);
   
-  SetAvgColorEZO(avg_pH, ezoPH);
+  SetAvgColorEZO(ezoPH);
   EscLocate(40, pos);
-  PrintBoldFloat(avg_pH,2,2,' ');
+  PrintBoldFloat(avg_pH, 2, 2, ' ');
   PrintUnit(ezoPH, 0, 0, 3);
   
-  SetAvgColorEZO(avg_ORP, ezoORP);
+  SetAvgColorEZO(ezoORP);
   EscLocate(52, pos);
-  PrintBoldFloat(avg_ORP,4,2,' ');
+  PrintBoldFloat(avg_ORP, 4, 2, ' ');
   PrintUnit(ezoORP, 0,  0 , 3);
   
-  SetAvgColorEZO(avg_O2, ezoDiO2);
+  SetAvgColorEZO(ezoDiO2);
   EscLocate(66, pos++);
-  PrintBoldFloat(avg_O2,3,2,' ');
+  PrintBoldFloat(avg_O2, 3, 2, ' ');
   PrintUnit(ezoDiO2, 0, 0, 3);
-  
+
   return pos;
 
 }
@@ -919,10 +937,18 @@ void PrintLoopMenu(){
   PrintCenteredWithSpacer(FaStrange(ezoStrLongType[ezoORP]),11);
   PrintCenteredWithSpacer(FaStrange(ezoStrLongType[ezoDiO2]),10);
   PrintSpacer(0);
-
-  //EscBold(1);
   //Serial.print(F(" | Temperature | Conductivity |     pH     |    Redox    |     O2     |"));
   pos = PrintLine(pos, 6, 70);
+  // Next Lines...
+  // | tooHigh    | tooLow     | never      |   high     |   low
+  // | 00:00:00<< | 00:00:00>> | 00:00:00-- | 00:00:00<- | 00:00:00>-
+  EscLocate(5, pos++);
+  SerialDayTimeToStr()
+  PrintCenteredWithSpacer()
+  
+  
+  
+  //EscBold(1);
   EscBold(0);
 
   PrintErrorOK(0, -1 ,(char*)"Read Loop started...");

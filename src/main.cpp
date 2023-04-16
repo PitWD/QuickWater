@@ -121,7 +121,7 @@ void loop() {
 
     // Check High/Low of AVGs 
     // compare timeOuts with timing-setting
-    for (byte i = 0; i < 8; i++){
+    for (byte i = 0; i < 5; i++){
 
       // Check On running/pending actions
       preToo = tooLowSince[i];

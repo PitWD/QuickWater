@@ -614,9 +614,6 @@ Start:
 
   int8_t pos = PrintMenuTop((char*)"- Set Values -") + 1;
   byte i = 0;
-  // Order to EzoType
-                // 0  1  2  3  4  5  6  7
-  byte offset[] = {0, 5, 6, 1, 2, 3, 4, 7};
   
   EscLocate(12, pos++);
   PrintFlexSpacer(0, 1);
@@ -626,28 +623,26 @@ Start:
 
   PrintLine(pos++, 3, 76);
   EscLocate(3, pos++);
-  for (i = 0; i < 8; i++){
+  for (i = 0; i < 5; i++){
     EscBold(1);
-    PrintCentered(Fa(ezoStrLongType[offset[i]]), 9);
+    PrintCentered(Fa(ezoStrLongType[i]), 9);
     PrintSpacer(0);
     PrintSmallMenuKey('a' + i);
-    PrintFloat(failSave[offset[i]], 4, 2, ' ');
+    PrintFloat(failSave[i], 4, 2, ' ');
     PrintSpacer(0);
-    PrintSmallMenuKey('i' + i);
-    PrintFloat(tooLow[offset[i]], 4, 2, ' ');
+    PrintSmallMenuKey('f' + i);
+    PrintFloat(tooLow[i], 4, 2, ' ');
     PrintSpacer(0);
-    PrintSmallMenuKey('q' + i);
-    PrintFloat(low[offset[i]], 4, 2, ' ');
+    PrintSmallMenuKey('k' + i);
+    PrintFloat(low[i], 4, 2, ' ');
     PrintSpacer(0);
-    PrintSmallMenuKey('I' + i);
-    PrintFloat(high[offset[i]], 4, 2, ' ');
+    PrintSmallMenuKey('p' + i);
+    PrintFloat(high[i], 4, 2, ' ');
     PrintSpacer(0);
-    PrintSmallMenuKey('Q' + i);
-    PrintFloat(tooHigh[offset[i]], 4, 2, ' ');
+    PrintSmallMenuKey('u' + i);
+    PrintFloat(tooHigh[i], 4, 2, ' ');
     PrintSpacer(0);
-    if (i == 2){
-      pos = PrintShortLine(pos, 6);
-    }   
+
     EscLocate(3, pos++);
   }
 
@@ -658,33 +653,33 @@ Start:
   if (pos < 1){
     // Exit & TimeOut
   }
-  else if (pos >= 'a' && pos <= 'h'){
+  else if (pos >= 'a' && pos <= 'e'){
     // FailSave
-    pos = offset[pos - 'a'];
+    pos -= 'a';
     failSave[pos] = GetUserFloat(failSave[pos]);
     pos = 1;
   }
-  else if (pos >= 'i' && pos <= 'p'){
+  else if (pos >= 'f' && pos <= 'j'){
     // tooLow
-    pos = offset[pos - 'i'];
+    pos -= 'f';
     tooLow[pos] = GetUserFloat(tooLow[pos]);
     pos = 1;
   }
-  else if (pos >= 'q' && pos <= 'x'){
+  else if (pos >= 'k' && pos <= 'o'){
     // Low
-    pos = offset[pos - 'q'];
+    pos -= 'k';
     low[pos] = GetUserFloat(low[pos]);
     pos = 1;
   }
-  else if (pos >= 'I' && pos <= 'P'){
+  else if (pos >= 'p' && pos <= 't'){
     // High
-    pos = offset[pos - 'I'];
+    pos -= 'p';
     high[pos] = GetUserFloat(high[pos]);
     pos = 1;
   }
-  else if (pos >= 'Q' && pos <= 'X'){
+  else if (pos >= 'u' && pos <= 'y'){
     // tooHigh
-    pos = offset[pos - 'Q'];
+    pos -= 'u';
     tooHigh[pos] = GetUserFloat(tooHigh[pos]);
     pos = 1;
   }
@@ -701,9 +696,6 @@ Start:
 
   int8_t pos = PrintMenuTop((char*)"- Set Timings -") + 1;
   byte i = 0;
-  // Order to EzoType
-                // 0  1  2  3  4  5  6  7
-  byte offset[] = {0, 5, 6, 1, 2, 3, 4, 7};
   
   EscLocate(12, pos++);
   PrintSpacer(1);
@@ -713,28 +705,25 @@ Start:
 
   PrintLine(pos++, 3, 76);
   EscLocate(3, pos++);
-  for (i = 0; i < 8; i++){
+  for (i = 0; i < 5; i++){
     EscBold(1);
-    PrintCentered(Fa(ezoStrLongType[offset[i]]), 9);
+    PrintCentered(Fa(ezoStrLongType[i]), 9);
     PrintSmallSpacer();
     PrintSmallMenuKey('a' + i);
-    PrintSerTime(delayTimes[offset[i]], 0, 1);
+    PrintSerTime(delayTimes[i], 0, 1);
     PrintSmallSpacer();
-    PrintSmallMenuKey('i' + i);
-    PrintSerTime(actionTooLow[offset[i]], 0, 1);
+    PrintSmallMenuKey('f' + i);
+    PrintSerTime(actionTooLow[i], 0, 1);
     PrintSmallSpacer();
-    PrintSmallMenuKey('q' + i);
-    PrintSerTime(actionLow[offset[i]], 0, 1);
+    PrintSmallMenuKey('k' + i);
+    PrintSerTime(actionLow[i], 0, 1);
     PrintSmallSpacer();
-    PrintSmallMenuKey('I' + i);
-    PrintSerTime(actionHigh[offset[i]], 0, 1);
+    PrintSmallMenuKey('p' + i);
+    PrintSerTime(actionHigh[i], 0, 1);
     PrintSmallSpacer();
-    PrintSmallMenuKey('Q' + i);
-    PrintSerTime(actionTooHigh[offset[i]], 0, 1);
+    PrintSmallMenuKey('u' + i);
+    PrintSerTime(actionTooHigh[i], 0, 1);
     PrintSmallSpacer();
-    if (i == 2){
-      pos = PrintShortLine(pos, 6);
-    }   
     EscLocate(3, pos++);
   }
 
@@ -745,33 +734,33 @@ Start:
   if (pos < 1){
     // Exit & TimeOut
   }
-  else if (pos >= 'a' && pos <= 'h'){
+  else if (pos >= 'a' && pos <= 'e'){
     // FailSave
-    pos = offset[pos - 'a'];
+    pos -= 'a';
     delayTimes[pos] = GetUserTime(delayTimes[pos]);
     pos = 1;
   }
-  else if (pos >= 'i' && pos <= 'p'){
+  else if (pos >= 'f' && pos <= 'j'){
     // tooLow
-    pos = offset[pos - 'i'];
+    pos -= 'f';
     actionTooLow[pos] = GetUserTime(actionTooLow[pos]);
     pos = 1;
   }
-  else if (pos >= 'q' && pos <= 'x'){
+  else if (pos >= 'k' && pos <= 'o'){
     // Low
-    pos = offset[pos - 'q'];
+    pos -= 'k';
     actionLow[pos] = GetUserTime(actionLow[pos]);
     pos = 1;
   }
-  else if (pos >= 'I' && pos <= 'P'){
+  else if (pos >= 'p' && pos <= 't'){
     // High
-    pos = offset[pos - 'I'];
+    pos -= 'p';
     actionHigh[pos] = GetUserTime(actionHigh[pos]);
     pos = 1;
   }
-  else if (pos >= 'Q' && pos <= 'X'){
+  else if (pos >= 'u' && pos <= 'y'){
     // tooHigh
-    pos = offset[pos - 'Q'];
+    pos -= 'u';
     actionTooHigh[pos] = GetUserTime(actionTooHigh[pos]);
     pos = 1;
   }
@@ -856,6 +845,8 @@ byte PrintWaterVals(byte pos){
 
 }
 
+
+
 void PrintActionTimes(byte ezoType){
   // Check which tooLow to tooHigh is actually valid
   
@@ -927,6 +918,7 @@ void PrintActionTimes(byte ezoType){
   EscFaint(0);
   EscColor(0);
 }
+
 
 
 byte PrintAVGs(byte pos){
@@ -1009,7 +1001,6 @@ void PrintCenteredWithSpacer(char *strIN, byte centerLen){
   PrintSpacer(1);
   PrintCentered(strIN, centerLen);
 }
-
 
 void PrintLoopMenu(){
 

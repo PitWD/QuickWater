@@ -125,6 +125,7 @@ uint16_t actionTooHigh[] = {3600, 1800, 6, 60, 0, 2700, 0, 0};
 // Counter for Low/High
 uint32_t tooLowSince[8];
 uint32_t lowSince[8];
+uint32_t okSince[8];
 uint32_t highSince[8];
 uint32_t tooHighSince[8];
 // Time of last action 

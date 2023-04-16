@@ -718,19 +718,19 @@ Start:
     PrintCentered(Fa(ezoStrLongType[offset[i]]), 9);
     PrintSmallSpacer();
     PrintSmallMenuKey('a' + i);
-    PrintSerTime(delayTimes[offset[i]], 0);
+    PrintSerTime(delayTimes[offset[i]], 0, 1);
     PrintSmallSpacer();
     PrintSmallMenuKey('i' + i);
-    PrintSerTime(actionTooLow[offset[i]], 0);
+    PrintSerTime(actionTooLow[offset[i]], 0, 1);
     PrintSmallSpacer();
     PrintSmallMenuKey('q' + i);
-    PrintSerTime(actionLow[offset[i]], 0);
+    PrintSerTime(actionLow[offset[i]], 0, 1);
     PrintSmallSpacer();
     PrintSmallMenuKey('I' + i);
-    PrintSerTime(actionHigh[offset[i]], 0);
+    PrintSerTime(actionHigh[offset[i]], 0, 1);
     PrintSmallSpacer();
     PrintSmallMenuKey('Q' + i);
-    PrintSerTime(actionTooHigh[offset[i]], 0);
+    PrintSerTime(actionTooHigh[offset[i]], 0, 1);
     PrintSmallSpacer();
     if (i == 2){
       pos = PrintShortLine(pos, 6);
@@ -856,6 +856,79 @@ byte PrintWaterVals(byte pos){
 
 }
 
+void PrintActionTimes(byte ezoType){
+  // Check which tooLow to tooHigh is actually valid
+  
+  int32_t timeToUse = 0;
+  int32_t timeToAction = 0;
+
+  byte colorState = GetAvgState(avgVal[ezoType], tooLow[ezoType], low[ezoType], high[ezoType], tooHigh[ezoType]);
+  
+  switch (colorState){
+  case fgCyan:
+    // tooLow
+    timeToUse = tooLowSince[ezoType];
+  case fgBlue:
+    // Low
+    if (colorState == fgCyan && lowSince[ezoType] && lowSince[ezoType] < tooLowSince[ezoType]){
+      timeToUse = lowSince[ezoType];
+      colorState = fgCyan;
+    }
+    else if (colorState == fgBlue){
+      timeToUse = lowSince[ezoType];
+    }  
+    break;
+  case fgRed:
+    // tooHigh
+    timeToUse = tooHighSince[ezoType];
+  case fgYellow:
+    // High
+    if (colorState == fgRed && highSince[ezoType] && highSince[ezoType] < tooHighSince[ezoType]){
+      timeToUse = highSince[ezoType];
+      colorState = fgYellow;
+    }
+    else if (colorState == fgYellow){
+      timeToUse = highSince[ezoType];
+    }  
+    break;
+  default:
+    // OK
+    timeToUse = okSince[ezoType];
+    break;
+  } 
+  EscColor(colorState);
+  EscFaint(1);
+
+  timeToUse = (myTime - timeToUse);            // time since state became true
+  if (colorState != fgGreen){
+    timeToAction = delayTimes[ezoType] - timeToUse;     // time until action begins
+  }
+  
+  EscSaveCursor();
+  PrintSerTime(timeToUse, 1, 1);
+  EscRestoreCursor();
+  EscCursorDown(1);
+  EscFaint(0);
+  if (timeToAction >= 0){
+    PrintSerTime(timeToAction, 1, 1);
+  }
+  else{
+    Serial.print(F("  -On Action-"));
+  }
+  
+  EscRestoreCursor();
+  EscCursorDown(2);
+  EscFaint(1);
+  timeToUse = 0;
+  if (lastAction[ezoType]){
+    timeToUse = myTime - lastAction[ezoType];
+  }
+  PrintSerTime(timeToUse, 1, 1);
+  EscFaint(0);
+  EscColor(0);
+}
+
+
 byte PrintAVGs(byte pos){
   
   /*
@@ -888,27 +961,47 @@ byte PrintAVGs(byte pos){
   PrintBoldFloat(avg_RTD, 2, 2, ' ');
   PrintUnit(ezoRTD, 0, 0, 3);
 
+  EscLocate(6, pos + 2);
+  PrintActionTimes(ezoRTD);
+
+
   SetAvgColorEZO(ezoEC);
   EscLocate(26, pos);
   PrintBoldInt(avg_EC / 1000, 4, ' ');
   PrintUnit(ezoEC, 0, 0, 3);
   
+  EscLocate(21, pos + 2);
+  PrintActionTimes(ezoEC);
+
+
   SetAvgColorEZO(ezoPH);
   EscLocate(40, pos);
   PrintBoldFloat(avg_pH, 2, 2, ' ');
   PrintUnit(ezoPH, 0, 0, 3);
-  
+
+  EscLocate(35, pos + 2);
+  PrintActionTimes(ezoPH);
+
+
   SetAvgColorEZO(ezoORP);
   EscLocate(52, pos);
   PrintBoldFloat(avg_ORP, 4, 2, ' ');
   PrintUnit(ezoORP, 0,  0 , 3);
-  
+
+  EscLocate(49, pos + 2);
+  PrintActionTimes(ezoORP);
+
+
   SetAvgColorEZO(ezoDiO2);
-  EscLocate(66, pos++);
+  EscLocate(66, pos);
   PrintBoldFloat(avg_O2, 3, 2, ' ');
   PrintUnit(ezoDiO2, 0, 0, 3);
 
-  return pos;
+  EscLocate(63, pos + 2);
+  PrintActionTimes(ezoDiO2);
+
+
+  return pos + 5;
 
 }
 
@@ -916,6 +1009,8 @@ void PrintCenteredWithSpacer(char *strIN, byte centerLen){
   PrintSpacer(1);
   PrintCentered(strIN, centerLen);
 }
+
+
 void PrintLoopMenu(){
 
   /*
@@ -939,14 +1034,7 @@ void PrintLoopMenu(){
   PrintSpacer(0);
   //Serial.print(F(" | Temperature | Conductivity |     pH     |    Redox    |     O2     |"));
   pos = PrintLine(pos, 6, 70);
-  // Next Lines...
-  // | tooHigh    | tooLow     | never      |   high     |   low
-  // | 00:00:00<< | 00:00:00>> | 00:00:00-- | 00:00:00<- | 00:00:00>-
-  EscLocate(5, pos++);
-  SerialDayTimeToStr()
-  PrintCenteredWithSpacer()
-  
-  
+    
   
   //EscBold(1);
   EscBold(0);
@@ -956,6 +1044,7 @@ void PrintLoopMenu(){
   pos = PrintWaterVals(pos);
 
   pos = PrintLine(pos, 6, 70);
+  PrintLine(pos + 1, 6, 70);
 
   // Avg 
   pos = PrintAVGs(pos);

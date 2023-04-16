@@ -5,7 +5,7 @@
 
 void PrintHlpTime(byte hourIN, byte minIN, byte secIN);
 void PrintHlpDate(byte dayIN, byte monthIN, uint16_t yearIN);
-void PrintSerTime(uint32_t timeIN, byte printDays);
+void PrintSerTime(uint32_t timeIN, byte printDays, byte print);
 void PrintTime();
 void PrintRunTime();
 void PrintDateTime();

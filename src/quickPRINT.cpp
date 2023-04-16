@@ -11,18 +11,27 @@ void PrintHlpDate(byte dayIN, byte monthIN, uint16_t yearIN){
     Serial.print(strHLP2);
 }
 
-void PrintSerTime(uint32_t timeIN, byte printDays){
+void PrintSerTime(uint32_t timeIN, byte printDays, byte print){
   // if "printDays" is set, '000d 00:00:00'
   // else         '00:00:00'
 
+  SerialDayTimeToStr(timeIN);           // strHLP2 contains 00:00:00 - strHLP was used....
+
   if (printDays){
     uint32_t days = timeIN / 86400UL;
-    IntToIntStr(days, 3, ' ');
-    Serial.print(strHLP);
-    Serial.print(F("d "));
+    IntToIntStr(days, 3, ' ');          // strHLP contains 000
+    memmove(&strHLP2[5], strHLP2, 9);   // make space for "000d "
+    memcpy(strHLP2, strHLP, 3);
+    strHLP2[3] = 'd';
+    strHLP2[4] = ' ';
+    // Serial.print(strHLP);
+    // Serial.print(F("d "));
   }
-  SerialDayTimeToStr(timeIN);
-  Serial.print(strHLP2);
+  
+  if (print){
+    Serial.print(strHLP2);
+  }
+  
 }
 
 void PrintTime(){
@@ -30,7 +39,7 @@ void PrintTime(){
 }
 
 void PrintRunTime(){
-    PrintSerTime(myRunTime, 1);
+    PrintSerTime(myRunTime, 1, 1);
 }
 
 void PrintDateTime(){

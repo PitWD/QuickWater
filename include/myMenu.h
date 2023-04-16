@@ -846,7 +846,7 @@ byte PrintWaterVals(byte pos){
 }
 
 
-
+/*
 void PrintActionTimes(byte ezoType){
   // Check which tooLow to tooHigh is actually valid
   
@@ -918,43 +918,18 @@ void PrintActionTimes(byte ezoType){
   EscFaint(0);
   EscColor(0);
 }
-
+*/
 
 
 byte PrintAVGs(byte pos){
-  
-  /*
-  byte posX[] = {11, 26, 40, 52, 66};
-  byte leadingZeros[] = {2, 4, 2, 4, 3};
-  byte decimalPlaces[] = {2, 0, 2, 2, 2};
-  byte j;   //Shifted Version of loop's i
-  
-
-  for (byte i = 1; i < 6; i++){
-    EscLocate(posX[i], pos);
-    // type order is 1,2,3,4,7
-    j = i;
-    if (i == 5){
-      j = 7;
-    }
-    SetAvgColorEZO(avgVal[j], j);
-    PrintBoldFloat(avgVal[j], leadingZeros[i], decimalPlaces[i], ' ');
-    PrintUnit(j, 0, 0, 3);
-  }
-  pos++;
-  */
-
-// Looped Version:
-// Flash wins 18 byte
-// Ram loss 16 byte
-  
+    
   SetAvgColorEZO(ezoRTD);
   EscLocate(11, pos);
   PrintBoldFloat(avg_RTD, 2, 2, ' ');
   PrintUnit(ezoRTD, 0, 0, 3);
 
-  EscLocate(6, pos + 2);
-  PrintActionTimes(ezoRTD);
+  //EscLocate(6, pos + 2);
+  //PrintActionTimes(ezoRTD);
 
 
   SetAvgColorEZO(ezoEC);
@@ -962,8 +937,8 @@ byte PrintAVGs(byte pos){
   PrintBoldInt(avg_EC / 1000, 4, ' ');
   PrintUnit(ezoEC, 0, 0, 3);
   
-  EscLocate(21, pos + 2);
-  PrintActionTimes(ezoEC);
+  //EscLocate(21, pos + 2);
+  //PrintActionTimes(ezoEC);
 
 
   SetAvgColorEZO(ezoPH);
@@ -971,8 +946,8 @@ byte PrintAVGs(byte pos){
   PrintBoldFloat(avg_pH, 2, 2, ' ');
   PrintUnit(ezoPH, 0, 0, 3);
 
-  EscLocate(35, pos + 2);
-  PrintActionTimes(ezoPH);
+  //EscLocate(35, pos + 2);
+  //PrintActionTimes(ezoPH);
 
 
   SetAvgColorEZO(ezoORP);
@@ -980,20 +955,20 @@ byte PrintAVGs(byte pos){
   PrintBoldFloat(avg_ORP, 4, 2, ' ');
   PrintUnit(ezoORP, 0,  0 , 3);
 
-  EscLocate(49, pos + 2);
-  PrintActionTimes(ezoORP);
+  //EscLocate(49, pos + 2);
+  //PrintActionTimes(ezoORP);
 
 
   SetAvgColorEZO(ezoDiO2);
-  EscLocate(66, pos);
+  EscLocate(66, pos++);
   PrintBoldFloat(avg_O2, 3, 2, ' ');
   PrintUnit(ezoDiO2, 0, 0, 3);
 
-  EscLocate(63, pos + 2);
-  PrintActionTimes(ezoDiO2);
+  //EscLocate(63, pos + 2);
+  //PrintActionTimes(ezoDiO2);
 
 
-  return pos + 5;
+  return pos;
 
 }
 
@@ -1030,12 +1005,12 @@ void PrintLoopMenu(){
   //EscBold(1);
   EscBold(0);
 
-  PrintErrorOK(0, -1 ,(char*)"Read Loop started...");
+  PrintErrorOK(0, 0, (char*)"Read Loop started...");
 
   pos = PrintWaterVals(pos);
 
   pos = PrintLine(pos, 6, 70);
-  PrintLine(pos + 1, 6, 70);
+  //PrintLine(pos + 1, 6, 70);
 
   // Avg 
   pos = PrintAVGs(pos);

@@ -105,7 +105,7 @@ byte PrintLine(byte posY, byte posX, byte len){
 #endif
 
 
-void PrintErrorOK(char err, char ezo, char *strIN){
+void PrintErrorOK(int8_t err, byte len, char *strIN){
 
    // !! Bottom-Line of TUI !!
 
@@ -139,13 +139,24 @@ void PrintErrorOK(char err, char ezo, char *strIN){
   Serial.print(F(" @ "));
   PrintRunTime();
 
-  PrintSpaces(40 - strlen(strIN));
+  // c++ pointer shit...
+  if (!len){
+    // TAKE CARE
+    // if strIN is a char-array a la strHLP - we already have the len of strIN
+    // if not, function got called with a (char*)"BlaBlaBla"
+    len = strlen(strIN);
+  }
+  
+  PrintSpaces(40 - len);
   //for (int i = 0; i < len; i++){
     //Print1Space();
   //}
   
   PrintDateTime();
+  Print1Space();
   EscInverse(0);
+//Serial.println("");
+//Serial.println(strlen(strIN));
 
 }
 

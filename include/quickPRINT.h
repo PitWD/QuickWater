@@ -28,7 +28,7 @@ byte PrintLine(byte pos, byte start, byte len);
     #define PrintFloat(val, cntLeadingZeros, cntDecimalPlaces, leadingChar) PrintValue(val, cntLeadingZeros, cntDecimalPlaces, leadingChar, 0)
 #endif
 
-void PrintErrorOK(char err, char ezo, char *strIN);
+void PrintErrorOK(int8_t err, byte len, char *strIN);
 void PrintCentered(char *strIN, byte centerLen);
 byte PrintMenuTop(char *strIN);
 void PrintMenuEnd(byte pos);

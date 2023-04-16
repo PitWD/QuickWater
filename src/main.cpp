@@ -91,12 +91,11 @@ uint32_t checkAction(uint32_t valIN, uint32_t actionTime, byte ezotype, byte isL
   
   // Port 2-9 - Action ports for high / tooHigh
   // Port 10-17 - Action ports for low / tooLow
-  digitalWrite(ezotype + 2 + (isLowPort * 8), *backSet);
+  digitalWrite(ezotype + 2 + (isLowPort * 5), *backSet);
   
   return r;
 
 }
-
 
 void loop() {
 // put your main code here, to run repeatedly:
@@ -132,7 +131,22 @@ void loop() {
         if (preToo != tooLowSince[i]){ 
           // after finished tooXYZ-Action - reset lowSince, too
           lowSince[i] = 0;
+          err = 0;
         }      
+        if (err){
+          // Low in Action
+          strcpy_P(strHLP, (PGM_P)F("\0"));
+        }
+      }
+      else{
+        //  TooLow in Action
+        strcpy_P(strHLP, (PGM_P)F("Too"));
+      }
+      if (err){
+        // something is in action
+        strcpy_P(&strHLP[strlen(strHLP)], (PGM_P)F("LowAction-"));
+        strcpy_P(&strHLP[strlen(strHLP)], (PGM_P)pgm_read_word(&(ezoStrType[i])));
+        PrintErrorOK(0, strlen(strHLP), strHLP);
       }
       
       preToo = tooHighSince[i];
@@ -143,7 +157,22 @@ void loop() {
         if (preToo != tooHighSince[i]){ 
           // after finished tooXYZ-Action - reset highSince, too
           highSince[i] = 0;
-        }      
+          err = 0;
+        }
+        if (err){
+          // High in Action
+          strcpy_P(strHLP, (PGM_P)F("\0"));
+        }
+      }
+      else{
+        //  TooHigh in Action
+        strcpy_P(strHLP, (PGM_P)F("Too"));
+      }
+      if (err){
+        // something is in action
+        strcpy_P(&strHLP[strlen(strHLP)], (PGM_P)F("HighAction-"));
+        strcpy_P(&strHLP[strlen(strHLP)], (PGM_P)pgm_read_word(&(ezoStrType[i])));
+        PrintErrorOK(0, strlen(strHLP), strHLP);
       }
       
       switch (GetAvgState(avgVal[i], tooLow[i], low[i], high[i], tooHigh[i])){
@@ -215,9 +244,6 @@ void loop() {
       err = PrintWaterVals(5);
       PrintAVGs(err + 1);
     } 
-
-      err = PrintWaterVals(5);
-      PrintAVGs(err + 1);
 
   }
 

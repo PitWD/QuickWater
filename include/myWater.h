@@ -30,15 +30,15 @@ static byte ezoCnt = 0;
 #define ezoDiO2 7
 */
 #define ezoRTD 0
-#define ezoPH 1
-#define ezoEC 2
+#define ezoEC 1
+#define ezoPH 2
 #define ezoORP 3
 #define ezoDiO2 4
 
 
 const char ezoStrType_0[] PROGMEM = "RTD";
-const char ezoStrType_1[] PROGMEM = "pH";
-const char ezoStrType_2[] PROGMEM = "EC";
+const char ezoStrType_1[] PROGMEM = "EC";
+const char ezoStrType_2[] PROGMEM = "pH";
 const char ezoStrType_3[] PROGMEM = "ORP";
 const char ezoStrType_4[] PROGMEM = "D.O.";
 PGM_P const ezoStrType[] PROGMEM = {
@@ -50,8 +50,8 @@ PGM_P const ezoStrType[] PROGMEM = {
 };
 
 const char ezoStrLongType_0[] PROGMEM = "Temp.";
-// pH
 // EC
+// pH
 const char ezoStrLongType_3[] PROGMEM = "Redox";
 const char ezoStrLongType_4[] PROGMEM = "O2";
 PGM_P const ezoStrLongType[] PROGMEM = {
@@ -63,20 +63,20 @@ PGM_P const ezoStrLongType[] PROGMEM = {
 };
 
 const char ezoStrUnit_0[] PROGMEM = "°C";
+const char ezoStrUnit_1[] PROGMEM = "µS";
 // "pH";
-const char ezoStrUnit_2[] PROGMEM = "µS";
 const char ezoStrUnit_3[] PROGMEM = "mV";
 const char ezoStrUnit_4[] PROGMEM = "%";
 PGM_P const ezoStrUnit[] PROGMEM = {
     ezoStrUnit_0,
-    ezoStrType_1,
+    ezoStrUnit_1,
     ezoStrType_2,
     ezoStrUnit_3,
     ezoStrUnit_4
 };
 
 // Waittime for readings...
-const int ezoWait[] PROGMEM = {600, 900, 600, 900, 600};
+const int ezoWait[] PROGMEM = {600, 600, 900, 900, 600};
 
 // Count of vals of probe
 const byte ezoValCnt[] PROGMEM = {1, 1, 1, 1, 2};
@@ -98,10 +98,10 @@ ezoProbeSTRUCT ezoProbe[EZO_MAX_PROBES];
 
 // Delay & ActionTimes
 uint16_t delayTimes[] = {2700, 2400, 2400, 0, 0};
-uint16_t actionTooLow[] = {900, 6, 10, 0, 0};
-uint16_t actionLow[] = {450, 3, 5, 0, 0};
-uint16_t actionHigh[] = {900, 3, 30, 0, 0};
-uint16_t actionTooHigh[] = {1800, 6, 60, 0, 0};
+uint16_t actionTooLow[] = {900, 10, 6, 0, 0};
+uint16_t actionLow[] = {450, 5, 3, 0, 0};
+uint16_t actionHigh[] = {900, 30, 3, 0, 0};
+uint16_t actionTooHigh[] = {1800, 60, 6, 0, 0};
 
 // Counter for Low/High
 uint32_t tooLowSince[5];
@@ -112,45 +112,45 @@ uint32_t tooHighSince[5];
 // Time of last action 
 uint32_t lastAction[5];
 
-long failSave[] = {21000L, 6000L, 1250000L, 225000L, 99999};
+long failSave[] = {21000L, 1250000L, 6000L, 225000L, 99999};
 #define failSave_RTD failSave[0]
-#define failSave_pH failSave[1]
-#define failSave_EC failSave[2]
+#define failSave_pH failSave[2]
+#define failSave_EC failSave[1]
 #define failSave_ORP failSave[3]
 #define failSave_O2 failSave[4]
 
-long avgVal[] = {21000L, 6000L, 1250000L, 225000L, 99999};
+long avgVal[] = {21000L, 1250000L, 6000L, 225000L, 99999};
 #define avg_RTD avgVal[0]
-#define avg_pH avgVal[1]
-#define avg_EC avgVal[2]
+#define avg_pH avgVal[2]
+#define avg_EC avgVal[1]
 #define avg_ORP avgVal[3]
 #define avg_O2 avgVal[4]
 
-long tooLow[] = {15000L, 5500L, 1000000L, -750000L, 50000L};
+long tooLow[] = {15000L, 1000000L, 5500L, -750000L, 50000L};
 #define tooLow_RTD tooLow[0]
-#define tooLow_pH tooLow[1]
-#define tooLow_EC tooLow[2]
+#define tooLow_pH tooLow[2]
+#define tooLow_EC tooLow[1]
 #define tooLow_ORP tooLow[3]
 #define tooLow_O2 tooLow[4]
 
-long low[] = {17000L, 5800L, 1250000L, -500000L, 66666L};
+long low[] = {17000L, 1250000L, 5800L, -500000L, 66666L};
 #define low_RTD low[0]
-#define low_pH low[1]
-#define low_EC low[2]
+#define low_pH low[2]
+#define low_EC low[1]
 #define low_ORP low[3]
 #define low_O2 low[4]
 
-long high[] = {20000L, 6800L, 1750000L, 500000L, 100001L};
+long high[] = {20000L, 1750000L, 6800L, 500000L, 100001L};
 #define high_RTD high[0]
-#define high_pH high[1]
-#define high_EC high[2]
+#define high_pH high[2]
+#define high_EC high[1]
 #define high_ORP high[3]
 #define high_O2 high[4]
 
-long tooHigh[] = {22000L, 7000L, 2000000L, 750000L, 100001L};
+long tooHigh[] = {22000L, 2000000L, 7000L, 750000L, 100001L};
 #define tooHigh_RTD tooHigh[0]
-#define tooHigh_pH tooHigh[1]
-#define tooHigh_EC tooHigh[2]
+#define tooHigh_pH tooHigh[2]
+#define tooHigh_EC tooHigh[1]
 #define tooHigh_ORP tooHigh[3]
 #define tooHigh_O2 tooHigh[4]
 

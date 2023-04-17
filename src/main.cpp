@@ -95,8 +95,8 @@ uint32_t checkAction(uint32_t valIN, uint32_t actionTime, byte ezotype, byte isL
     // NoAction
   }
   
-  // Port 2-9 - Action ports for high / tooHigh
-  // Port 10-17 - Action ports for low / tooLow
+  // Port 2-6 - Action ports for high / tooHigh
+  // Port 7-11 - Action ports for low / tooLow
   digitalWrite(ezotype + 2 + (isLowPort * 5), *backSet);
   
   return r;
@@ -255,7 +255,6 @@ void loop() {
       err = PrintWaterVals(5);
       PrintAVGs(err + 1);
     } 
-
   }
 
   if (Serial.available()){

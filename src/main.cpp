@@ -37,18 +37,24 @@ void setup() {
 
   delay(300);
 
-  memset(tooLowSince, 0, sizeof(tooLowSince));
-  memset(lowSince, 0, sizeof(lowSince));
-  memset(highSince, 0, sizeof(highSince));
-  memset(tooHighSince, 0, sizeof(tooHighSince));
-  memset(okSince, 0, sizeof(okSince));
-  memset(lastAction, 0, sizeof(lastAction));
+  //memset(tooLowSince, 0, sizeof(tooLowSince));
+  //memset(lowSince, 0, sizeof(lowSince));
+  //memset(highSince, 0, sizeof(highSince));
+  //memset(tooHighSince, 0, sizeof(tooHighSince));
+  //memset(okSince, 0, sizeof(okSince));
+  //memset(lastAction, 0, sizeof(lastAction));
 
-  for (byte i = 0; i < 16; i++){
-    pinMode(i + 2, OUTPUT);
-    digitalWrite(i + 2, LOW);
+  // OutPorts
+  for (byte i = 2; i < 18; i++){
+    if (i < 14){
+      pinMode(i, OUTPUT);
+      digitalWrite(i, LOW);
+    }
+    else{
+      pinMode(i, INPUT_PULLUP);    // Level tooLow, low, high, tooHigh
+    }
   }
-  
+
   if (myDefault == 1 && myCnt && myCnt <= EZO_MAX_PROBES){ 
     DefaultProbesFromRom();
     ezoCnt = myCnt;
@@ -104,6 +110,7 @@ void loop() {
     // A Second is over...
 
     byte err = 1;
+    byte printAction = 0;
 
     uint32_t preToo = 0;
 
@@ -122,7 +129,9 @@ void loop() {
     // compare timeOuts with timing-setting
     for (byte i = 0; i < 5; i++){
 
-      // Check On running/pending actions
+      printAction = 0;
+
+      // Check On needed/pending actions
       preToo = tooLowSince[i];
       tooLowSince[i] = checkAction(tooLowSince[i], actionTooLow[i], i, 1, &err);
       if (!err){
@@ -145,8 +154,7 @@ void loop() {
       if (err){
         // something is in action
         strcpy_P(&strHLP[strlen(strHLP)], (PGM_P)F("LowAction-"));
-        strcpy_P(&strHLP[strlen(strHLP)], (PGM_P)pgm_read_word(&(ezoStrType[i])));
-        PrintErrorOK(0, strlen(strHLP), strHLP);
+        printAction = 1;
       }
       
       preToo = tooHighSince[i];
@@ -171,10 +179,15 @@ void loop() {
       if (err){
         // something is in action
         strcpy_P(&strHLP[strlen(strHLP)], (PGM_P)F("HighAction-"));
+        printAction = 1;
+      }
+      if (printAction){
+        // Print Action
         strcpy_P(&strHLP[strlen(strHLP)], (PGM_P)pgm_read_word(&(ezoStrType[i])));
         PrintErrorOK(0, strlen(strHLP), strHLP);
       }
       
+      // Set / Reset Since-Variables depending on high/low state...
       switch (GetAvgState(avgVal[i], tooLow[i], low[i], high[i], tooHigh[i])){
       case fgCyan:
         // tooLow
@@ -234,8 +247,6 @@ void loop() {
         }
         break;
       }
-
-
     }
 
     //Read EZO's

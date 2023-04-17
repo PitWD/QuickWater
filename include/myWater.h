@@ -35,7 +35,6 @@ static byte ezoCnt = 0;
 #define ezoORP 3
 #define ezoDiO2 4
 
-
 const char ezoStrType_0[] PROGMEM = "RTD";
 const char ezoStrType_1[] PROGMEM = "EC";
 const char ezoStrType_2[] PROGMEM = "pH";
@@ -261,7 +260,7 @@ void EzoSetName(char *strIN, byte ezo, byte all, byte autoName){
 
         if (EzoCheckOnSet(ezo,all, i)){
 
-            strcpy(iicStr,"Name,");
+            strcpy_P(iicStr, (PGM_P)F("Name,"));
 
             if (autoName){
                 cnt[ezoProbe[i].type]++;
@@ -354,7 +353,7 @@ void EzoSetCal(char *strCmd, byte ezo, byte all){
 void EzoSetAddress(byte ezo, byte addrNew, byte all){
     for (int i = 0; i < ezoCnt; i++){
         if (EzoCheckOnSet(ezo,all, i)){
-            strcpy(strHLP, "I2C,");
+            strcpy_P(strHLP, (PGM_P)F("I2C,"));
             itoa(addrNew, strHLP2, 10);
             strcpy(&strHLP[4], strHLP2);
             IIcSetStr(ezoProbe[i].address, strHLP, 0);
@@ -471,6 +470,9 @@ int8_t EzoDoNext(){
 
 }
 
+void PrintColon(){
+    Serial.print(F(" : "));
+}
 void EzoScan(){
     // Scan for Ezo's
 
@@ -492,15 +494,15 @@ void EzoScan(){
             if (!err){
                 Serial.print(F("Slave @: "));
                 Serial.print(i);
-                Serial.print(F(" : "));
+                PrintColon();
                 // Slave found... looking for EZO-ID
                 err = IIcSetStr(i, (char*)"i", 0);
                 Serial.print(err);
-                Serial.print(F(" : "));
+                PrintColon();
                 delay(333);
                 err = IIcGetAtlas(i);
                 Serial.print(err);
-                Serial.print(F(" : "));
+                PrintColon();
                 switch (err){
                 case 0:
                     // nothing received
@@ -516,7 +518,7 @@ void EzoScan(){
                 default:
                     // something received
                     Serial.print(iicStr);
-                    Serial.print(F(" : "));
+                    PrintColon();
                     if (iicStr[0] == '?' && iicStr[1] == 'I'){
                         // It's an ezo...
 
@@ -597,11 +599,11 @@ void EzoScan(){
                                 switch (iicStr[8]){
                                 case 'P':
                                     // powered off
-                                    Serial.print(F("PoweredOff"));
+                                    Serial.print(F("PwrOff"));
                                     break;
                                 case 'S':
                                     // software reset
-                                    Serial.print(F("SoftReset"));
+                                    Serial.print(F("Reset"));
                                     break;
                                 case 'B':
                                     // brown out
@@ -622,11 +624,11 @@ void EzoScan(){
                                 Serial.println(F(" V"));
                             }
                             else{
-                                Serial.println(F("ERROR"));
+                                Serial.println(F("ERR"));
                             }
                             
                             // Value(s)
-                            Serial.print(F("Value(s): "));
+                            Serial.print(F("Val's: "));
                             EzoStartValues(ezoCnt);
                             EzoWaitValues(ezoCnt);
                             if (EzoGetValues(ezoCnt)){
@@ -638,7 +640,7 @@ void EzoScan(){
                                 Serial.println(F(""));
                             }
                             else{
-                                Serial.println(F("ERROR"));
+                                Serial.println(F("ERR"));
                             }
                             Serial.println(F(""));
                             

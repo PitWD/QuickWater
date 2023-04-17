@@ -47,7 +47,7 @@ void myFromRom(){
 }
 
 void DummyNameToStrDefault(void){
-  strcpy(strDefault, "-DummyName-");
+  strcpy_P(strDefault,(PGM_P)F( "-DummyName-"));
 }
 void EditAutoName(){
   if (GetUserString(strDefault)){
@@ -265,12 +265,12 @@ void PrintCalMenu(byte ezo, byte all){
 
   Start:
 
-  strcpy(iicStr, "- Calibrate ");
+  strcpy_P(iicStr,(PGM_P)F( "- Calibrate "));
 
   switch (ezoProbe[ezo].type){
   case ezoRTD:
     /* code */
-    strcpy(&iicStr[12], "RTD -");
+    strcpy_P(&iicStr[12], (PGM_P)F("RTD -"));
     if (!ImInside){
       myMenu.c = 0;
       myMenu.d = 0;
@@ -285,7 +285,7 @@ void PrintCalMenu(byte ezo, byte all){
     break;
   case ezoEC:
     /* code */
-    strcpy(&iicStr[12], "EC -");
+    strcpy_P(&iicStr[12], (PGM_P)F("EC -"));
     if (!ImInside){
       myMenu.d = 0;
       myMenu.h = 0;
@@ -298,7 +298,7 @@ void PrintCalMenu(byte ezo, byte all){
     break;
   case ezoPH:
     /* code */
-    strcpy(&iicStr[12], "pH -");
+    strcpy_P(&iicStr[12], (PGM_P)F("pH -"));
     if (!ImInside){
       calLow = CAL_PH_LOW;
       calMid = CAL_PH_MID;
@@ -309,7 +309,7 @@ void PrintCalMenu(byte ezo, byte all){
     break;
   case ezoORP:
     /* code */
-    strcpy(&iicStr[12], "ORP -");
+    strcpy_P(&iicStr[12], (PGM_P)F("ORP -"));
     if (!ImInside){
       myMenu.c = 0;
       myMenu.d = 0;
@@ -324,7 +324,7 @@ void PrintCalMenu(byte ezo, byte all){
     break;
   case ezoDiO2:
     /* code */
-    strcpy(&iicStr[12], "O2 -");
+    strcpy_P(&iicStr[12], (PGM_P)F("O2 -"));
     if (!ImInside){
       myMenu.d = 0;
       myMenu.e = 0;
@@ -397,57 +397,6 @@ void PrintCalMenu(byte ezo, byte all){
     PrintBoldFloat(calHigh, 4, 2, ' ');
   }
   
-  /*
-  switch (ezoProbe[ezo].type){
-  case ezoRTD:
-    pos = PrintCal_B(0, pos);
-    pos = PrintCal_C(1, pos); myMenu.c = 0;
-    pos = PrintCal_D(1, pos); myMenu.d = 0;
-    pos = PrintCal_E(0, pos, calMid);
-    pos = PrintCal_F(0, pos, avg_RTD);
-    pos = PrintCal_G(1, pos, calLow); myMenu.g = 0;
-    pos = PrintCal_H(1, pos, calHigh); myMenu.h = 0;
-    break;
-  case ezoEC:
-    pos = PrintCal_B(0, pos);
-    pos = PrintCal_C(0, pos);
-    pos = PrintCal_D(1, pos); myMenu.d = 0;
-    pos = PrintCal_E(0, pos, calMid);
-    pos = PrintCal_F(0, pos, avg_EC);
-    pos = PrintCal_G(0, pos, calLow);
-    pos = PrintCal_H(1, pos, calHigh); myMenu.h = 0;
-    break;
-  case ezoPH:
-    pos = PrintCal_B(0, pos);
-    pos = PrintCal_C(0, pos);
-    pos = PrintCal_D(0, pos);
-    pos = PrintCal_E(0, pos, calMid);
-    pos = PrintCal_F(0, pos, avg_pH);
-    pos = PrintCal_G(0, pos, calLow);
-    pos = PrintCal_H(0, pos, calHigh);
-    break;
-  case ezoORP:
-    pos = PrintCal_B(0, pos);
-    pos = PrintCal_C(1, pos); myMenu.c = 0;
-    pos = PrintCal_D(1, pos); myMenu.d = 0;
-    pos = PrintCal_E(0, pos, calMid);
-    pos = PrintCal_F(0, pos, avg_ORP);
-    pos = PrintCal_G(1, pos, calLow); myMenu.g = 0;
-    pos = PrintCal_H(1, pos, calHigh); myMenu.h = 0;
-    break;
-  case ezoDiO2:
-    pos = PrintCal_B(0, pos);
-    pos = PrintCal_C(0, pos);
-    pos = PrintCal_D(1, pos); myMenu.d = 0;
-    pos = PrintCal_E(1, pos, calMid); myMenu.e = 0;
-    pos = PrintCal_F(1, pos, avg_O2); myMenu.f = 0;
-    pos = PrintCal_G(1, pos, calLow); myMenu.g = 0;
-    pos = PrintCal_H(1, pos, calHigh); myMenu.h = 0;
-    break;
-  default:
-    break;
-  }
-  */
 
   PrintMenuEnd(pos + 1);
 
@@ -845,82 +794,6 @@ byte PrintWaterVals(byte pos){
 
 }
 
-
-/*
-void PrintActionTimes(byte ezoType){
-  // Check which tooLow to tooHigh is actually valid
-  
-  int32_t timeToUse = 0;
-  int32_t timeToAction = 0;
-
-  byte colorState = GetAvgState(avgVal[ezoType], tooLow[ezoType], low[ezoType], high[ezoType], tooHigh[ezoType]);
-  
-  switch (colorState){
-  case fgCyan:
-    // tooLow
-    timeToUse = tooLowSince[ezoType];
-  case fgBlue:
-    // Low
-    if (colorState == fgCyan && lowSince[ezoType] && lowSince[ezoType] < tooLowSince[ezoType]){
-      timeToUse = lowSince[ezoType];
-      colorState = fgCyan;
-    }
-    else if (colorState == fgBlue){
-      timeToUse = lowSince[ezoType];
-    }  
-    break;
-  case fgRed:
-    // tooHigh
-    timeToUse = tooHighSince[ezoType];
-  case fgYellow:
-    // High
-    if (colorState == fgRed && highSince[ezoType] && highSince[ezoType] < tooHighSince[ezoType]){
-      timeToUse = highSince[ezoType];
-      colorState = fgYellow;
-    }
-    else if (colorState == fgYellow){
-      timeToUse = highSince[ezoType];
-    }  
-    break;
-  default:
-    // OK
-    timeToUse = okSince[ezoType];
-    break;
-  } 
-  EscColor(colorState);
-  EscFaint(1);
-
-  timeToUse = (myTime - timeToUse);            // time since state became true
-  if (colorState != fgGreen){
-    timeToAction = delayTimes[ezoType] - timeToUse;     // time until action begins
-  }
-  
-  EscSaveCursor();
-  PrintSerTime(timeToUse, 1, 1);
-  EscRestoreCursor();
-  EscCursorDown(1);
-  EscFaint(0);
-  if (timeToAction >= 0){
-    PrintSerTime(timeToAction, 1, 1);
-  }
-  else{
-    Serial.print(F("  -On Action-"));
-  }
-  
-  EscRestoreCursor();
-  EscCursorDown(2);
-  EscFaint(1);
-  timeToUse = 0;
-  if (lastAction[ezoType]){
-    timeToUse = myTime - lastAction[ezoType];
-  }
-  PrintSerTime(timeToUse, 1, 1);
-  EscFaint(0);
-  EscColor(0);
-}
-*/
-
-
 byte PrintAVGs(byte pos){
     
   SetAvgColorEZO(ezoRTD);
@@ -979,11 +852,6 @@ void PrintCenteredWithSpacer(char *strIN, byte centerLen){
 
 void PrintLoopMenu(){
 
-  /*
-  byte type[] = {1, 3, 2, 4, 7};
-  byte cnt[] = {11, 12, 10, 11, 10};
-  */
-
   EscCls();
   EscInverse(1);
   byte pos = PrintMenuTop((char*)"- QuickWater 1.01 -");
@@ -998,6 +866,7 @@ void PrintLoopMenu(){
   PrintCenteredWithSpacer(FaStrange(ezoStrLongType[ezoORP]),11);
   PrintCenteredWithSpacer(FaStrange(ezoStrLongType[ezoDiO2]),10);
   PrintSpacer(0);
+
   //Serial.print(F(" | Temperature | Conductivity |     pH     |    Redox    |     O2     |"));
   pos = PrintLine(pos, 6, 70);
     
@@ -1028,16 +897,6 @@ Start:
   int pos = PrintMenuTop((char*)"- QuickWater 1.01 -");
   
   uint32_t hlpTime = 0;
-
-/*
-  PrintLine(pos, 5, 63);
-  for (int i = 0; i < ezoCnt; i++){
-    pos++;
-    PrintProbeLine(i, pos, 1);
-  }
-  pos++;
-  PrintLine(pos++, 5, 63);
-*/
 
   pos = PrintProbesOfType(255, 1, pos);
 
@@ -1117,14 +976,14 @@ Start:
   case 'b':
     // Date
     hlpTime = SerializeTime(1, 1, 2023, myHour, myMin, mySec);    // Time of now
-    DeSerializeTime(hlpTime + GetUserDate(myTime), &myDay, &myMonth, &myYear, &myHour, &myMin, &mySec);
-    RTC_SetDateTime();
-    myTime = SerializeTime(myDay, myMonth, myYear, myHour, myMin, mySec);
-    break;
+    hlpTime += GetUserDate(myTime);
   case 'c':
     // Time
-    hlpTime = SerializeTime(myDay, myMonth, myYear, 0, 0, 0);    // Midnight of today
-    DeSerializeTime(hlpTime + GetUserTime(myTime), &myDay, &myMonth, &myYear, &myHour, &myMin, &mySec);
+    if (pos == 'c'){
+      hlpTime = SerializeTime(myDay, myMonth, myYear, 0, 0, 0);    // Midnight of today
+      hlpTime += GetUserTime(myTime);
+    }
+    DeSerializeTime(hlpTime, &myDay, &myMonth, &myYear, &myHour, &myMin, &mySec);    
     RTC_SetDateTime();
     myTime = SerializeTime(myDay, myMonth, myYear, myHour, myMin, mySec);
     break;

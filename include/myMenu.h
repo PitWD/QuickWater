@@ -572,23 +572,23 @@ Start:
 
   PrintLine(pos++, 3, 76);
   EscLocate(3, pos++);
-  for (i = 0; i < 5; i++){
+  for (i = 0; i < 6; i++){
     EscBold(1);
     PrintCentered(Fa(ezoStrLongType[i]), 9);
     PrintSpacer(0);
     PrintSmallMenuKey('a' + i);
     PrintFloat(failSave[i], 4, 2, ' ');
     PrintSpacer(0);
-    PrintSmallMenuKey('f' + i);
+    PrintSmallMenuKey('g' + i);
     PrintFloat(tooLow[i], 4, 2, ' ');
     PrintSpacer(0);
-    PrintSmallMenuKey('k' + i);
+    PrintSmallMenuKey('m' + i);
     PrintFloat(low[i], 4, 2, ' ');
     PrintSpacer(0);
-    PrintSmallMenuKey('p' + i);
+    PrintSmallMenuKey('s' + i);
     PrintFloat(high[i], 4, 2, ' ');
     PrintSpacer(0);
-    PrintSmallMenuKey('u' + i);
+    PrintSmallMenuKey('A' + i);
     PrintFloat(tooHigh[i], 4, 2, ' ');
     PrintSpacer(0);
 
@@ -602,33 +602,33 @@ Start:
   if (pos < 1){
     // Exit & TimeOut
   }
-  else if (pos >= 'a' && pos <= 'e'){
+  else if (pos >= 'a' && pos <= 'f'){
     // FailSave
     pos -= 'a';
     failSave[pos] = GetUserFloat(failSave[pos]);
     pos = 1;
   }
-  else if (pos >= 'f' && pos <= 'j'){
+  else if (pos >= 'g' && pos <= 'l'){
     // tooLow
-    pos -= 'f';
+    pos -= 'g';
     tooLow[pos] = GetUserFloat(tooLow[pos]);
     pos = 1;
   }
-  else if (pos >= 'k' && pos <= 'o'){
+  else if (pos >= 'm' && pos <= 'r'){
     // Low
-    pos -= 'k';
+    pos -= 'm';
     low[pos] = GetUserFloat(low[pos]);
     pos = 1;
   }
-  else if (pos >= 'p' && pos <= 't'){
+  else if (pos >= 's' && pos <= 'x'){
     // High
-    pos -= 'p';
+    pos -= 's';
     high[pos] = GetUserFloat(high[pos]);
     pos = 1;
   }
-  else if (pos >= 'u' && pos <= 'y'){
+  else if (pos >= 'A' && pos <= 'F'){
     // tooHigh
-    pos -= 'u';
+    pos -= 'A';
     tooHigh[pos] = GetUserFloat(tooHigh[pos]);
     pos = 1;
   }
@@ -654,23 +654,23 @@ Start:
 
   PrintLine(pos++, 3, 76);
   EscLocate(3, pos++);
-  for (i = 0; i < 5; i++){
+  for (i = 0; i < 6; i++){
     EscBold(1);
     PrintCentered(Fa(ezoStrLongType[i]), 9);
     PrintSmallSpacer();
     PrintSmallMenuKey('a' + i);
     PrintSerTime(delayTimes[i], 0, 1);
     PrintSmallSpacer();
-    PrintSmallMenuKey('f' + i);
+    PrintSmallMenuKey('g' + i);
     PrintSerTime(actionTooLow[i], 0, 1);
     PrintSmallSpacer();
-    PrintSmallMenuKey('k' + i);
+    PrintSmallMenuKey('m' + i);
     PrintSerTime(actionLow[i], 0, 1);
     PrintSmallSpacer();
-    PrintSmallMenuKey('p' + i);
+    PrintSmallMenuKey('s' + i);
     PrintSerTime(actionHigh[i], 0, 1);
     PrintSmallSpacer();
-    PrintSmallMenuKey('u' + i);
+    PrintSmallMenuKey('A' + i);
     PrintSerTime(actionTooHigh[i], 0, 1);
     PrintSmallSpacer();
     EscLocate(3, pos++);
@@ -683,33 +683,33 @@ Start:
   if (pos < 1){
     // Exit & TimeOut
   }
-  else if (pos >= 'a' && pos <= 'e'){
+  else if (pos >= 'a' && pos <= 'f'){
     // FailSave
     pos -= 'a';
     delayTimes[pos] = GetUserTime(delayTimes[pos]);
     pos = 1;
   }
-  else if (pos >= 'f' && pos <= 'j'){
+  else if (pos >= 'g' && pos <= 'l'){
     // tooLow
-    pos -= 'f';
+    pos -= 'g';
     actionTooLow[pos] = GetUserTime(actionTooLow[pos]);
     pos = 1;
   }
-  else if (pos >= 'k' && pos <= 'o'){
+  else if (pos >= 'm' && pos <= 'r'){
     // Low
-    pos -= 'k';
+    pos -= 'm';
     actionLow[pos] = GetUserTime(actionLow[pos]);
     pos = 1;
   }
-  else if (pos >= 'p' && pos <= 't'){
+  else if (pos >= 's' && pos <= 'x'){
     // High
-    pos -= 'p';
+    pos -= 's';
     actionHigh[pos] = GetUserTime(actionHigh[pos]);
     pos = 1;
   }
-  else if (pos >= 'u' && pos <= 'y'){
+  else if (pos >= 'A' && pos <= 'F'){
     // tooHigh
-    pos -= 'u';
+    pos -= 'A';
     actionTooHigh[pos] = GetUserTime(actionTooHigh[pos]);
     pos = 1;
   }

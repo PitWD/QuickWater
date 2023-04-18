@@ -142,7 +142,7 @@ long avgVal[] = {21000L, 1250000L, 6000L, 225000L, 99999L, 66666L};
 #define avg_O2 avgVal[4]
 #define avg_LVL avgVal[5]
 
-long tooLow[] = {15000L, 1000000L, 5500L, -750000L, 50000L, 25000L};
+long tooLow[] = {15000L, 1000000L, 5500L, -750000L, 50000L, 24999L};
 #define tooLow_RTD tooLow[0]
 #define tooLow_EC tooLow[1]
 #define tooLow_pH tooLow[2]
@@ -150,7 +150,7 @@ long tooLow[] = {15000L, 1000000L, 5500L, -750000L, 50000L, 25000L};
 #define tooLow_O2 tooLow[4]
 #define tooLow_LVL tooLow[5]
 
-long low[] = {17000L, 1250000L, 5800L, -500000L, 66666L, 50000L};
+long low[] = {17000L, 1250000L, 5800L, -500000L, 66666L, 49999L};
 #define low_RTD low[0]
 #define low_EC low[1]
 #define low_pH low[2]
@@ -158,7 +158,7 @@ long low[] = {17000L, 1250000L, 5800L, -500000L, 66666L, 50000L};
 #define low_O2 low[4]
 #define low_LVL low[5]
 
-long high[] = {20000L, 1750000L, 6800L, 500000L, 100001L, 75000L};
+long high[] = {20000L, 1750000L, 6800L, 500000L, 100001L, 74999L};
 #define high_RTD high[0]
 #define high_EC high[1]
 #define high_pH high[2]
@@ -703,7 +703,7 @@ void EzoScan(){
     }
 
     // Add internal 4-step level
-    ezoProbe[ezoCnt].value[0] = 75000;
+    ezoProbe[ezoCnt].value[0] = 66666;
     ezoProbe[ezoCnt].address = 0;
     strcpy_P(ezoProbe[ezoCnt].name, (PGM_P)F("Int. Level - 1"));
     ezoProbe[ezoCnt].type = ezoLVL;

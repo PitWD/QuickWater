@@ -97,7 +97,7 @@ uint32_t checkAction(uint32_t valIN, uint32_t actionTime, byte ezotype, byte isL
   
   // Port 2-6 - Action ports for high / tooHigh
   // Port 7-11 - Action ports for low / tooLow
-  digitalWrite(ezotype + 2 + (isLowPort * 5), *backSet);
+  digitalWrite(ezotype + 2 + (isLowPort * 6), *backSet);
   
   return r;
 
@@ -127,7 +127,7 @@ void loop() {
 
     // Check High/Low of AVGs 
     // compare timeOuts with timing-setting
-    for (byte i = 0; i < 5; i++){
+    for (byte i = 0; i < 6; i++){
 
       printAction = 0;
 

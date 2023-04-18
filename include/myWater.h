@@ -6,6 +6,8 @@
 #define EZO_1st_ADDRESS 32
 #define EZO_LAST_ADDRESS 127
 
+#define INTERNAL_LEVEL_CNT 1    // cnt of internal level sensors
+
 // What is the actual Action
 // 0 = all read
 // 1 = write command(s)
@@ -34,7 +36,7 @@ static byte ezoCnt = 0;
 #define ezoPH 2
 #define ezoORP 3
 #define ezoDiO2 4
-#define ezoLVL 2
+#define ezoLVL 5
 
 const char ezoStrType_0[] PROGMEM = "RTD";
 const char ezoStrType_1[] PROGMEM = "EC";
@@ -130,6 +132,7 @@ long failSave[] = {21000L, 1250000L, 6000L, 225000L, 99999L, 66666L};
 #define failSave_pH failSave[2]
 #define failSave_ORP failSave[3]
 #define failSave_O2 failSave[4]
+#define failSave_LVL failSave[5]
 
 long avgVal[] = {21000L, 1250000L, 6000L, 225000L, 99999L, 66666L};
 #define avg_RTD avgVal[0]
@@ -137,6 +140,7 @@ long avgVal[] = {21000L, 1250000L, 6000L, 225000L, 99999L, 66666L};
 #define avg_pH avgVal[2]
 #define avg_ORP avgVal[3]
 #define avg_O2 avgVal[4]
+#define avg_LVL avgVal[5]
 
 long tooLow[] = {15000L, 1000000L, 5500L, -750000L, 50000L, 25000L};
 #define tooLow_RTD tooLow[0]
@@ -144,6 +148,7 @@ long tooLow[] = {15000L, 1000000L, 5500L, -750000L, 50000L, 25000L};
 #define tooLow_pH tooLow[2]
 #define tooLow_ORP tooLow[3]
 #define tooLow_O2 tooLow[4]
+#define tooLow_LVL tooLow[5]
 
 long low[] = {17000L, 1250000L, 5800L, -500000L, 66666L, 50000L};
 #define low_RTD low[0]
@@ -151,6 +156,7 @@ long low[] = {17000L, 1250000L, 5800L, -500000L, 66666L, 50000L};
 #define low_pH low[2]
 #define low_ORP low[3]
 #define low_O2 low[4]
+#define low_LVL low[5]
 
 long high[] = {20000L, 1750000L, 6800L, 500000L, 100001L, 75000L};
 #define high_RTD high[0]
@@ -158,6 +164,7 @@ long high[] = {20000L, 1750000L, 6800L, 500000L, 100001L, 75000L};
 #define high_pH high[2]
 #define high_ORP high[3]
 #define high_O2 high[4]
+#define high_LVL high[5]
 
 long tooHigh[] = {22000L, 2000000L, 7000L, 750000L, 100001L, 99999};
 #define tooHigh_RTD tooHigh[0]
@@ -165,6 +172,7 @@ long tooHigh[] = {22000L, 2000000L, 7000L, 750000L, 100001L, 99999};
 #define tooHigh_pH tooHigh[2]
 #define tooHigh_ORP tooHigh[3]
 #define tooHigh_O2 tooHigh[4]
+#define tooHigh_LVL tooHigh[5]
 
 
 #define CAL_RTD_RES -1L         // Value for Reset
@@ -262,7 +270,7 @@ void EzoSetName(char *strIN, byte ezo, byte all, byte autoName){
     byte len = 0;
 
 
-    for (int i = 0; i < ezoCnt; i++){
+    for (int i = 0; i < ezoCnt - INTERNAL_LEVEL_CNT; i++){
 
         if (EzoCheckOnSet(ezo,all, i)){
 
@@ -302,7 +310,7 @@ void EzoReset(byte ezo, byte all){
     byte cntSetup;           // count of setup-lines to send
     char strSetup[6][9];
 
-    for (int i = 0; i < ezoCnt; i++){
+    for (int i = 0; i < ezoCnt - INTERNAL_LEVEL_CNT; i++){
 
         if (EzoCheckOnSet(ezo,all, i)){
         
@@ -345,7 +353,7 @@ void EzoReset(byte ezo, byte all){
 }
 
 void EzoSetCal(char *strCmd, byte ezo, byte all){
-    for (int i = 0; i < ezoCnt; i++){
+    for (int i = 0; i < ezoCnt - INTERNAL_LEVEL_CNT; i++){
         if (EzoCheckOnSet(ezo,all, i)){
             if (Fb(ezoHasCal[ezoProbe[ezo].type])){
                 // Has set-able calibration
@@ -357,7 +365,7 @@ void EzoSetCal(char *strCmd, byte ezo, byte all){
 }
 
 void EzoSetAddress(byte ezo, byte addrNew, byte all){
-    for (int i = 0; i < ezoCnt; i++){
+    for (int i = 0; i < ezoCnt - INTERNAL_LEVEL_CNT; i++){
         if (EzoCheckOnSet(ezo,all, i)){
             strcpy_P(strHLP, (PGM_P)F("I2C,"));
             itoa(addrNew, strHLP2, 10);
@@ -454,8 +462,42 @@ int8_t EzoDoNext(){
         // Actions done for this Module
         ezoAct++;
         ezoAction = 0;
-        if (ezoAct == ezoCnt){
-            // All Modules Read
+        if (ezoAct == ezoCnt - INTERNAL_LEVEL_CNT){
+            // All Modules Done
+            
+
+            // Analyze internal Level-Ports
+                // tooLow
+                ezoAct = 0;     // temporary use for comparison 
+                ezoProbe[ezoCnt - INTERNAL_LEVEL_CNT].value[0] = 0;
+            if (!digitalRead(14)){
+                // Low
+                ezoAct += 25;
+                ezoProbe[ezoCnt - INTERNAL_LEVEL_CNT].value[0] = 25;
+            }
+            if (!digitalRead(15)){
+                // OK
+                ezoAct += 25;
+                ezoProbe[ezoCnt - INTERNAL_LEVEL_CNT].value[0] = 50;
+            }
+            if (!digitalRead(16)){
+                // High
+                ezoAct += 25;
+                ezoProbe[ezoCnt - INTERNAL_LEVEL_CNT].value[0] = 75L;
+            }
+            if (!digitalRead(17)){
+                // toHigh
+                ezoAct += 25;
+                ezoProbe[ezoCnt - INTERNAL_LEVEL_CNT].value[0] = 100;
+            }
+            if (ezoProbe[ezoCnt - INTERNAL_LEVEL_CNT].value[0] != ezoAct){
+                // One or some level-switches are wrong/faulty
+                ezoProbe[ezoCnt - INTERNAL_LEVEL_CNT].value[0] = 66666;
+            }     
+            else{
+                ezoProbe[ezoCnt - INTERNAL_LEVEL_CNT].value[0] *= 1000;
+            }
+            
             ezoAct = 0;
             return 1;
         }
@@ -490,7 +532,7 @@ void EzoScan(){
     ezoCnt = 0;
     Serial.println("");
 
-    for (int i = EZO_1st_ADDRESS; i < EZO_LAST_ADDRESS + 1 && ezoCnt < EZO_MAX_PROBES; i++){
+    for (int i = EZO_1st_ADDRESS; i < EZO_LAST_ADDRESS + 1 && ezoCnt < EZO_MAX_PROBES - INTERNAL_LEVEL_CNT; i++){
         
         //Exclude known stuff
         if (!(i > 79 && i < 88) && !(i == 104)){        
@@ -658,6 +700,14 @@ void EzoScan(){
                 }
             }
         }
-    }   
+    }
+
+    // Add internal 4-step level
+    ezoProbe[ezoCnt].value[0] = 75000;
+    ezoProbe[ezoCnt].address = 0;
+    strcpy_P(ezoProbe[ezoCnt].name, (PGM_P)F("Int. Level - 1"));
+    ezoProbe[ezoCnt].type = ezoLVL;
+    ezoCnt++;
+
 }
 

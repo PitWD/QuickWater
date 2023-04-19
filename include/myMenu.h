@@ -245,23 +245,26 @@ void PrintCalMenu(byte ezo, byte all){
   long calRes = 0;      // Value for Reset
   long calAvg = 0;      // Actual avg of actual ezoType
 
+  long calTemp = avg_RTD;
+  byte calCnt = 1;
+
   struct myMenu{
+    byte a:1;
     byte b:1;
     byte c:1;
     byte d:1;
     byte e:1;
     byte f:1;
     byte g:1;
-    byte h:1;
   }myMenu;
   
+  myMenu.a = 1;
   myMenu.b = 1;
   myMenu.c = 1;
   myMenu.d = 1;
   myMenu.e = 1;
   myMenu.f = 1;
   myMenu.g = 1;
-  myMenu.h = 1;
 
   Start:
 
@@ -272,10 +275,10 @@ void PrintCalMenu(byte ezo, byte all){
     /* code */
     strcpy_P(&iicStr[12], (PGM_P)F("RTD -"));
     if (!ImInside){
+      myMenu.b = 0;
       myMenu.c = 0;
-      myMenu.d = 0;
+      myMenu.f = 0;
       myMenu.g = 0;
-      myMenu.h = 0;
       calLow = CAL_RTD_LOW;
       calMid = CAL_RTD_MID;
       calHigh = CAL_RTD_HIGH;
@@ -287,8 +290,7 @@ void PrintCalMenu(byte ezo, byte all){
     /* code */
     strcpy_P(&iicStr[12], (PGM_P)F("EC -"));
     if (!ImInside){
-      myMenu.d = 0;
-      myMenu.h = 0;
+      myMenu.a = 0;
       calLow = CAL_EC_LOW;
       calMid = CAL_EC_MID;
       calHigh = CAL_EC_HIGH;
@@ -311,10 +313,10 @@ void PrintCalMenu(byte ezo, byte all){
     /* code */
     strcpy_P(&iicStr[12], (PGM_P)F("ORP -"));
     if (!ImInside){
+      myMenu.b = 0;
       myMenu.c = 0;
-      myMenu.d = 0;
+      myMenu.f = 0;
       myMenu.g = 0;
-      myMenu.h = 0;
       calLow = CAL_ORP_LOW;
       calMid = CAL_ORP_MID;
       calHigh = CAL_ORP_HIGH;
@@ -326,11 +328,11 @@ void PrintCalMenu(byte ezo, byte all){
     /* code */
     strcpy_P(&iicStr[12], (PGM_P)F("O2 -"));
     if (!ImInside){
+      myMenu.c = 0;
       myMenu.d = 0;
       myMenu.e = 0;
       myMenu.f = 0;
       myMenu.g = 0;
-      myMenu.h = 0;
       calLow = CAL_DiO2_LOW;
       calMid = CAL_DiO2_MID;
       calHigh = CAL_DiO2_HIGH;
@@ -346,53 +348,53 @@ void PrintCalMenu(byte ezo, byte all){
 
   pos = PrintProbesOfType(ezo, all, pos);
   pos++;
-  EscLocate(5, pos++);
-  PrintMenuKeyStd('A'); Serial.print(F("Clear Cal."));
-  pos = PrintShortLine(pos, 8);
+  //EscLocate(5, pos++);
+  //PrintMenuKeyStd('A'); Serial.print(F("Clear Cal."));
+  //pos = PrintShortLine(pos, 8);
 
-  if (myMenu.b){
+  if (myMenu.a){
     // 1-Point Cal.
     EscLocate(5, pos);
-    PrintMenuKeyStd('B'); Serial.print(F("Do 1-Pt. Cal."));
+    PrintMenuKeyStd('A'); Serial.print(F("Do 1-Pt. Cal."));
+  }
+  if (myMenu.b){
+    // 3-Point Cal.
+    EscLocate(26, pos);
+    PrintMenuKeyStd('B'); Serial.print(F("Do 2-Pt. Cal."));
   }
   if (myMenu.c){
     // 3-Point Cal.
-    EscLocate(26, pos);
-    PrintMenuKeyStd('C'); Serial.print(F("Do 2-Pt. Cal."));
-  }
-  if (myMenu.d){
-    // 3-Point Cal.
     EscLocate(47, pos);
-    PrintMenuKeyStd('D'); Serial.print(F("Do 3-Pt. Cal."));
+    PrintMenuKeyStd('C'); Serial.print(F("Do 3-Pt. Cal."));
   }
   pos++;
   pos = PrintShortLine(pos, 8);
 
-  if (myMenu.e){
+  if (myMenu.d){
     // Set Single/Mid Point
     EscLocate(5, pos);
-    PrintMenuKeyStd('E'); Serial.print(F("Set Single/Mid"));
+    PrintMenuKeyStd('D'); Serial.print(F("Set Single/Mid"));
     PrintPointEqual(pos++);
     PrintBoldFloat(calMid, 4, 2, ' ');
   }
-  if (myMenu.f){
+  if (myMenu.e){
     // Use Avg as Single/Mid Point
     EscLocate(5, pos);
-    PrintMenuKeyStd('F'); Serial.print(F("Set AVG As Mid"));
+    PrintMenuKeyStd('E'); Serial.print(F("Set AVG As Mid"));
     PrintPointEqual(pos++);
     PrintBoldFloat(calAvg, 4, 2, ' ');
   }
-  if (myMenu.g){
+  if (myMenu.f){
     // Set Low Point
     EscLocate(5, pos);
-    PrintMenuKeyStd('G'); Serial.print(F("Set Low"));
+    PrintMenuKeyStd('F'); Serial.print(F("Set Low"));
     PrintPointEqual(pos++);
     PrintBoldFloat(calLow, 4, 2, ' ');
 }
-  if (myMenu.h){
+  if (myMenu.g){
     // Set High Point
     EscLocate(5, pos);
-    PrintMenuKeyStd('H'); Serial.print(F("Set High"));
+    PrintMenuKeyStd('G'); Serial.print(F("Set High"));
     PrintPointEqual(pos++);
     PrintBoldFloat(calHigh, 4, 2, ' ');
   }
@@ -400,36 +402,54 @@ void PrintCalMenu(byte ezo, byte all){
 
   PrintMenuEnd(pos + 1);
 
-  pos = GetUserKey('h', 0);
+  pos = GetUserKey('g', 0);
+  calCnt = 0;
+  calTemp = 0;
   switch (pos){
   case 'a':
-    // Clear Cal
-    break;
-  case 'b':
     if (myMenu.b){
       // 1-Pt. Cal
-    }  
+      switch (ezoProbe[ezo].type){
+      case ezoEC:
+        // EC calibrations have to start with a dry-cal
+        // EzoSetCal("Cal,dry", ezo, all)
+        break;
+      default:
+        // all other types start direct with value...
+        break;
+      }  
+      switch (ezoProbe[ezo].type){
+      case ezoPH:
+      case ezoEC:
+        // Need on temperature to do cal right
+        // GetRtdAvg()
+        break;
+      default:
+        // No need on temp
+        break;
+      }  
+    }
     break;
-  case 'c':
+  case 'b':
     if (myMenu.c){
       // 2-Pt. Cal
     }  
     break;
-  case 'd':
+  case 'c':
     if (myMenu.d){
       // 3-Pt. Cal
     }  
     break;
-  case 'e':
+  case 'd':
     calMid = GetUserFloat(calMid);
     break;
-  case 'f':
+  case 'e':
     calMid = calAvg;
     break;
-  case 'g':
+  case 'f':
     calLow = GetUserFloat(calLow);
     break;
-  case 'h':
+  case 'g':
     calHigh = GetUserFloat(calHigh);
     break;
   default:

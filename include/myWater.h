@@ -183,7 +183,7 @@ long tooHigh[] = {22000L, 2000000L, 7000L, 750000L, 100001L, 99999};
 #define CAL_EC_RES 0L
 #define CAL_EC_LOW 84000L 
 #define CAL_EC_MID 1413000L
-#define CAL_EC_HIGH -1L
+#define CAL_EC_HIGH 1413000L
 
 #define CAL_PH_RES -1L
 #define CAL_PH_LOW 4000L 
@@ -374,6 +374,30 @@ void EzoSetAddress(byte ezo, byte addrNew, byte all){
             addrNew++;
             delay(300);
         }
+    }
+}
+
+int32_t GetRtdAvg(){
+
+    long avgTemp = 0;
+    byte avgCnt = 0;
+
+    for (byte i = 0; i < ezoCnt - INTERNAL_LEVEL_CNT; i++){
+        if (ezoProbe[i].type == ezoRTD){
+            // RTD
+            avgCnt++;
+            EzoStartValues(i);
+            EzoWaitValues(i);
+            EzoGetValues(i);
+            avgTemp += ezoProbe[i].value[0];
+        }
+    }
+    if (avgCnt){
+        // Real RTD exist
+        return avgTemp / avgCnt;
+    }
+    else{
+        return avg_RTD;
     }
 }
 

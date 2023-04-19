@@ -408,36 +408,53 @@ void PrintCalMenu(byte ezo, byte all){
   switch (pos){
   case 'a':
     if (myMenu.b){
-      // 1-Pt. Cal
-      switch (ezoProbe[ezo].type){
-      case ezoEC:
-        // EC calibrations have to start with a dry-cal
-        // EzoSetCal("Cal,dry", ezo, all)
-        break;
-      default:
-        // all other types start direct with value...
-        break;
-      }  
-      switch (ezoProbe[ezo].type){
-      case ezoPH:
-      case ezoEC:
-        // Need on temperature to do cal right
-        // GetRtdAvg()
-        break;
-      default:
-        // No need on temp
-        break;
-      }  
+      if (ezoProbe[ezo].type == ezoDiO2){
+        // medium: air    cmd: "Cal"
+      }
+      else if (ezoProbe[ezo].type == ezoPH){
+        // "Cal,mid,value"
+      }
+      else{
+        // (ORP & RTD) "Cal,value"
+      } 
     }
     break;
   case 'b':
     if (myMenu.c){
       // 2-Pt. Cal
+      switch (ezoProbe[ezo].type){
+      case ezoEC:
+        // "Cal,dry" (air)
+        // "Cal,value"
+        break;
+      case ezoDiO2:
+        // medium: air        cmd:  "Cal"
+        // medium: 0-liquid   cmd:  "Cal,0"        
+        break;
+      default:
+        // just pH
+        // "Cal,mid,value"
+        // "Cal,low,value"
+        break;
+      }  
     }  
     break;
   case 'c':
     if (myMenu.d){
       // 3-Pt. Cal
+      switch (ezoProbe[ezo].type){
+      case ezoEC:
+        // "Cal,dry" (air)
+        // "Cal,low,value"
+        // "Cal,high,value"
+        break;
+      default:
+        // just pH
+        // "Cal,mid,value"
+        // "Cal,low,value"
+        // "Cal,high,value"
+        break;
+      }  
     }  
     break;
   case 'd':

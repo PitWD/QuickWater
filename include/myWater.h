@@ -377,7 +377,7 @@ void EzoSetAddress(byte ezo, byte addrNew, byte all){
     }
 }
 
-int32_t GetRtdAvg(){
+int32_t GetRtdAvgForCal(){
 
     long avgTemp = 0;
     byte avgCnt = 0;
@@ -398,6 +398,65 @@ int32_t GetRtdAvg(){
     }
     else{
         return avg_RTD;
+    }
+}
+
+int32_t PrintValsForCal(byte ezo, byte all){
+    
+    long avgTemp = 25;
+    byte pos = 1;
+    byte startPos = 1;
+    byte timeOut = 120;
+
+START:
+
+    startPos = 0;
+    if (ezoProbe[ezo].type == ezoPH || ezoProbe[ezo].type == ezoEC){
+        // Need on temperature to do cal right
+        avgTemp = GetRtdAvgForCal();
+        avg_RTD = avgTemp;
+        Serial.println();
+        PrintFloat(avgTemp, 3, 2, ' ');
+        EscFaint(1);
+        Serial.print(F("°C"));
+        EscFaint(0);
+        EscCursorRight(3);
+        pos += 11;
+        startPos = 11;
+    }   // else no need on temp
+
+    // Read Vals of all to calibrate probes
+    for (int i = 0; i < ezoCnt - INTERNAL_LEVEL_CNT; i++){
+        if (EzoCheckOnSet(ezo,all, i)){
+            if (Fb(ezoHasCal[ezoProbe[ezo].type])){
+                // Has set-able calibration
+                EzoStartValues(i);
+                EzoWaitValues(i);
+                EzoGetValues(i);
+                PrintInt(i + 1, 2, '0');
+                Serial.print(F(": "));
+                PrintBoldFloat(ezoProbe[i].value[0], 4, 2, ' ');
+                PrintSpacer(0);
+                pos += 14;
+                if (pos > 66){
+                    Serial.println("");
+                    EscCursorRight(startPos);
+                    pos = startPos + 1;
+                }
+            }
+        }
+        if (DoTimer()){
+            timeOut--;
+        }
+        if (Serial.available() || !timeOut){
+            // Accept
+            if (Serial.read() != 27){
+                // valid return
+                return avgTemp;
+            }
+            return 0;
+        }
+        goto START;
     }
 }
 

@@ -89,7 +89,7 @@ const int ezoWait[] PROGMEM = {600, 600, 900, 900, 600, 0};
 const byte ezoValCnt[] PROGMEM = {1, 1, 1, 1, 2, 1};
 
 // if type has a calibration
-const byte ezoHasCal[] PROGMEM = {1, 1, 1, 1, 0, 0};
+const byte ezoHasCal[] PROGMEM = {1, 1, 1, 1, 1, 0};
 
 typedef struct ezoProbeSTRUCT{
     byte type;
@@ -175,30 +175,30 @@ long tooHigh[] = {22000L, 2000000L, 7000L, 750000L, 100001L, 99999};
 #define tooHigh_LVL tooHigh[5]
 
 
-#define CAL_RTD_RES -1L         // Value for Reset
-#define CAL_RTD_LOW 0L          // Value for LowPoint
-#define CAL_RTD_MID 21000L      // Value for MidPoint
-#define CAL_RTD_HIGH 100000L    // Value for HighPoint
+#define CAL_RTD_RES -1         // Value for Reset
+#define CAL_RTD_LOW 0          // Value for LowPoint
+#define CAL_RTD_MID 21000      // Value for MidPoint
+#define CAL_RTD_HIGH 100000    // Value for HighPoint
 
-#define CAL_EC_RES 0L
-#define CAL_EC_LOW 84000L 
-#define CAL_EC_MID 1413000L
-#define CAL_EC_HIGH 1413000L
+#define CAL_EC_RES 0
+#define CAL_EC_LOW 84000 
+#define CAL_EC_MID 1413000
+#define CAL_EC_HIGH 1413000
 
-#define CAL_PH_RES -1L
-#define CAL_PH_LOW 4000L 
-#define CAL_PH_MID 7000L
-#define CAL_PH_HIGH 10000L
+#define CAL_PH_RES -1
+#define CAL_PH_LOW 4000
+#define CAL_PH_MID 7000
+#define CAL_PH_HIGH 10000
 
-#define CAL_ORP_RES -1L
-#define CAL_ORP_LOW -1L 
-#define CAL_ORP_MID 225000L
-#define CAL_ORP_HIGH -1L
+#define CAL_ORP_RES -1
+#define CAL_ORP_LOW -1 
+#define CAL_ORP_MID 225000
+#define CAL_ORP_HIGH -1
 
-#define CAL_DiO2_RES 0L
-#define CAL_DiO2_LOW 0L 
-#define CAL_DiO2_MID 0L
-#define CAL_DiO2_HIGH 0L
+#define CAL_DiO2_RES 0
+#define CAL_DiO2_LOW 0 
+#define CAL_DiO2_MID 0
+#define CAL_DiO2_HIGH 0
 
 void DefaultProbesToRom(){
     // Save actual probe-constellation as Standard to Eeprom
@@ -352,12 +352,76 @@ void EzoReset(byte ezo, byte all){
     }   
 }
 
-void EzoSetCal(char *strCmd, byte ezo, byte all){
-    for (int i = 0; i < ezoCnt - INTERNAL_LEVEL_CNT; i++){
+int32_t compensateEC(int32_t EC, int32_t temp) {
+    //int32_t twoPercent = (EC / 50);
+    //int32_t tempDiff = (temp - 25000);
+    return EC + ((EC / 50) * (temp - 25000) / 1000);
+}
+int32_t compensatePH(int32_t pH, int32_t temp) {
+    return pH - ((pH / 588) * (temp - 25000) / 1000);
+}
+
+void EzoSetCalTemp(byte ezo, byte all){
+    for (byte i = 0; i < ezoCnt - INTERNAL_LEVEL_CNT; i++){
+        if (EzoCheckOnSet(ezo,all, i)){
+            IIcSetStr(ezoProbe[i].address, (char*)"T,25", 0);
+        }
+    }
+}
+
+void EzoSetCal(char *strCmd, byte ezo, byte all, int32_t value, byte calAction){
+    
+    // if !calAction
+    //    "Cal"
+    // else
+    // calAction = 1    = ",low,"   + value
+    //           = 2    = ",mid,"   + value
+    //           = 3    = ",high,"  + value
+    //           = 4    = ","   + value
+    //           = 5    = ","   + strCmd
+    //           = 6    = ",dry"
+    strcpy_P(iicStr, (PGM_P)F("Cal"));
+    if (calAction){
+        iicStr[3] = ',';
+        byte len = 4;
+        switch (calAction){
+        case 1:
+            // "low,"
+            strcpy_P(&iicStr[len], (PGM_P)F("low,"));
+            len = 8;
+            break;
+        case 2:
+            // "mid,"
+            strcpy_P(&iicStr[len], (PGM_P)F("mid,"));
+            len = 8;
+            break;
+        case 3:
+            // "high,"
+            strcpy_P(&iicStr[len], (PGM_P)F("high,"));
+            len = 9;
+            break;
+        case 5:
+            // strCmd
+            strcpy(&iicStr[len], strCmd);
+            break;
+        case 6:
+            // "dry"
+            strcpy_P(&iicStr[len], (PGM_P)F("dry"));
+            break;
+        }
+        if (calAction < 5){
+            // value
+            IntToFloatStr(value, 1, 2, '0');
+            strcpy(&iicStr[len], strHLP);
+        }
+    }
+    
+    for (byte i = 0; i < ezoCnt - INTERNAL_LEVEL_CNT; i++){
         if (EzoCheckOnSet(ezo,all, i)){
             if (Fb(ezoHasCal[ezoProbe[ezo].type])){
                 // Has set-able calibration
-                IIcSetStr(ezoProbe[i].address, strCmd, 0);
+                Serial.println((char*)iicStr);
+                IIcSetStr(ezoProbe[i].address, iicStr, 0);
                 ezoProbe[i].calibrated = 0;
             }
         }
@@ -411,6 +475,7 @@ int32_t PrintValsForCal(byte ezo, byte all){
 START:
 
     startPos = 0;
+    pos = 0;
     if (ezoProbe[ezo].type == ezoPH || ezoProbe[ezo].type == ezoEC){
         // Need on temperature to do cal right
         avgTemp = GetRtdAvgForCal();
@@ -426,23 +491,20 @@ START:
     }   // else no need on temp
 
     // Read Vals of all to calibrate probes
-    for (int i = 0; i < ezoCnt - INTERNAL_LEVEL_CNT; i++){
-        if (EzoCheckOnSet(ezo,all, i)){
-            if (Fb(ezoHasCal[ezoProbe[ezo].type])){
-                // Has set-able calibration
-                EzoStartValues(i);
-                EzoWaitValues(i);
-                EzoGetValues(i);
-                PrintInt(i + 1, 2, '0');
-                Serial.print(F(": "));
-                PrintBoldFloat(ezoProbe[i].value[0], 4, 2, ' ');
-                PrintSpacer(0);
-                pos += 14;
-                if (pos > 66){
-                    Serial.println("");
-                    EscCursorRight(startPos);
-                    pos = startPos + 1;
-                }
+    for (byte i = 0; i < ezoCnt - INTERNAL_LEVEL_CNT; i++){
+        if (EzoCheckOnSet(ezo, all, i)){
+            EzoStartValues(i);
+            EzoWaitValues(i);
+            EzoGetValues(i);
+            PrintInt(i + 1, 2, '0');
+            Serial.print(F(": "));
+            PrintBoldFloat(ezoProbe[i].value[0], 4, 2, ' ');
+            PrintSpacer(0);
+            pos += 14;
+            if (pos > 66){
+                Serial.println("");
+                EscCursorRight(startPos);
+                pos = startPos + 1;
             }
         }
         if (DoTimer()){
@@ -456,8 +518,9 @@ START:
             }
             return 0;
         }
-        goto START;
     }
+    goto START;
+    return 0;
 }
 
 int8_t EzoDoNext(){

@@ -509,10 +509,6 @@ void PrintCalMenu(byte ezo, byte all){
   }
 
   if (calTemp){
-    if (ezoProbe[ezo].type == ezoPH || ezoProbe[ezo].type == ezoEC){
-      // Set int. temp to 25°C
-      EzoSetCalTemp(ezo, all);
-    }
     EzoSetCal((char*)"", ezo, all, calVal[0], calAction[0]);
     for (byte i = 1; i < calCnt; i++){
       calTemp = PrintValsForCal(ezo, all);
@@ -531,7 +527,18 @@ void PrintCalMenu(byte ezo, byte all){
         //ESC
         i = calCnt;
       }
-    }    
+    } 
+    calCnt = ezoCnt;
+    EzoScan();
+    if (ezoCnt < calCnt){
+      // sometimes needed...
+      EzoScan();
+    }  
+    if (myDefault){
+      DefaultProbesToRom();
+    }
+    
+
   }
 
   if (pos > 0){
@@ -610,6 +617,11 @@ Start:
     SetAutoAddress();
     break;
   case 'h':
+    EzoReset(ezo, all);
+    if (ezoProbe[ezo].type == ezoPH || ezoProbe[ezo].type == ezoEC){
+      // Set int. temp to 25°C
+      EzoSetCalTemp(ezo, all);
+    }
     PrintCalMenu(ezo, all);
     break;
   case 'i':
@@ -1091,7 +1103,7 @@ Start:
       hlpTime += GetUserTime(myTime);
     }
     DeSerializeTime(hlpTime, &myDay, &myMonth, &myYear, &myHour, &myMin, &mySec);    
-    RTC_SetDateTime();
+    //RTC_SetDateTime();
     myTime = SerializeTime(myDay, myMonth, myYear, myHour, myMin, mySec);
     break;
   case 'd':

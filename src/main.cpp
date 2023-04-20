@@ -33,7 +33,7 @@ void setup() {
 
   delay(300);
 
-  RTC_GetDateTime();
+  // RTC_GetDateTime();
 
   delay(300);
 

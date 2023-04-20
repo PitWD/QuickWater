@@ -355,18 +355,20 @@ void EzoReset(byte ezo, byte all){
 int32_t compensateEC(int32_t EC, int32_t temp) {
     //int32_t twoPercent = (EC / 50);
     //int32_t tempDiff = (temp - 25000);
-    return EC + ((EC / 50) * (temp - 25000) / 1000);
+    return EC + ((EC / 58) * (temp - 25000) / 1000);
 }
 int32_t compensatePH(int32_t pH, int32_t temp) {
     return pH - ((pH / 588) * (temp - 25000) / 1000);
 }
 
 void EzoSetCalTemp(byte ezo, byte all){
+    
     for (byte i = 0; i < ezoCnt - INTERNAL_LEVEL_CNT; i++){
         if (EzoCheckOnSet(ezo,all, i)){
             IIcSetStr(ezoProbe[i].address, (char*)"T,25", 0);
         }
     }
+    
 }
 
 void EzoSetCal(char *strCmd, byte ezo, byte all, int32_t value, byte calAction){
@@ -420,7 +422,6 @@ void EzoSetCal(char *strCmd, byte ezo, byte all, int32_t value, byte calAction){
         if (EzoCheckOnSet(ezo,all, i)){
             if (Fb(ezoHasCal[ezoProbe[ezo].type])){
                 // Has set-able calibration
-                Serial.println((char*)iicStr);
                 IIcSetStr(ezoProbe[i].address, iicStr, 0);
                 ezoProbe[i].calibrated = 0;
             }
@@ -629,7 +630,7 @@ int8_t EzoDoNext(){
             if (!digitalRead(16)){
                 // High
                 ezoAct += 25;
-                ezoProbe[ezoCnt - INTERNAL_LEVEL_CNT].value[0] = 75L;
+                ezoProbe[ezoCnt - INTERNAL_LEVEL_CNT].value[0] = 75;
             }
             if (!digitalRead(17)){
                 // toHigh
@@ -797,15 +798,15 @@ void EzoScan(){
                                     break;
                                 case 'S':
                                     // software reset
-                                    Serial.print(F("Reset"));
+                                    Serial.print(F("RST"));
                                     break;
                                 case 'B':
                                     // brown out
-                                    Serial.print(F("BrownOut"));
+                                    Serial.print(F("BOut"));
                                     break;
                                 case 'W':
                                     // watchdog
-                                    Serial.print(F("Watchdog"));
+                                    Serial.print(F("WatchD"));
                                     break;
                                 case 'U':
                                     // Unknown

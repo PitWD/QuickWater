@@ -531,6 +531,7 @@ void PrintCalMenu(byte ezo, byte all){
     calCnt = ezoCnt;
     EzoScan();
     if (ezoCnt < calCnt){
+      // not all modules recognized
       // sometimes needed...
       EzoScan();
     }  
@@ -1020,69 +1021,74 @@ Start:
   pos = PrintProbesOfType(255, 1, pos);
 
   EscLocate(5, pos);
-  PrintMenuKeyStd('A'); Serial.print(F("Boot"));
-  EscLocate(16, pos);
+  PrintMenuKeyStd('A'); Serial.print(F("ReBoot"));
+  EscLocate(20, pos);
   PrintMenuKeyStd('B'); Serial.print(F("Date"));
-  EscLocate(27, pos);
+  EscLocate(33, pos);
   PrintMenuKeyStd('C'); Serial.print(F("Time"));
+  /*
   EscLocate(38, pos);
   PrintMenuKeyStd('D'); Serial.print(F("Addr. = "));
   PrintBoldInt(myAddress, 3, '0');
-  EscLocate(56, pos++);
-  PrintMenuKeyStd('E'); Serial.print(F("Speed = "));
+  */
+  EscLocate(46, pos++);
+  PrintMenuKeyStd('D'); Serial.print(F("Speed = "));
   EscBold(1);
   Serial.print(mySpeed);
   PrintShortLine(pos++, 8);
   EscLocate(5, pos);
+  /*
   PrintMenuKeyStd('F'); Serial.print(F("Boot4Terminal = "));
   if (myBoot){
     EscFaint(1);
-    Serial.print(F("False"));
+    PrintFalse();
   }
   else{
     EscBold(1);
-    Serial.print(F(" True"));
+    PrintTrue();
   }
   EscLocate(34, pos);
 
   PrintMenuKeyStd('G'); Serial.print(F("Boot4Slave = "));
   if (myBoot){
     EscBold(1);
-    Serial.print(F(" True"));
+    PrintTrue();
   }
   else{
     EscFaint(1);
-    Serial.print(F("False"));
+    PrintFalse();
   }
   EscLocate(59, pos++);
-
-  PrintMenuKey('H', 0, 0, 0, 1, (mySolarized), (!mySolarized));
-  Serial.print(F("Sol.Color"));
+  */
+  PrintMenuKey('E', 0, 0, 0, 1, (mySolarized), (!mySolarized));
+  Serial.print(F("FaintHack"));
   EscBold(0);
 
-  pos = PrintShortLine(pos++, 8);
 //****************************************************
-  EscLocate(5, pos);
-  PrintMenuKeyStd('I'); Serial.print(F("All..."));
-  EscLocate(17, pos);
-  PrintMenuKey('J', 0, 0, 0, 1, (myDefault), (!myDefault)); Serial.print(F("SetDefault"));
+  EscLocate(22, pos);
+  PrintMenuKeyStd('F'); Serial.print(F("All..."));
+  EscLocate(36, pos++);
+  PrintMenuKey('G', 0, 0, 0, 1, (myDefault), (!myDefault)); Serial.print(F("(Re)SetDefault"));
+  /*
   EscLocate(34, pos);
   PrintMenuKeyStd('K'); Serial.print(F("DelDef."));
-  EscLocate(47, pos);
-  PrintMenuKeyStd('L'); Serial.print(F("Values..."));
-  EscLocate(62, pos);
-  PrintMenuKeyStd('M'); Serial.print(F("Times..."));
+  */
+  pos = PrintShortLine(pos++, 8);
+  EscLocate(5, pos);
+  PrintMenuKeyStd('H'); Serial.print(F("Values..."));
+  EscLocate(22, pos);
+  PrintMenuKeyStd('I'); Serial.print(F("Times..."));
   
   PrintMenuEnd(pos + 1);
 
-  pos = GetUserKey('m', ezoCnt - INTERNAL_LEVEL_CNT);
+  pos = GetUserKey('i', ezoCnt - INTERNAL_LEVEL_CNT);
   switch (pos){
   case -1:
     // TimeOut
   case 0:
     // EXIT
     break;
-  case 'i':
+  case 'f':
     // All Menu
     PrintAllMenu();
     break;
@@ -1106,6 +1112,7 @@ Start:
     //RTC_SetDateTime();
     myTime = SerializeTime(myDay, myMonth, myYear, myHour, myMin, mySec);
     break;
+  /*
   case 'd':
     // Address
     myAddress = GetUserInt(myAddress);
@@ -1118,7 +1125,8 @@ Start:
       myToRom();
     }
     break;
-  case 'e':
+  */
+  case 'd':
     // Speed
     // Set Speed
     mySpeed = GetUserInt(mySpeed);
@@ -1131,25 +1139,30 @@ Start:
       myFromRom();
     }
     break;
-  case 'j':
-    // Save as default
-    myDefault = 1;
+  case 'g':
+    // (Re)SetDefault
+    myDefault = !myDefault;
     myToRom();
-    DefaultProbesToRom();
+    if (myDefault){
+      DefaultProbesToRom();
+    }  
     break;
+  /*
   case 'k':
     // Erase Defaults
     myDefault = 0;
     myToRom();
     break;
-  case 'l':
+  */
+  case 'h':
     // Values
     PrintValuesMenu();
     break;
-  case 'm':
+  case 'i':
     // Values
     PrintTimingsMenu();
     break;
+  /*
   case 'f':
     // Boot for Terminal
     myBoot = 0;
@@ -1160,7 +1173,8 @@ Start:
     myBoot = 1;
     myToRom();
     break;
-  case 'h':
+  */
+  case 'e':
     // Solarized
     mySolarized = !mySolarized;
     fgFaint = 90 + (mySolarized * 2);

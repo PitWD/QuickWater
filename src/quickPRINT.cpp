@@ -233,6 +233,17 @@ void PrintOFF(void){
 void PrintON(void){
   Serial.print(F(" ON"));
 }
+void PrintTrue(void){
+  Serial.print(F(" True"));
+}
+void PrintFalse(void){
+  Serial.print(F("False"));
+}
+void PrintCharInSpaces(char charIN){
+  Print1Space();
+  Serial.print(charIN);
+  Print1Space();
+}
 
 void PrintSpacer(byte bold){
   EscBold(0);

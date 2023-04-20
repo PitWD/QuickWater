@@ -666,7 +666,7 @@ int8_t EzoDoNext(){
 }
 
 void PrintColon(){
-    Serial.print(F(" : "));
+    PrintCharInSpaces(':');
 }
 void EzoScan(){
     // Scan for Ezo's
@@ -814,7 +814,7 @@ void EzoScan(){
                                     Serial.print(F("N/A"));
                                     break;
                                 }             
-                                Serial.print(F(" @ "));
+                                PrintCharInSpaces('@');
                                 Serial.print(&iicStr[10]);
                                 Serial.println(F(" V"));
                             }
@@ -829,7 +829,7 @@ void EzoScan(){
                             if (EzoGetValues(ezoCnt)){
                                 Serial.print(ezoProbe[ezoCnt].value[0]);
                                 for (byte i2 = 1; i2 < Fb(ezoValCnt[recEzo]); i2++){
-                                    Serial.print(F(" , "));
+                                    PrintCharInSpaces(',');
                                     Serial.print(ezoProbe[ezoCnt].value[i2]);
                                 }          
                                 Serial.println(F(""));

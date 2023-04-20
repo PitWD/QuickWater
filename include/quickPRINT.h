@@ -39,7 +39,9 @@ void PrintMenuNo(char number);
 
 void PrintOFF(void);
 void PrintON(void);
-
+void PrintTrue(void);
+void PrintFalse(void);
+void PrintCharInSpaces(char charIN);
 void PrintSpacer(byte bold);
 
 #endif

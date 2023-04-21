@@ -220,6 +220,9 @@ void PrintMenuKey(char key, byte space, char leadChar, char trailChar, byte colo
   }
   
 }
+void PrintMenuKeyBoldFaint(char key, byte bold, byte faint){
+  PrintMenuKey(key, 0, 0, 0, 1, bold, faint);
+}
 void PrintMenuKeyStd(char key){
   PrintMenuKey(key, 0, 0, 0, 1, 0, 0);
 }

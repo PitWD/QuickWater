@@ -352,12 +352,10 @@ void EzoReset(byte ezo, byte all){
     }   
 }
 
-int32_t compensateEC(int32_t EC, int32_t temp) {
-    //int32_t twoPercent = (EC / 50);
-    //int32_t tempDiff = (temp - 25000);
+int32_t CompensateEC(int32_t EC, int32_t temp) {
     return EC + ((EC / 58) * (temp - 25000) / 1000);
 }
-int32_t compensatePH(int32_t pH, int32_t temp) {
+int32_t CompensatePH(int32_t pH, int32_t temp) {
     return pH - ((pH / 588) * (temp - 25000) / 1000);
 }
 

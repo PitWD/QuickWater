@@ -99,6 +99,51 @@ byte PrintAllMenuOpt1(byte pos){
 
 }
 
+byte SwitchAllAndProbeMenu(int8_t pos, byte ezo, byte all){
+  
+  switch (pos){
+  case -1:
+    // TimeOut
+  case 0:
+    // Return
+    break;
+  case 'a':
+    // Factory Reset for All
+    EzoReset(ezo, all);
+    break;
+  case 'c':
+    // Delete all names
+    EzoSetName((char*)"", ezo, all, 0);
+    break;
+  case 'd':
+    // Edit Auto Name
+    EditAutoName();
+    break;
+  case 'e':
+    // Set AutoNames
+    EzoSetName(strDefault, ezo, all, 1);
+    break;
+  case 'f':
+    // Edit 1st Address
+    EditAutoAddress();
+    break;
+  case 'g':
+    // Set Addresses
+    SetAutoAddress();
+    // direct back to main
+    pos = 0;
+    break;
+  case 'b':
+    // Clear calibration
+    EzoSetCal((char*)"clear", ezo, all, 0, 5);
+    break;
+  default:
+    return 0;
+    break;
+  }
+  return 1;
+}
+
 void PrintAllMenu(){
 
   adrDefault = 33;
@@ -113,6 +158,8 @@ Start:
 
   pos = GetUserKey('g', -1);
 
+  SwitchAllAndProbeMenu(pos, 0, 2);
+  /*
   switch (pos){
   case -1:
     // TimeOut
@@ -152,6 +199,7 @@ Start:
   default:
     break;
   }
+  */
 
   if (pos > 0){
     goto Start;
@@ -237,7 +285,7 @@ void PrintPointEqual(uint8_t pos){
 
 void PrintCalMenu(byte ezo, byte all){
 
-  static byte ImInside = 0;
+  byte ImInside = 0;
 
   int32_t calLow = 0;      // Value for LowPoint
   int32_t calMid = 0;      // Value for MidPoint
@@ -267,6 +315,7 @@ void PrintCalMenu(byte ezo, byte all){
   myMenu.e = 1;
   myMenu.f = 1;
   myMenu.g = 1;
+
 
   Start:
 
@@ -340,7 +389,16 @@ void PrintCalMenu(byte ezo, byte all){
   default:
     break;
   }
+  
   int8_t pos = PrintMenuTop(iicStr);
+  
+  if (!ImInside){
+    EzoReset(ezo, all);
+    if (ezoProbe[ezo].type == ezoPH || ezoProbe[ezo].type == ezoEC){
+      // Set int. temp to 25°C
+      EzoSetCalTemp(ezo, all);
+    }
+  }  
   ImInside = 1;
 
   pos = PrintProbesOfType(ezo, all, pos);
@@ -419,7 +477,7 @@ void PrintCalMenu(byte ezo, byte all){
         else if (ezoProbe[ezo].type == ezoPH){
           // "Cal,mid,value"
           calAction[0] = 2;
-          calVal[0] = compensatePH(calMid, calTemp);
+          calVal[0] = CompensatePH(calMid, calTemp);
         }
         else{
           // RTD & ORP "Cal,value"
@@ -453,7 +511,7 @@ void PrintCalMenu(byte ezo, byte all){
           // "Cal,mid,value"
           // "Cal,low,value"
           calAction[0] = 2;
-          calVal[0] = compensatePH(calMid, calTemp);   // !!! MODIFY !!!
+          calVal[0] = CompensatePH(calMid, calTemp);   // !!! MODIFY !!!
           calAction[1] = 2;
           calVal[1] = calLow;
           break;
@@ -473,7 +531,7 @@ void PrintCalMenu(byte ezo, byte all){
         // "Cal,high,value"
         calAction[0] = 6;
         calAction[1] = 4;
-        calVal[1] = compensateEC(calLow, calTemp);   // !!! MODIFY !!!
+        calVal[1] = CompensateEC(calLow, calTemp);   // !!! MODIFY !!!
         calAction[2] = 4;
         calVal[2] = calHigh;
         break;
@@ -483,7 +541,7 @@ void PrintCalMenu(byte ezo, byte all){
         // "Cal,low,value"
         // "Cal,high,value"
         calAction[0] = 2;
-        calVal[0] = compensatePH(calMid, calTemp);   // !!! MODIFY !!!
+        calVal[0] = CompensatePH(calMid, calTemp);   // !!! MODIFY !!!
         calAction[1] = 2;
         calVal[1] = calLow;
         calAction[2] = 2;
@@ -515,11 +573,11 @@ void PrintCalMenu(byte ezo, byte all){
       if (calTemp){
         if (ezoProbe[ezo].type == ezoPH){
           // pH Temp - Compensation
-          calVal[i] = compensatePH(calVal[i], calTemp);
+          calVal[i] = CompensatePH(calVal[i], calTemp);
         }
         else if (ezoProbe[ezo].type == ezoEC){
           // EC Temp - Compensation
-          calVal[i] = compensateEC(calVal[i], calTemp);
+          calVal[i] = CompensateEC(calVal[i], calTemp);
         }
         EzoSetCal((char*)"", ezo, all, calVal[i], calAction[i]);
       }
@@ -538,15 +596,12 @@ void PrintCalMenu(byte ezo, byte all){
     if (myDefault){
       DefaultProbesToRom();
     }
-    
-
   }
 
   if (pos > 0){
     goto Start;
   }
   
-  ImInside = 0;
 }
 
 void PrintProbeMenu(byte ezo){
@@ -555,7 +610,6 @@ void PrintProbeMenu(byte ezo){
 
     DummyNameToStrDefault();
     adrDefault = 33;
-    all = 0;
 
 Start:
 
@@ -569,28 +623,38 @@ Start:
   PrintMenuKeyStd('H'); Serial.print(F("Calibration(s)..."));
   EscLocate(30, pos);
   PrintMenuKeyStd('I'); 
-  if (!all){
-    EscBold(1);
-  }
-  else{
-    EscFaint(1);
-  }
   Serial.print(F("Select Single"));
   EscLocate(51, pos++);
   PrintMenuKeyStd('J');
-  if (all){
-    EscBold(1);
-  }
-  else{
-    EscFaint(1);
-  }
   Serial.print(F("Select ALL"));
-  EscBold(0);
+  //EscBold(0);
 
   PrintMenuEnd(pos);
 
   pos = GetUserKey('j', 9);
-  switch (pos){
+
+  if (!SwitchAllAndProbeMenu(pos, ezo, all)){
+    switch (pos){
+    case 'h':
+      PrintCalMenu(ezo, all);
+      break;
+    case 'i':
+      // Single
+      all = 0;
+      break;
+    case 'j':
+      // All
+      all = 1;
+      break;
+    default:
+      // Select another...
+      ezo = pos - 49;
+      break;
+    }
+  }
+   
+  
+  /*
   case -1:
     // TimeOut
   case 0:
@@ -617,27 +681,8 @@ Start:
   case 'g':
     SetAutoAddress();
     break;
-  case 'h':
-    EzoReset(ezo, all);
-    if (ezoProbe[ezo].type == ezoPH || ezoProbe[ezo].type == ezoEC){
-      // Set int. temp to 25°C
-      EzoSetCalTemp(ezo, all);
-    }
-    PrintCalMenu(ezo, all);
-    break;
-  case 'i':
-    // Single
-    all = 0;
-    break;
-  case 'j':
-    // All
-    all = 1;
-    break;
-  default:
-    // Select another...
-    ezo = pos - 49;
-    break;
-  }
+  */
+
   if (pos > 0){
     goto Start;
   }
@@ -873,6 +918,13 @@ byte PrintWaterValsHlp(byte pos, byte posX, byte ezotype, byte lz, byte dp, int 
   return posAct;
 
 }
+
+byte GetPosMax(byte posAct, byte posMax){
+  if (posAct > posMax){
+    return posAct;
+  }
+  return posMax;
+}
 byte PrintWaterVals(byte pos){
 
   byte posMax = 0;
@@ -881,29 +933,19 @@ byte PrintWaterVals(byte pos){
   posMax = PrintWaterValsHlp(pos, 5, ezoRTD, 2, 2, 1); //, &avg_RTD);
 
   posAct = PrintWaterValsHlp(pos, 18, ezoEC, 4, 0, 1000); //, &avg_EC);
-  if (posAct > posMax){
-    posMax = posAct;
-  }
+  posMax = GetPosMax(posAct, posMax);
 
   posAct = PrintWaterValsHlp(pos, 30, ezoPH, 2, 2, 1); //, &avg_pH);
-  if (posAct > posMax){
-    posMax = posAct;
-  }
+  posMax = GetPosMax(posAct, posMax);
 
   posAct = PrintWaterValsHlp(pos, 42, ezoORP, 4, 2, 1); //, &avg_ORP);
-  if (posAct > posMax){
-    posMax = posAct;
-  }
+  posMax = GetPosMax(posAct, posMax);
 
   posAct = PrintWaterValsHlp(pos, 54, ezoDiO2, 3, 2, 1); //, &avg_O2);
-  if (posAct > posMax){
-    posMax = posAct;
-  }
+  posMax = GetPosMax(posAct, posMax);
 
   posAct = PrintWaterValsHlp(pos, 69, ezoLVL, 3, 2, 1); //, &avg_O2);
-  if (posAct > posMax){
-    posMax = posAct;
-  }
+  posMax = GetPosMax(posAct, posMax);
 
   return pos + posMax;
 
@@ -990,7 +1032,6 @@ void PrintLoopMenu(){
   //Serial.print(F(" | Temperature | Conductivity |     pH     |    Redox    |     O2     |"));
   pos = PrintLine(pos, 3, 77);
     
-  
   //EscBold(1);
   EscBold(0);
 
@@ -1060,15 +1101,17 @@ Start:
   }
   EscLocate(59, pos++);
   */
-  PrintMenuKey('E', 0, 0, 0, 1, (mySolarized), (!mySolarized));
-  Serial.print(F("FaintHack"));
+  PrintMenuKeyBoldFaint('E', (mySolarized), (!mySolarized)); Serial.print(F("FaintHack"));
+  //PrintMenuKey('E', 0, 0, 0, 1, (mySolarized), (!mySolarized));
+  //Serial.print(F("FaintHack"));
   EscBold(0);
 
 //****************************************************
   EscLocate(22, pos);
   PrintMenuKeyStd('F'); Serial.print(F("All..."));
   EscLocate(36, pos++);
-  PrintMenuKey('G', 0, 0, 0, 1, (myDefault), (!myDefault)); Serial.print(F("(Re)SetDefault"));
+  PrintMenuKeyBoldFaint('G', (myDefault), (!myDefault)); Serial.print(F("(Re)SetDefault"));
+  //PrintMenuKey('G', 0, 0, 0, 1, (myDefault), (!myDefault)); Serial.print(F("(Re)SetDefault"));
   /*
   EscLocate(34, pos);
   PrintMenuKeyStd('K'); Serial.print(F("DelDef."));

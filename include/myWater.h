@@ -104,18 +104,19 @@ typedef struct ezoProbeSTRUCT{
 ezoProbeSTRUCT ezoProbe[EZO_MAX_PROBES];
 
 // Delay & ActionTimes
-/*
-uint16_t delayTimes[] = {2700, 2400, 2400, 0, 0, 3600};
-uint16_t actionTooLow[] = {900, 10, 6, 0, 0, 30};
-uint16_t actionLow[] = {450, 5, 3, 0, 15, 15};
-uint16_t actionHigh[] = {900, 30, 3, 0, 0, 0};
-uint16_t actionTooHigh[] = {1800, 60, 6, 0, 0, 15};
-*/
-uint16_t delayTimes[] = {180, 120, 60, 0, 0, 10};
-uint16_t actionTooLow[] = {30, 20, 10, 0, 0, 3};
-uint16_t actionLow[] = {15, 10, 5, 0, 0, 1};
-uint16_t actionHigh[] = {15, 10, 5, 0, 0, 1};
-uint16_t actionTooHigh[] = {30, 20, 10, 0, 0, 3};
+#if USE_DEBUG_VALS
+    uint16_t delayTimes[] = {180, 120, 60, 0, 0, 10};
+    uint16_t actionTooLow[] = {30, 20, 10, 0, 0, 3};
+    uint16_t actionLow[] = {15, 10, 5, 0, 0, 1};
+    uint16_t actionHigh[] = {15, 10, 5, 0, 0, 1};
+    uint16_t actionTooHigh[] = {30, 20, 10, 0, 0, 3};
+#else
+    uint16_t delayTimes[] = {2700, 2400, 2400, 0, 0, 3600};
+    uint16_t actionTooLow[] = {900, 10, 6, 0, 0, 30};
+    uint16_t actionLow[] = {450, 5, 3, 0, 15, 15};
+    uint16_t actionHigh[] = {900, 30, 3, 0, 0, 0};
+    uint16_t actionTooHigh[] = {1800, 60, 6, 0, 0, 15};
+#endif
 
 // Counter for Low/High
 uint32_t tooLowSince[6];

@@ -5,8 +5,10 @@
 #define SMALL_GetUserVal 0  
 // ASCII IIC protocol
 #define USE_ATLAS_PRTCL 1
-// RTC
+// Hardware RTC
 #define USE_RTC 0
+// Debug Values...
+#define USE_DEBUG_VALS 0
 
 // IIC IO/Buffer & Global HLP Strings
 #define IIC_STR_LEN 34

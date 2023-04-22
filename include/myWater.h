@@ -103,6 +103,20 @@ typedef struct ezoProbeSTRUCT{
 }ezoProbeSTRUCT;
 ezoProbeSTRUCT ezoProbe[EZO_MAX_PROBES - INTERNAL_LEVEL_CNT];
 
+struct actionSTRUCT{
+    uint16_t Delay;
+    uint16_t TooLow;
+    uint16_t Low;
+    uint16_t High;
+    uint16_t TooHigh;
+}action[6];
+
+struct temporarySTRUCT{
+    uint16_t Low[6];
+    uint16_t High[6];
+    char Name[17];
+}temporary;
+
 // Delay & ActionTimes
 #if USE_DEBUG_VALS
     uint16_t delayTimes[] = {180, 120, 60, 0, 0, 10};
@@ -111,23 +125,26 @@ ezoProbeSTRUCT ezoProbe[EZO_MAX_PROBES - INTERNAL_LEVEL_CNT];
     uint16_t actionHigh[] = {15, 10, 5, 0, 0, 1};
     uint16_t actionTooHigh[] = {30, 20, 10, 0, 0, 3};
 #else
+    /*
     uint16_t delayTimes[6]; // = {2700, 2400, 2400, 0, 0, 3600};
     uint16_t actionTooLow[6]; // = {900, 10, 6, 0, 0, 30};
     uint16_t actionLow[6]; // = {450, 5, 3, 0, 15, 15};
     uint16_t actionHigh[6]; // = {900, 30, 3, 0, 0, 0};
     uint16_t actionTooHigh[6]; // = {1800, 60, 6, 0, 0, 15};
-
+    */
 #endif
 
+/*
 // Temporary Runtimes - usable as premix...
 uint16_t temporaryLow[6];/* = {
     {0, 60, 3, 0, 0, 900},
     {0, 90, 4, 0, 0, 900},
     {0, 120, 6, 0, 0, 1800},
     {0, 180, 8, 0, 0, 1800},
-};*/
+};*//*
 uint16_t temporaryHigh[6]; //  = {0, 0, 0, 0, 0, 0};
 char temporaryName[17];
+*/
 
 // Counter for Low/High
 uint32_t tooLowSince[6];
@@ -218,14 +235,17 @@ void DefaultProbesToRom(){
     // 27 byte * 13 = 351
     EEPROM.put(0, ezoProbe);
 }
-void ActionTimesToRom(int set){
+void ActionTimesToRom(void){ //(int set){
     // Save Action Model (2x60 byte / end @ 471)
+    /*
     set *= 60;
     EEPROM.put(351 + set, delayTimes);
     EEPROM.put(363 + set, actionTooLow);
     EEPROM.put(375 + set, actionLow);
     EEPROM.put(387 + set, actionHigh);
     EEPROM.put(399 + set, actionTooHigh);
+    */
+   EEPROM.put(351, action);
 }
 void LowHighValsToRom(int set){
     // Save tooLow TO tooHigh model (2x96 byte / end @ 663 )
@@ -238,21 +258,26 @@ void LowHighValsToRom(int set){
 void ManualTimesToRom(int set){
     // Save temporay/manual times (4x41 byte / end @ 868)
     set *= 41;
+    /*
     EEPROM.put(663 + set, temporaryLow);
-    EEPROM.put(675 + set, temporaryLow);
+    EEPROM.put(675 + set, temporaryHigh);
     EEPROM.put(687 + set, temporaryName);
+    */
+    EEPROM.put(663 + set, temporary);
 }
 
 void DefaultProbesFromRom(){
     EEPROM.get(0, ezoProbe);
 }
-void ActionTimesFromRom(int set){
+void ActionTimesFromRom(void){ //(int set){
+    /*
     set *= 60;
     EEPROM.get(351 + set, delayTimes);
     EEPROM.get(363 + set, actionTooLow);
     EEPROM.get(375 + set, actionLow);
     EEPROM.get(387 + set, actionHigh);
     EEPROM.get(399 + set, actionTooHigh);
+    */
 }
 void LowHighValsFromRom(int set){
     set *= 96;
@@ -263,9 +288,12 @@ void LowHighValsFromRom(int set){
 }
 void ManualTimesFromRom(int set){
     set *= 41;
+    /*
     EEPROM.get(663 + set, temporaryLow);
     EEPROM.get(675 + set, temporaryLow);
     EEPROM.get(687 + set, temporaryName);
+    */
+    EEPROM.get(663 + set, temporary);
 }
 
 

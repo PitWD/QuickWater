@@ -1,7 +1,7 @@
 #include "quicklib.h"
 #include <EEPROM.h>
 
-#define EZO_MAX_PROBES 14
+#define EZO_MAX_PROBES 13
 #define EZO_MAX_VALUES 1        // 3 for full HUM / 5 for full RGB...
 #define EZO_1st_ADDRESS 32
 #define EZO_LAST_ADDRESS 127
@@ -92,6 +92,7 @@ const byte ezoValCnt[] PROGMEM = {1, 1, 1, 1, 2, 1};
 const byte ezoHasCal[] PROGMEM = {1, 1, 1, 1, 1, 0};
 
 typedef struct ezoProbeSTRUCT{
+    // 27 Byte * 12(+1) Probes Max = 351 Byte
     byte type;
     byte calibrated;
     byte error;            // 0=OK, 1=processing, 2=syntax, 3=IIC, unknown
@@ -101,17 +102,30 @@ typedef struct ezoProbeSTRUCT{
     int32_t value[EZO_MAX_VALUES];
     //long valueLast[EZO_MAX_VALUES];
 }ezoProbeSTRUCT;
-ezoProbeSTRUCT ezoProbe[EZO_MAX_PROBES - INTERNAL_LEVEL_CNT];
+ezoProbeSTRUCT ezoProbe[EZO_MAX_PROBES];
+
+struct limitsSTRUCT{
+    // 120 Byte
+    int32_t FailSave[6];
+    int32_t TooLow[6];
+    int32_t Low[6];
+    int32_t High[6];
+    int32_t TooHigh[6];
+};
 
 struct actionSTRUCT{
-    uint16_t Delay;
-    uint16_t TooLow;
-    uint16_t Low;
-    uint16_t High;
-    uint16_t TooHigh;
-}action[6];
+    // 197 Byte * 2 Modes = 394 Byte
+    uint16_t Delay[6];
+    uint16_t TooLow[6];
+    uint16_t Low[6];
+    uint16_t High[6];
+    uint16_t TooHigh[6];
+    limitsSTRUCT limits;
+    char Name[17];
+}action;
 
 struct temporarySTRUCT{
+    // 41 Byte * 4 Sets = 164 Byte
     uint16_t Low[6];
     uint16_t High[6];
     char Name[17];
@@ -164,45 +178,45 @@ long avgVal[6]; //  = {21000L, 1250000L, 6000L, 225000L, 99999L, 66666L};
 #define avg_LVL avgVal[5]
 
 
-long failSave[6]; //  = {21000L, 1250000L, 6000L, 225000L, 99999L, 66666L};
-#define failSave_RTD failSave[0]
-#define failSave_EC failSave[1]
-#define failSave_pH failSave[2]
-#define failSave_ORP failSave[3]
-#define failSave_O2 failSave[4]
-#define failSave_LVL failSave[5]
+//long failSave[6]; //  = {21000L, 1250000L, 6000L, 225000L, 99999L, 66666L};
+#define failSave_RTD action.limits.FailSave[0]
+#define failSave_EC action.limits.FailSave[1]
+#define failSave_pH action.limits.FailSave[2]
+#define failSave_ORP action.limits.FailSave[3]
+#define failSave_O2 action.limits.FailSave[4]
+#define failSave_LVL action.limits.FailSave[5]
 
-long tooLow[6]; //  = {15000L, 1000000L, 5500L, -750000L, 50000L, 24999L};
-#define tooLow_RTD tooLow[0]
-#define tooLow_EC tooLow[1]
-#define tooLow_pH tooLow[2]
-#define tooLow_ORP tooLow[3]
-#define tooLow_O2 tooLow[4]
-#define tooLow_LVL tooLow[5]
+// long tooLow[6]; //  = {15000L, 1000000L, 5500L, -750000L, 50000L, 24999L};
+#define tooLow_RTD action.limits.TooLow[0]
+#define tooLow_EC action.limits.TooLow[1]
+#define tooLow_pH action.limits.TooLow[2]
+#define tooLow_ORP action.limits.TooLow[3]
+#define tooLow_O2 action.limits.TooLow[4]
+#define tooLow_LVL action.limits.TooLow[5]
 
-long low[6]; //  = {17000L, 1250000L, 5800L, -500000L, 66666L, 49999L};
-#define low_RTD low[0]
-#define low_EC low[1]
-#define low_pH low[2]
-#define low_ORP low[3]
-#define low_O2 low[4]
-#define low_LVL low[5]
+// long low[6]; //  = {17000L, 1250000L, 5800L, -500000L, 66666L, 49999L};
+#define low_RTD action.limits.Low[0]
+#define low_EC action.limits.Low[1]
+#define low_pH action.limits.Low[2]
+#define low_ORP action.limits.Low[3]
+#define low_O2 action.limits.Low[4]
+#define low_LVL action.limits.Low[5]
 
-long high[6]; //  = {20000L, 1750000L, 6800L, 500000L, 100001L, 74999L};
-#define high_RTD high[0]
-#define high_EC high[1]
-#define high_pH high[2]
-#define high_ORP high[3]
-#define high_O2 high[4]
-#define high_LVL high[5]
+// long high[6]; //  = {20000L, 1750000L, 6800L, 500000L, 100001L, 74999L};
+#define high_RTD action.limits.High[0]
+#define high_EC action.limits.High[1]
+#define high_pH action.limits.High[2]
+#define high_ORP action.limits.High[3]
+#define high_O2 action.limits.High[4]
+#define high_LVL action.limits.High[5]
 
-long tooHigh[6]; //  = {22000L, 2000000L, 7000L, 750000L, 100001L, 99999};
-#define tooHigh_RTD tooHigh[0]
-#define tooHigh_EC tooHigh[1]
-#define tooHigh_pH tooHigh[2]
-#define tooHigh_ORP tooHigh[3]
-#define tooHigh_O2 tooHigh[4]
-#define tooHigh_LVL tooHigh[5]
+// long tooHigh[6]; //  = {22000L, 2000000L, 7000L, 750000L, 100001L, 99999};
+#define tooHigh_RTD action.limits.TooHigh[0]
+#define tooHigh_EC action.limits.TooHigh[1]
+#define tooHigh_pH action.limits.TooHigh[2]
+#define tooHigh_ORP action.limits.TooHigh[3]
+#define tooHigh_O2 action.limits.TooHigh[4]
+#define tooHigh_LVL action.limits.TooHigh[5]
 
 
 #define CAL_RTD_RES -1         // Value for Reset
@@ -235,65 +249,76 @@ void DefaultProbesToRom(){
     // 27 byte * 13 = 351
     EEPROM.put(0, ezoProbe);
 }
-void ActionTimesToRom(void){ //(int set){
-    // Save Action Model (2x60 byte / end @ 471)
+void ActionTimesToRom(int set){ //(int set){
+    // Save Action Model (2x197 byte / end @ 745)
+    //set *= 197;
     /*
-    set *= 60;
     EEPROM.put(351 + set, delayTimes);
     EEPROM.put(363 + set, actionTooLow);
     EEPROM.put(375 + set, actionLow);
     EEPROM.put(387 + set, actionHigh);
     EEPROM.put(399 + set, actionTooHigh);
     */
-   EEPROM.put(351, action);
+    EEPROM.put(351 + set * 197, action);
 }
+/*
 void LowHighValsToRom(int set){
     // Save tooLow TO tooHigh model (2x96 byte / end @ 663 )
     set *= 96;
+    /*
     EEPROM.put(471 + set, tooLow);
     EEPROM.put(495 + set, low);
     EEPROM.put(519 + set, high);
     EEPROM.put(543 + set, tooHigh);
+    *//*
+    EEPROM.put(471 + set, limits);
 }
+*/
 void ManualTimesToRom(int set){
-    // Save temporay/manual times (4x41 byte / end @ 868)
-    set *= 41;
+    // Save temporay/manual times (4x41 byte / end @ 909)
+    //set *= 41;
     /*
     EEPROM.put(663 + set, temporaryLow);
     EEPROM.put(675 + set, temporaryHigh);
     EEPROM.put(687 + set, temporaryName);
     */
-    EEPROM.put(663 + set, temporary);
+    EEPROM.put(745 + set * 41, temporary);
 }
 
 void DefaultProbesFromRom(){
     EEPROM.get(0, ezoProbe);
 }
-void ActionTimesFromRom(void){ //(int set){
+void ActionTimesFromRom(int set){ //(int set){
+    //set *= 197;
     /*
-    set *= 60;
     EEPROM.get(351 + set, delayTimes);
     EEPROM.get(363 + set, actionTooLow);
     EEPROM.get(375 + set, actionLow);
     EEPROM.get(387 + set, actionHigh);
     EEPROM.get(399 + set, actionTooHigh);
     */
+   EEPROM.get(351 + set * 197, action);
 }
+/*
 void LowHighValsFromRom(int set){
     set *= 96;
+    /*
     EEPROM.get(471 + set, tooLow);
     EEPROM.get(495 + set, low);
     EEPROM.get(519 + set, high);
     EEPROM.get(543 + set, tooHigh);
+    *//*
+    EEPROM.get(471 + set, limits);
 }
+*/
 void ManualTimesFromRom(int set){
-    set *= 41;
+    //set *= 41;
     /*
     EEPROM.get(663 + set, temporaryLow);
     EEPROM.get(675 + set, temporaryLow);
     EEPROM.get(687 + set, temporaryName);
     */
-    EEPROM.get(663 + set, temporary);
+    EEPROM.get(745 + set * 41, temporary);
 }
 
 
@@ -320,7 +345,7 @@ void SetAvgColor(long avg, long tooLow, long low, long high, long tooHigh){
 void SetAvgColorEZO(byte ezoType){
     // - 46 Flash (5x used)
     // +128 Ram
-    SetAvgColor(avgVal[ezoType], tooLow[ezoType], low[ezoType], high[ezoType], tooHigh[ezoType]);
+    SetAvgColor(avgVal[ezoType], action.limits.TooLow[ezoType], action.limits.Low[ezoType], action.limits.High[ezoType], action.limits.TooHigh[ezoType]);
 }
 
 char EzoStartValues(byte ezo){

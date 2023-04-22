@@ -26,7 +26,8 @@ void setup() {
 
   myFromRom();
   ManualTimesFromRom(my.Temporary);
-  LowHighValsFromRom(my.Model);
+  //LowHighValsFromRom(my.Model);
+  ActionTimesFromRom(my.Model);
 
   Serial.begin(my.Speed);
 
@@ -81,9 +82,9 @@ uint32_t checkAction(uint32_t valIN, uint32_t actionTime, byte ezotype, byte isL
   *backSet = 0;
 
   // If something is OnAction
-  if (ValidTimeSince(valIN) > action[ezotype].Delay){
+  if (ValidTimeSince(valIN) > action.Delay[ezotype]){
     // Action Valid
-    if ((ValidTimeSince(valIN) - action[ezotype].Delay) > actionTime){
+    if ((ValidTimeSince(valIN) - action.Delay[ezotype]) > actionTime){
       // ActionTime done
       lastAction[ezotype] = myTime;
       r = 0;
@@ -135,10 +136,10 @@ void loop() {
 
       // Check On needed/pending actions
       preToo = tooLowSince[i];
-      tooLowSince[i] = checkAction(tooLowSince[i], action[i].TooLow, i, 1, &err);
+      tooLowSince[i] = checkAction(tooLowSince[i], action.TooLow[i], i, 1, &err);
       if (!err){
         // TooLow isn't in Action...
-        lowSince[i] = checkAction(lowSince[i], action[i].Low, i, 1, &err);
+        lowSince[i] = checkAction(lowSince[i], action.Low[i], i, 1, &err);
         if (preToo != tooLowSince[i]){ 
           // after finished tooXYZ-Action - reset lowSince, too
           lowSince[i] = 0;
@@ -160,10 +161,10 @@ void loop() {
       }
       
       preToo = tooHighSince[i];
-      tooHighSince[i] = checkAction(tooHighSince[i], action[i].TooHigh, i, 0, &err);
+      tooHighSince[i] = checkAction(tooHighSince[i], action.TooHigh[i], i, 0, &err);
       if (!err){
         // TooHigh isn't in Action...
-        highSince[i] = checkAction(highSince[i], action[i].High, i, 0, &err);
+        highSince[i] = checkAction(highSince[i], action.High[i], i, 0, &err);
         if (preToo != tooHighSince[i]){ 
           // after finished tooXYZ-Action - reset highSince, too
           highSince[i] = 0;
@@ -190,7 +191,7 @@ void loop() {
       }
       
       // Set / Reset Since-Variables depending on high/low state...
-      switch (GetAvgState(avgVal[i], tooLow[i], low[i], high[i], tooHigh[i])){
+      switch (GetAvgState(avgVal[i], action.limits.TooLow[i], action.limits.Low[i], action.limits.High[i], action.limits.TooHigh[i])){
       case fgCyan:
         // tooLow
         highSince[i] = 0;

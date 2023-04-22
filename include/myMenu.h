@@ -772,19 +772,19 @@ Start:
     PrintCentered(Fa(ezoStrLongType[i]), 9);
     PrintSpacer(0);
     PrintSmallMenuKey('a' + i);
-    PrintFloat(failSave[i], 4, 2, ' ');
+    PrintFloat(action.limits.FailSave[i], 4, 2, ' ');
     PrintSpacer(0);
     PrintSmallMenuKey('g' + i);
-    PrintFloat(tooLow[i], 4, 2, ' ');
+    PrintFloat(action.limits.TooLow[i], 4, 2, ' ');
     PrintSpacer(0);
     PrintSmallMenuKey('m' + i);
-    PrintFloat(low[i], 4, 2, ' ');
+    PrintFloat(action.limits.Low[i], 4, 2, ' ');
     PrintSpacer(0);
     PrintSmallMenuKey('s' + i);
-    PrintFloat(high[i], 4, 2, ' ');
+    PrintFloat(action.limits.High[i], 4, 2, ' ');
     PrintSpacer(0);
     PrintSmallMenuKey('A' + i);
-    PrintFloat(tooHigh[i], 4, 2, ' ');
+    PrintFloat(action.limits.TooHigh[i], 4, 2, ' ');
     PrintSpacer(0);
 
     EscLocate(3, pos++);
@@ -800,33 +800,38 @@ Start:
   else if (pos >= 'a' && pos <= 'f'){
     // FailSave
     pos -= 'a';
-    failSave[pos] = GetUserFloat(failSave[pos]);
+    action.limits.FailSave[pos] = GetUserFloat(action.limits.FailSave[pos]);
     pos = 1;
   }
   else if (pos >= 'g' && pos <= 'l'){
     // tooLow
     pos -= 'g';
-    tooLow[pos] = GetUserFloat(tooLow[pos]);
+    action.limits.TooLow[pos] = GetUserFloat(action.limits.TooLow[pos]);
     pos = 1;
   }
   else if (pos >= 'm' && pos <= 'r'){
     // Low
     pos -= 'm';
-    low[pos] = GetUserFloat(low[pos]);
+    action.limits.Low[pos] = GetUserFloat(action.limits.Low[pos]);
     pos = 1;
   }
   else if (pos >= 's' && pos <= 'x'){
     // High
     pos -= 's';
-    high[pos] = GetUserFloat(high[pos]);
+    action.limits.High[pos] = GetUserFloat(action.limits.High[pos]);
     pos = 1;
   }
   else if (pos >= 'A' && pos <= 'F'){
     // tooHigh
     pos -= 'A';
-    tooHigh[pos] = GetUserFloat(tooHigh[pos]);
+    action.limits.TooHigh[pos] = GetUserFloat(action.limits.TooHigh[pos]);
     pos = 1;
   }
+
+  if (pos == 1){
+    ActionTimesToRom(my.Model);
+  }
+  
 
   if (pos > 0){
     goto Start;
@@ -844,7 +849,7 @@ Start:
   byte i = 0;
   
   EscLocate(5, pos++);
-  PrintMenuNo('m');
+  PrintMenuKey(i + 'm', 0, '(', ' ', 0, 0, 0);
   PrintCentered(temporary.Name, 16);
   PrintFlexSpacer(0, 6);
   Serial.print(F("LOW"));
@@ -853,10 +858,10 @@ Start:
   PrintFlexSpacer(6, 0);
 
   PrintLine(pos++, 5, 58);
-  EscLocate(5, pos++);
+  EscLocate(8, pos++);
   for (i = 0; i < 6; i++){
     EscBold(1);
-    PrintCentered(Fa(ezoStrLongType[i]), 20);
+    PrintCentered(Fa(ezoStrLongType[i]), 17);
     PrintSpacer(1);
     PrintSmallMenuKey('a' + i);
     PrintSerTime(temporary.Low[i], 0, 1);
@@ -866,7 +871,7 @@ Start:
     PrintSerTime(temporary.High[i], 0, 1);
     PrintMenuKey(i + 'G', 1, '(', 0, 0, 0, 0);
     PrintSpacer(0);
-    EscLocate(5, pos++);
+    EscLocate(8, pos++);
   }
   pos--;
   PrintLine(pos++, 5, 58);
@@ -894,7 +899,7 @@ Start:
 
   PrintMenuEnd(pos + 2);
 
-  pos = GetUserKey('l', 4);
+  pos = GetUserKey('m', 4);
 
   if (pos < 1){
     // Exit & TimeOut
@@ -914,21 +919,30 @@ Start:
   else if (pos >= 'A' && pos <= 'F'){
     // Run Single LowTime
     pos -= 'A';
-    pos = 1;
+    pos = 2;
   }
   else if (pos >= 'G' && pos <= 'L'){
     // Run Single HighTime
     pos -= 'G';
-    pos = 1;
+    pos = 2;
   }
   else if (pos == '0'){
     // Run Together
+    pos = 2;
   }
   else if (pos >= '1' && pos <= '4'){
     // Load Set
     my.Temporary = pos - '1';
     ManualTimesFromRom(my.Temporary);
+    myToRom();
   }
+  else if (pos == 'm'){
+    // Edit Name
+    GetUserString(temporary.Name);
+    strcpy(temporary.Name, strHLP);
+    pos = 1;
+  }
+  
   
   if (pos == 1){
     ManualTimesToRom(my.Temporary);
@@ -939,7 +953,6 @@ Start:
   }
   
 }
-
 
 void PrintTimingsMenu(){
 
@@ -961,19 +974,19 @@ Start:
     PrintCentered(Fa(ezoStrLongType[i]), 9);
     PrintSmallSpacer();
     PrintSmallMenuKey('a' + i);
-    PrintSerTime(action[i].Delay, 0, 1);
+    PrintSerTime(action.Delay[i], 0, 1);
     PrintSmallSpacer();
     PrintSmallMenuKey('g' + i);
-    PrintSerTime(action[i].TooLow, 0, 1);
+    PrintSerTime(action.TooLow[i], 0, 1);
     PrintSmallSpacer();
     PrintSmallMenuKey('m' + i);
-    PrintSerTime(action[i].Low, 0, 1);
+    PrintSerTime(action.Low[i], 0, 1);
     PrintSmallSpacer();
     PrintSmallMenuKey('s' + i);
-    PrintSerTime(action[i].High, 0, 1);
+    PrintSerTime(action.High[i], 0, 1);
     PrintSmallSpacer();
     PrintSmallMenuKey('A' + i);
-    PrintSerTime(action[i].TooHigh, 0, 1);
+    PrintSerTime(action.TooHigh[i], 0, 1);
     PrintSmallSpacer();
     EscLocate(3, pos++);
   }
@@ -988,36 +1001,36 @@ Start:
   else if (pos >= 'a' && pos <= 'f'){
     // FailSave
     pos -= 'a';
-    action[pos].Delay = GetUserTime(action[pos].Delay);
+    action.Delay[pos] = GetUserTime(action.Delay[pos]);
     pos = 1;
   }
   else if (pos >= 'g' && pos <= 'l'){
     // tooLow
     pos -= 'g';
-    action[pos].TooLow = GetUserTime(action[pos].TooLow);
+    action.TooLow[pos] = GetUserTime(action.TooLow[pos]);
     pos = 1;
   }
   else if (pos >= 'm' && pos <= 'r'){
     // Low
     pos -= 'm';
-    action[pos].Low = GetUserTime(action[pos].Low);
+    action.Low[pos] = GetUserTime(action.Low[pos]);
     pos = 1;
   }
   else if (pos >= 's' && pos <= 'x'){
     // High
     pos -= 's';
-    action[pos].High = GetUserTime(action[pos].High);
+    action.High[pos] = GetUserTime(action.High[pos]);
     pos = 1;
   }
   else if (pos >= 'A' && pos <= 'F'){
     // tooHigh
     pos -= 'A';
-    action[pos].TooHigh = GetUserTime(action[pos].TooHigh);
+    action.TooHigh[pos] = GetUserTime(action.TooHigh[pos]);
     pos = 1;
   }
 
   if (pos == 1){
-    ActionTimesToRom();
+    ActionTimesToRom(my.Model);
   }
   
   if (pos > 0){

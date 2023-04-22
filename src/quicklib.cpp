@@ -244,7 +244,7 @@ long StrTokFloatIntToInt(char *strIN, int8_t autoScale){
         // New string with value(s)
         nextToken = strIN;
     }
-    byte firstVal = 1;
+    // byte firstVal = 1;
 
     while ((token = strtok(nextToken, ",")) != NULL) {
         // reset nextToken for subsequent calls to strtok()
@@ -508,7 +508,7 @@ byte GetUserString(char *strIN){
         // Print and save char
         if (c > 31 && c < 255){
           // Valid char
-          if (pos == STR_HLP_LEN){
+          if (pos == STR_HLP_LEN - 1){
             // MaxLen reached
             EscCursorLeft(1);
             pos--;

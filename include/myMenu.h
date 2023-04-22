@@ -6,38 +6,77 @@
 #include "myWater.h"
 
 // my Eeprom - Variables
+/*
 byte myBoot = 0;    // 0 = Terminal  /  1 = Slave
 uint32_t mySpeed = 9600;
 byte mySolarized = 0;
 byte myAddress = 123;
 byte myDefault = 0;
 byte myCnt = 0;
+byte myModel = 0;
+byte myTemporary = 0;
+*/
+struct mySTRUCT{
+  byte Boot; // = 0;    // 0 = Terminal  /  1 = Slave
+  uint32_t Speed; // = 9600;
+  byte Solarized; // = 0;
+  byte Address; // = 123;
+  byte Default; // = 0;
+  byte Cnt; // = 0;
+  byte Model; // = 0;
+  byte Temporary; // = 0;
+}my;
 
 void myToRom(){
+  /*
   EEPROM.put(1000, myBoot);       // byte
   EEPROM.put(1001, mySolarized);  // byte
   EEPROM.put(1002, myAddress);    // byte
   EEPROM.put(1003, mySpeed);      // 4 byte
   EEPROM.put(1007, myDefault);    // byte
   EEPROM.put(1008, ezoCnt);       // byte
-  // 1009 is next...
+  EEPROM.put(1009, myModel);      // byte
+  EEPROM.put(1010, myTemporary);  // byte
+  */
+  EEPROM.put(1000, my);
+  // 1011 is next...
 }
 void myFromRom(){
+  /*
   EEPROM.get(1000, myBoot);
   EEPROM.get(1001, mySolarized);
   EEPROM.get(1002, myAddress);
   EEPROM.get(1003, mySpeed);
   EEPROM.get(1007, myDefault);
   EEPROM.get(1008, myCnt);
-  // 1009 is next...
-
-  if (!IsSerialSpeedValid(mySpeed)){
-    mySpeed = 9600;
+  EEPROM.get(1009, myModel);
+  EEPROM.get(1010, myTemporary);
+  */
+  // 1011 is next...
+  EEPROM.get(1000, my);
+  if (!IsSerialSpeedValid(my.Speed)){
+    my.Speed = 9600;
   }
+  /*
   if (!myAddress || myAddress > 254){
     myAddress = 123;
   }
-  if (mySolarized){
+  */
+  if (my.Model > 1){
+    my.Model = 0;
+    my.Default = 0;
+  }
+  if (my.Temporary > 3){
+    my.Temporary = 0;
+    my.Default = 0;
+  }
+  if (my.Cnt > EZO_MAX_PROBES - INTERNAL_LEVEL_CNT){
+    my.Cnt = 0;
+    my.Default = 0;
+  }
+  
+  
+  if (my.Solarized){
     fgFaint = 92;
   }
   else{
@@ -593,7 +632,7 @@ void PrintCalMenu(byte ezo, byte all){
       // sometimes needed...
       EzoScan();
     }  
-    if (myDefault){
+    if (my.Default){
       DefaultProbesToRom();
     }
   }
@@ -704,7 +743,7 @@ void PrintSmallMenuKey(char key){
 
 void PrintLowToHigh(){
   Serial.print(F("tooLow"));
-  PrintFlexSpacer(2, 3);
+  PrintFlexSpacer(2, 3);  
   Serial.print(F("Low"));
   PrintFlexSpacer(4,3);
   Serial.print(F("High"));
@@ -794,6 +833,115 @@ Start:
   }
   
 }
+
+void PrintManualMenu(){
+
+  //byte selectedSet = 0;
+
+Start:
+
+  int8_t pos = PrintMenuTop((char*)"- Manual Menu -") + 1;
+  byte i = 0;
+  
+  EscLocate(5, pos++);
+  PrintMenuNo('m');
+  PrintCentered(temporaryName, 16);
+  PrintFlexSpacer(0, 6);
+  Serial.print(F("LOW"));
+  PrintFlexSpacer(6, 5);
+  Serial.print(F("HIGH"));
+  PrintFlexSpacer(6, 0);
+
+  PrintLine(pos++, 5, 58);
+  EscLocate(5, pos++);
+  for (i = 0; i < 6; i++){
+    EscBold(1);
+    PrintCentered(Fa(ezoStrLongType[i]), 20);
+    PrintSpacer(1);
+    PrintSmallMenuKey('a' + i);
+    PrintSerTime(temporaryLow[i], 0, 1);
+    PrintMenuKey(i + 'A', 1, '(', 0, 0, 0, 0);
+    PrintSpacer(1);
+    PrintSmallMenuKey('g' + i);
+    PrintSerTime(temporaryHigh[i], 0, 1);
+    PrintMenuKey(i + 'G', 1, '(', 0, 0, 0, 0);
+    PrintSpacer(0);
+    EscLocate(5, pos++);
+  }
+  pos--;
+  PrintLine(pos++, 5, 58);
+  EscLocate(5, pos + 1);
+  EscBold(1);
+  Serial.print(F("a-l):"));
+  EscBold(0);
+  Print1Space();
+  Serial.print(F("Edit"));
+  PrintSpaces(3);
+  EscBold(1);
+  Serial.print(F("A-L):"));
+  EscBold(0);
+  Print1Space();
+  Serial.print(F("RunSingle"));
+  PrintSpaces(3);
+  PrintMenuKeyStd('0');
+  Serial.print(F("RunAll"));
+  PrintSpaces(3);
+  EscBold(1);
+  Serial.print(F("1-4):"));
+  EscBold(0);
+  Print1Space();
+  Serial.print(F("SelectSet"));
+
+  PrintMenuEnd(pos + 2);
+
+  pos = GetUserKey('l', 4);
+
+  if (pos < 1){
+    // Exit & TimeOut
+  }
+  else if (pos >= 'a' && pos <= 'f'){
+    // LowTime
+    pos -= 'a';
+    temporaryLow[pos] = GetUserTime(temporaryLow[pos]);
+    pos = 1;
+  }
+  else if (pos >= 'g' && pos <= 'l'){
+    // HighTime
+    pos -= 'g';
+    temporaryHigh[pos] = GetUserTime(temporaryHigh[pos]);
+    pos = 1;
+  }
+  else if (pos >= 'A' && pos <= 'F'){
+    // Run Single LowTime
+    pos -= 'A';
+    actionTooHigh[pos] = GetUserTime(actionTooHigh[pos]);
+    pos = 1;
+  }
+  else if (pos >= 'G' && pos <= 'L'){
+    // Run Single LowTime
+    pos -= 'G';
+    actionTooHigh[pos] = GetUserTime(actionTooHigh[pos]);
+    pos = 1;
+  }
+  else if (pos == '0'){
+    // Run Together
+  }
+  else if (pos >= '1' && pos <= '4'){
+    // Load Set
+    my.Temporary = pos - '1';
+    ManualTimesFromRom(my.Temporary);
+  }
+  
+  if (pos == 1){
+    ManualTimesToRom(my.Temporary);
+  }
+  
+  if (pos > 0){
+    goto Start;
+  }
+  
+}
+
 
 void PrintTimingsMenu(){
 
@@ -1075,7 +1223,7 @@ Start:
   EscLocate(46, pos++);
   PrintMenuKeyStd('D'); Serial.print(F("Speed = "));
   EscBold(1);
-  Serial.print(mySpeed);
+  Serial.print(my.Speed);
   PrintShortLine(pos++, 8);
   EscLocate(5, pos);
   /*
@@ -1101,7 +1249,7 @@ Start:
   }
   EscLocate(59, pos++);
   */
-  PrintMenuKeyBoldFaint('E', (mySolarized), (!mySolarized)); Serial.print(F("FaintHack"));
+  PrintMenuKeyBoldFaint('E', (my.Solarized), (!my.Solarized)); Serial.print(F("FaintHack"));
   //PrintMenuKey('E', 0, 0, 0, 1, (mySolarized), (!mySolarized));
   //Serial.print(F("FaintHack"));
   EscBold(0);
@@ -1110,7 +1258,7 @@ Start:
   EscLocate(22, pos);
   PrintMenuKeyStd('F'); Serial.print(F("All..."));
   EscLocate(36, pos++);
-  PrintMenuKeyBoldFaint('G', (myDefault), (!myDefault)); Serial.print(F("(Re)SetDefault"));
+  PrintMenuKeyBoldFaint('G', (my.Default), (!my.Default)); Serial.print(F("(Re)SetDefault"));
   //PrintMenuKey('G', 0, 0, 0, 1, (myDefault), (!myDefault)); Serial.print(F("(Re)SetDefault"));
   /*
   EscLocate(34, pos);
@@ -1121,10 +1269,12 @@ Start:
   PrintMenuKeyStd('H'); Serial.print(F("Values..."));
   EscLocate(22, pos);
   PrintMenuKeyStd('I'); Serial.print(F("Times..."));
+  EscLocate(38, pos);
+  PrintMenuKeyStd('J'); Serial.print(F("Manual..."));
   
   PrintMenuEnd(pos + 1);
 
-  pos = GetUserKey('i', ezoCnt - INTERNAL_LEVEL_CNT);
+  pos = GetUserKey('j', ezoCnt - INTERNAL_LEVEL_CNT);
   switch (pos){
   case -1:
     // TimeOut
@@ -1172,8 +1322,8 @@ Start:
   case 'd':
     // Speed
     // Set Speed
-    mySpeed = GetUserInt(mySpeed);
-    if (IsSerialSpeedValid(mySpeed)){ 
+    my.Speed = GetUserInt(my.Speed);
+    if (IsSerialSpeedValid(my.Speed)){ 
       // valid - save to eeprom
       myToRom();
     }
@@ -1184,9 +1334,9 @@ Start:
     break;
   case 'g':
     // (Re)SetDefault
-    myDefault = !myDefault;
+    my.Default = !my.Default;
     myToRom();
-    if (myDefault){
+    if (my.Default){
       DefaultProbesToRom();
     }  
     break;
@@ -1205,6 +1355,9 @@ Start:
     // Values
     PrintTimingsMenu();
     break;
+  case 'j':
+    PrintManualMenu();
+    break;
   /*
   case 'f':
     // Boot for Terminal
@@ -1219,8 +1372,8 @@ Start:
   */
   case 'e':
     // Solarized
-    mySolarized = !mySolarized;
-    fgFaint = 90 + (mySolarized * 2);
+    my.Solarized = !my.Solarized;
+    fgFaint = 90 + (my.Solarized * 2);
     myToRom();
     break;
   default:

@@ -2,7 +2,7 @@
 #include <EEPROM.h>
 
 #define EZO_MAX_PROBES 14
-#define EZO_MAX_VALUES 2        // 3 for full HUM / 5 for full RGB...
+#define EZO_MAX_VALUES 1        // 3 for full HUM / 5 for full RGB...
 #define EZO_1st_ADDRESS 32
 #define EZO_LAST_ADDRESS 127
 
@@ -98,10 +98,10 @@ typedef struct ezoProbeSTRUCT{
     byte address;
     uint16_t version; 
     char name[17];
-    long value[EZO_MAX_VALUES];
+    int32_t value[EZO_MAX_VALUES];
     //long valueLast[EZO_MAX_VALUES];
 }ezoProbeSTRUCT;
-ezoProbeSTRUCT ezoProbe[EZO_MAX_PROBES];
+ezoProbeSTRUCT ezoProbe[EZO_MAX_PROBES - INTERNAL_LEVEL_CNT];
 
 // Delay & ActionTimes
 #if USE_DEBUG_VALS
@@ -111,12 +111,23 @@ ezoProbeSTRUCT ezoProbe[EZO_MAX_PROBES];
     uint16_t actionHigh[] = {15, 10, 5, 0, 0, 1};
     uint16_t actionTooHigh[] = {30, 20, 10, 0, 0, 3};
 #else
-    uint16_t delayTimes[] = {2700, 2400, 2400, 0, 0, 3600};
-    uint16_t actionTooLow[] = {900, 10, 6, 0, 0, 30};
-    uint16_t actionLow[] = {450, 5, 3, 0, 15, 15};
-    uint16_t actionHigh[] = {900, 30, 3, 0, 0, 0};
-    uint16_t actionTooHigh[] = {1800, 60, 6, 0, 0, 15};
+    uint16_t delayTimes[6]; // = {2700, 2400, 2400, 0, 0, 3600};
+    uint16_t actionTooLow[6]; // = {900, 10, 6, 0, 0, 30};
+    uint16_t actionLow[6]; // = {450, 5, 3, 0, 15, 15};
+    uint16_t actionHigh[6]; // = {900, 30, 3, 0, 0, 0};
+    uint16_t actionTooHigh[6]; // = {1800, 60, 6, 0, 0, 15};
+
 #endif
+
+// Temporary Runtimes - usable as premix...
+uint16_t temporaryLow[6];/* = {
+    {0, 60, 3, 0, 0, 900},
+    {0, 90, 4, 0, 0, 900},
+    {0, 120, 6, 0, 0, 1800},
+    {0, 180, 8, 0, 0, 1800},
+};*/
+uint16_t temporaryHigh[6]; //  = {0, 0, 0, 0, 0, 0};
+char temporaryName[17];
 
 // Counter for Low/High
 uint32_t tooLowSince[6];
@@ -127,15 +138,7 @@ uint32_t tooHighSince[6];
 // Time of last action 
 uint32_t lastAction[6];
 
-long failSave[] = {21000L, 1250000L, 6000L, 225000L, 99999L, 66666L};
-#define failSave_RTD failSave[0]
-#define failSave_EC failSave[1]
-#define failSave_pH failSave[2]
-#define failSave_ORP failSave[3]
-#define failSave_O2 failSave[4]
-#define failSave_LVL failSave[5]
-
-long avgVal[] = {21000L, 1250000L, 6000L, 225000L, 99999L, 66666L};
+long avgVal[6]; //  = {21000L, 1250000L, 6000L, 225000L, 99999L, 66666L};
 #define avg_RTD avgVal[0]
 #define avg_EC avgVal[1]
 #define avg_pH avgVal[2]
@@ -143,7 +146,16 @@ long avgVal[] = {21000L, 1250000L, 6000L, 225000L, 99999L, 66666L};
 #define avg_O2 avgVal[4]
 #define avg_LVL avgVal[5]
 
-long tooLow[] = {15000L, 1000000L, 5500L, -750000L, 50000L, 24999L};
+
+long failSave[6]; //  = {21000L, 1250000L, 6000L, 225000L, 99999L, 66666L};
+#define failSave_RTD failSave[0]
+#define failSave_EC failSave[1]
+#define failSave_pH failSave[2]
+#define failSave_ORP failSave[3]
+#define failSave_O2 failSave[4]
+#define failSave_LVL failSave[5]
+
+long tooLow[6]; //  = {15000L, 1000000L, 5500L, -750000L, 50000L, 24999L};
 #define tooLow_RTD tooLow[0]
 #define tooLow_EC tooLow[1]
 #define tooLow_pH tooLow[2]
@@ -151,7 +163,7 @@ long tooLow[] = {15000L, 1000000L, 5500L, -750000L, 50000L, 24999L};
 #define tooLow_O2 tooLow[4]
 #define tooLow_LVL tooLow[5]
 
-long low[] = {17000L, 1250000L, 5800L, -500000L, 66666L, 49999L};
+long low[6]; //  = {17000L, 1250000L, 5800L, -500000L, 66666L, 49999L};
 #define low_RTD low[0]
 #define low_EC low[1]
 #define low_pH low[2]
@@ -159,7 +171,7 @@ long low[] = {17000L, 1250000L, 5800L, -500000L, 66666L, 49999L};
 #define low_O2 low[4]
 #define low_LVL low[5]
 
-long high[] = {20000L, 1750000L, 6800L, 500000L, 100001L, 74999L};
+long high[6]; //  = {20000L, 1750000L, 6800L, 500000L, 100001L, 74999L};
 #define high_RTD high[0]
 #define high_EC high[1]
 #define high_pH high[2]
@@ -167,7 +179,7 @@ long high[] = {20000L, 1750000L, 6800L, 500000L, 100001L, 74999L};
 #define high_O2 high[4]
 #define high_LVL high[5]
 
-long tooHigh[] = {22000L, 2000000L, 7000L, 750000L, 100001L, 99999};
+long tooHigh[6]; //  = {22000L, 2000000L, 7000L, 750000L, 100001L, 99999};
 #define tooHigh_RTD tooHigh[0]
 #define tooHigh_EC tooHigh[1]
 #define tooHigh_pH tooHigh[2]
@@ -203,11 +215,59 @@ long tooHigh[] = {22000L, 2000000L, 7000L, 750000L, 100001L, 99999};
 
 void DefaultProbesToRom(){
     // Save actual probe-constellation as Standard to Eeprom
+    // 27 byte * 13 = 351
     EEPROM.put(0, ezoProbe);
 }
+void ActionTimesToRom(int set){
+    // Save Action Model (2x60 byte / end @ 471)
+    set *= 60;
+    EEPROM.put(351 + set, delayTimes);
+    EEPROM.put(363 + set, actionTooLow);
+    EEPROM.put(375 + set, actionLow);
+    EEPROM.put(387 + set, actionHigh);
+    EEPROM.put(399 + set, actionTooHigh);
+}
+void LowHighValsToRom(int set){
+    // Save tooLow TO tooHigh model (2x96 byte / end @ 663 )
+    set *= 96;
+    EEPROM.put(471 + set, tooLow);
+    EEPROM.put(495 + set, low);
+    EEPROM.put(519 + set, high);
+    EEPROM.put(543 + set, tooHigh);
+}
+void ManualTimesToRom(int set){
+    // Save temporay/manual times (4x41 byte / end @ 868)
+    set *= 41;
+    EEPROM.put(663 + set, temporaryLow);
+    EEPROM.put(675 + set, temporaryLow);
+    EEPROM.put(687 + set, temporaryName);
+}
+
 void DefaultProbesFromRom(){
     EEPROM.get(0, ezoProbe);
 }
+void ActionTimesFromRom(int set){
+    set *= 60;
+    EEPROM.get(351 + set, delayTimes);
+    EEPROM.get(363 + set, actionTooLow);
+    EEPROM.get(375 + set, actionLow);
+    EEPROM.get(387 + set, actionHigh);
+    EEPROM.get(399 + set, actionTooHigh);
+}
+void LowHighValsFromRom(int set){
+    set *= 96;
+    EEPROM.get(471 + set, tooLow);
+    EEPROM.get(495 + set, low);
+    EEPROM.get(519 + set, high);
+    EEPROM.get(543 + set, tooHigh);
+}
+void ManualTimesFromRom(int set){
+    set *= 41;
+    EEPROM.get(663 + set, temporaryLow);
+    EEPROM.get(675 + set, temporaryLow);
+    EEPROM.get(687 + set, temporaryName);
+}
+
 
 byte GetAvgState(long avg, long tooLow, long low, long high, long tooHigh){
   if (avg < tooLow){
@@ -336,7 +396,7 @@ void EzoReset(byte ezo, byte all){
             case ezoORP:
                 break;
             case ezoDiO2:
-                strcpy_P(strSetup[1],(PGM_P)F("O,mg,1"));
+                strcpy_P(strSetup[1],(PGM_P)F("O,mg,0"));
                 strcpy_P(strSetup[2],(PGM_P)F("O,%,1"));
                 cntSetup = 3;
                 break;

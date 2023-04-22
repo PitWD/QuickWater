@@ -26,7 +26,7 @@ void setup() {
 
   myFromRom();
 
-  Serial.begin(mySpeed);
+  Serial.begin(my.Speed);
 
   Wire.setClock(31000L);
   Wire.begin();
@@ -55,9 +55,9 @@ void setup() {
     }
   }
 
-  if (myDefault == 1 && myCnt && myCnt <= EZO_MAX_PROBES){ 
+  if (my.Default == 1 && my.Cnt && my.Cnt <= EZO_MAX_PROBES - INTERNAL_LEVEL_CNT){ 
     DefaultProbesFromRom();
-    ezoCnt = myCnt;
+    ezoCnt = my.Cnt;
     PrintLoopMenu();
   }
   else{

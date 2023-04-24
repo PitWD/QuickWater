@@ -113,11 +113,11 @@ void SetAutoAddress(){
 
 byte PrintAllMenuOpt1(byte pos){
 
-  EscLocate(5, pos);
+  EscLocate(5, pos++);
   PrintMenuKeyStd('a'); Serial.print(F("Reset"));
-  EscLocate(18, pos);
+  PrintSpaces(5);
   PrintMenuKeyStd('b'); Serial.print(F("Clear Calibration(s)"));
-  EscLocate(46, pos++);
+  PrintSpaces(5);
   PrintMenuKeyStd('c'); Serial.print(F("Delete Name(s)"));
   PrintShortLine(pos++, 8);
   EscLocate(5, pos);
@@ -125,15 +125,15 @@ byte PrintAllMenuOpt1(byte pos){
   EscBold(1);
   Serial.print((char*)strDefault);
   EscLocate(42, pos++);
-  PrintMenuKeyStd('e'); Serial.print(F("Do Name(s)"));
+  PrintMenuKeyStd('e'); Serial.print(F("Do (Auto-)Name(s)"));
   PrintShortLine(pos++, 8);
-  EscLocate(5, pos);
+  EscLocate(5, pos++);
   PrintMenuKeyStd('f'); Serial.print(F("(1st) (Auto-)Address = "));
   EscBold(1);
   IntToIntStr(adrDefault, 3, '0');
   Serial.print((char*)strHLP);
-  EscLocate(42, pos++);
-  PrintMenuKeyStd('g'); Serial.print(F("Do Address(es)"));
+  PrintSpaces(5);
+  PrintMenuKeyStd('g'); Serial.print(F("Do (Auto-)Address(es)"));
     
   return pos;
 
@@ -184,12 +184,24 @@ byte SwitchAllAndProbeMenu(int8_t pos, byte ezo, byte all){
   return 1;
 }
 
-void PrintProbeLine(byte ezo, byte pos, byte bold){
+void PrintProbeLine(byte ezo, byte pos, byte bold, byte noKey){
 
     EscLocate(5, pos);
-    PrintMenuKey((char)(ezo + 49), 0, '(', 0, 0, bold, !bold);
+    if (!noKey){
+      // Print Menu-Key
+      PrintMenuKey((char)(ezo + 49), 0, '(', 0, 0, bold, !bold);
+      EscCursorLeft(1);
+      //EscLocate(10, pos);
+    }
+    if (bold){
+      EscBold(1);
+    }
+    else{
+      EscFaint(1);
+    }
+    
+    EscCursorRight(3);
     // Name
-    EscLocate(10, pos);
     Serial.print((char*)ezoProbe[ezo].name);
     EscLocate(26, pos);
     PrintSpacer(bold);
@@ -229,7 +241,7 @@ void PrintProbeLine(byte ezo, byte pos, byte bold){
     PrintSpacer(0);
 
 }
-int8_t PrintProbesOfType(byte ezo, byte all, int8_t pos){
+int8_t PrintProbesOfType(byte ezo, byte all, int8_t pos, byte noKey){
 
   byte veryAll = 0;
   if (ezo == 255){
@@ -244,7 +256,7 @@ int8_t PrintProbesOfType(byte ezo, byte all, int8_t pos){
     if ((ezoProbe[i].type == ezoProbe[ezo].type) || veryAll) {
       // Right Probe Type
       pos++;
-      PrintProbeLine(i, pos, (i == ezo) || all);
+      PrintProbeLine(i, pos, (i == ezo) || all, noKey);
     }    
   }
   EscFaint(0);
@@ -262,41 +274,31 @@ void PrintAllMenu(){
 Start:
 
   int8_t pos = PrintMenuTop((char*)"- ALL Menu -");
-  pos = PrintProbesOfType(255, 1, pos);
+  pos = PrintProbesOfType(255, 1, pos, 1);
   pos = PrintAllMenuOpt1(pos);
+  
   PrintShortLine(pos++, 8);
   EscLocate(5, pos);
-  PrintMenuKeyStd('h');
-  Serial.print(F("Setting-Name = "));
-  EscBold(1);
-  EscColor(fgBlue);
-  Serial.print((char*)setting.Name);
-  EscColor(0);
+  PrintMenuKeyBoldFaint('h', my.Boot, !my.Boot);
+  Serial.print(F("Boot As ModBUS Slave"));
   PrintSpaces(5);
-  Serial.print(F("i-k): "));
-  EscBold(0);
-  Serial.print(F("Sel.Setting = "));
-  EscColor(fgBlue);
-  Serial.print(my.Setting + 1);
-  EscColor(0);
-  PrintMenuEnd(pos + 1);
+  PrintMenuKeyBoldFaint('i', !my.Boot, my.Boot);
+  Serial.print(F("Boot For Terminal Use"));
+  
+  PrintMenuEnd(pos + 2);
 
-  pos = GetUserKey('k', 3);
+  pos = GetUserKey('i', -1);
 
   if (!SwitchAllAndProbeMenu(pos, 0, 2)){
     switch (pos){
     case 'h':
-      // Set Name
-      GetUserString(setting.Name);
-      // strcpy(action.Name, strHLP);
-      SettingsToRom(my.Setting);
+      // Boot As Slave
+      my.Boot = 1;
+      myToRom();
       break;
     case 'i':
-    case 'j':
-    case 'k':
-      // select Setting
-      my.Setting = pos - 'i';
-      SettingsFromRom(my.Setting);
+      // Boot For Terminal
+      my.Boot = 0;
       myToRom();
       break;
     default:
@@ -304,49 +306,6 @@ Start:
     }
   }
   
-  
-  /*
-  switch (pos){
-  case -1:
-    // TimeOut
-  case 0:
-    // Return
-    break;
-  case 'a':
-    // Factory Reset for All
-    EzoReset(0,2);
-    break;
-  case 'c':
-    // Delete all names
-    EzoSetName((char*)"", 0, 2, 0);
-    break;
-  case 'd':
-    // Edit Auto Name
-    EditAutoName();
-    break;
-  case 'e':
-    // Set AutoNames
-    EzoSetName(strDefault,0,2,1);
-    break;
-  case 'f':
-    // Edit 1st Address
-    EditAutoAddress();
-    break;
-  case 'g':
-    // Set Addresses
-    SetAutoAddress();
-    // direct back to main
-    pos = 0;
-    break;
-  case 'b':
-    // Clear calibration
-    EzoSetCal((char*)"clear", 0, 2, 0, 5);
-    break;
-  default:
-    break;
-  }
-  */
-
   if (pos > 0){
     goto Start;
   }
@@ -477,22 +436,22 @@ void PrintCalMenu(byte ezo, byte all){
   }  
   ImInside = 1;
 
-  pos = PrintProbesOfType(ezo, all, pos);
+  pos = PrintProbesOfType(ezo, all, pos, 1);
   pos++;
 
+  EscLocate(5, pos);
   if (myMenu.a){
     // 1-Point Cal.
-    EscLocate(5, pos);
     PrintMenuKeyStd('A'); Serial.print(F("Do 1-Pt. Cal."));
+    PrintSpaces(5);
   }
   if (myMenu.b){
     // 3-Point Cal.
-    EscLocate(26, pos);
     PrintMenuKeyStd('B'); Serial.print(F("Do 2-Pt. Cal."));
+    PrintSpaces(5);
   }
   if (myMenu.c){
     // 3-Point Cal.
-    EscLocate(47, pos);
     PrintMenuKeyStd('C'); Serial.print(F("Do 3-Pt. Cal."));
   }
   pos++;
@@ -691,17 +650,17 @@ Start:
 
   int8_t pos = PrintMenuTop((char*)"- Probe(Type) Menu -");
   
-  pos = PrintProbesOfType(ezo, all, pos);
+  pos = PrintProbesOfType(ezo, all, pos, 0);
 
   pos = PrintAllMenuOpt1(pos + 1);
   PrintShortLine(pos++, 8);
   EscLocate(5, pos);
   PrintMenuKeyStd('h'); Serial.print(F("Calibration(s)..."));
   EscLocate(30, pos);
-  PrintMenuKeyStd('i'); 
+  PrintMenuKeyBoldFaint('i', !all, all); 
   Serial.print(F("Select Single"));
   EscLocate(51, pos++);
-  PrintMenuKeyStd('j');
+  PrintMenuKeyBoldFaint('j', all, !all);
   Serial.print(F("Select ALL"));
   //EscBold(0);
 
@@ -729,36 +688,6 @@ Start:
     }
   }
    
-  
-  /*
-  case -1:
-    // TimeOut
-  case 0:
-    // Return
-    break;
-  case 'a':
-    EzoReset(ezo, all);
-    break;
-  case 'b':
-    EzoSetCal((char*)"clear", ezo, all, 0, 5);
-    break;
-  case 'c':
-    EzoSetName((char*)"", ezo, all, 0);
-    break;
-  case 'd':
-    EditAutoName();
-    break;
-  case 'e':
-    EzoSetName(strDefault, ezo, all, 1);
-    break;
-  case 'f':
-    EditAutoAddress();
-    break;
-  case 'g':
-    SetAutoAddress();
-    break;
-  */
-
   if (pos > 0){
     goto Start;
   }
@@ -1454,98 +1383,89 @@ Start:
   
   uint32_t hlpTime = 0;
 
-  pos = PrintProbesOfType(255, 1, pos);
+  pos = PrintProbesOfType(255, 1, pos, 0);
 
-  EscLocate(5, pos);
-  PrintMenuKeyStd('a'); Serial.print(F("ReBoot"));
-  EscLocate(20, pos);
-  PrintMenuKeyStd('b'); Serial.print(F("Date"));
-  EscLocate(33, pos);
-  PrintMenuKeyStd('c'); Serial.print(F("Time"));
-  /*
-  EscLocate(38, pos);
-  PrintMenuKeyStd('D'); Serial.print(F("Addr. = "));
-  PrintBoldInt(myAddress, 3, '0');
-  */
-  EscLocate(46, pos++);
-  PrintMenuKeyStd('d'); Serial.print(F("Speed = "));
+  EscLocate(5, pos++);
+  PrintMenuKeyStd('a'); Serial.print(F("ReScan"));
+  PrintSpaces(3);
+  PrintMenuKeyStd('b'); Serial.print(F("ReBoot"));
+  PrintSpaces(3);
+  PrintMenuKeyStd('c'); Serial.print(F("Date"));
+  PrintSpaces(3);
+  PrintMenuKeyStd('d'); Serial.print(F("Time"));
+  PrintSpaces(3);
+  PrintMenuKeyStd('e'); Serial.print(F("Addr. = "));
+  PrintBoldInt(my.Address, 3, '0');
+
+  PrintShortLine(pos++, 8);
+
+  EscLocate(5, pos++);
+  PrintMenuKeyStd('f'); Serial.print(F("Speed = "));
   EscBold(1);
   Serial.print(my.Speed);
-  PrintShortLine(pos++, 8);
-  EscLocate(5, pos);
-  /*
-  PrintMenuKeyStd('F'); Serial.print(F("Boot4Terminal = "));
-  if (myBoot){
-    EscFaint(1);
-    PrintFalse();
-  }
-  else{
-    EscBold(1);
-    PrintTrue();
-  }
-  EscLocate(34, pos);
+  PrintSpaces(3);  
+  PrintMenuKeyBoldFaint('g', (my.Solarized), (!my.Solarized)); Serial.print(F("Use Faint Hack"));
+  EscBold(0);
+  PrintSpaces(3);
+  PrintMenuKeyBoldFaint('h', (my.Default), (!my.Default)); Serial.print(F("Use Scan As Default"));
 
-  PrintMenuKeyStd('G'); Serial.print(F("Boot4Slave = "));
-  if (myBoot){
-    EscBold(1);
-    PrintTrue();
-  }
-  else{
-    EscFaint(1);
-    PrintFalse();
-  }
-  EscLocate(59, pos++);
-  */
-  PrintMenuKeyBoldFaint('e', (my.Solarized), (!my.Solarized)); Serial.print(F("FaintHack"));
-  //PrintMenuKey('E', 0, 0, 0, 1, (mySolarized), (!mySolarized));
-  //Serial.print(F("FaintHack"));
+  pos = PrintShortLine(pos++, 8);
+
+  EscLocate(5, pos++);
+  PrintMenuKeyStd('i');
+  Serial.print(F("More..."));
+  PrintSpaces(3);
+  PrintMenuKeyStd('j'); Serial.print(F("Values..."));
+  PrintSpaces(3);
+  PrintMenuKeyStd('k'); Serial.print(F("Times..."));
+  PrintSpaces(3);
+  PrintMenuKeyStd('l'); Serial.print(F("Manual..."));
+
+  PrintShortLine(pos++, 8);
+
+  EscLocate(5, pos);
+  PrintMenuKeyStd('m'); Serial.print(F("Setting-Name = "));
+  EscBold(1);
+  EscColor(fgBlue);
+  Serial.print((char*)setting.Name);
+  EscColor(0);
+  PrintSpaces(5);
+  Serial.print(F("n-p): "));
+  EscBold(0);
+  Serial.print(F("Sel.Setting = "));
+  EscBold(1);
+  EscColor(fgBlue);
+  Serial.print(my.Setting + 1);
+  EscColor(0);
   EscBold(0);
 
-//****************************************************
-  EscLocate(22, pos++);
-  PrintMenuKeyBoldFaint('f', (my.Default), (!my.Default)); Serial.print(F("AsDefault"));
-  //PrintMenuKey('G', 0, 0, 0, 1, (myDefault), (!myDefault)); Serial.print(F("(Re)SetDefault"));
-  /*
-  EscLocate(34, pos);
-  PrintMenuKeyStd('K'); Serial.print(F("DelDef."));
-  */
-  pos = PrintShortLine(pos++, 8);
-  EscLocate(5, pos);
-  PrintMenuKeyStd('g');
-  EscColor(fgBlue);
-  Serial.print(F("More..."));
-  EscColor(0);
-  EscLocate(20, pos);
-  PrintMenuKeyStd('h'); Serial.print(F("Values..."));
-  EscLocate(37, pos);
-  PrintMenuKeyStd('i'); Serial.print(F("Times..."));
-  EscLocate(53, pos);
-  PrintMenuKeyStd('j'); Serial.print(F("Manual..."));
-  
   PrintMenuEnd(pos + 1);
 
-  pos = GetUserKey('j', ezoCnt - INTERNAL_LEVEL_CNT);
+  pos = GetUserKey('p', ezoCnt - INTERNAL_LEVEL_CNT);
   switch (pos){
   case -1:
     // TimeOut
   case 0:
     // EXIT
     break;
-  case 'g':
-    // All Menu
+  case 'i':
+    // All/More Menu
     PrintAllMenu();
     break;
   case 'a':
-    // ReBoot
+    // ReScan
     EscCls();
     EscLocate(1,1);
     EzoScan();
     break;
   case 'b':
+    // ReBoot
+    break;
+  case 'c':
     // Date
     hlpTime = SerializeTime(1, 1, 2023, myHour, myMin, mySec);    // Time of now
     hlpTime += GetUserDate(myTime);
-  case 'c':
+  case 'd':
     // Time
     if (pos == 'c'){
       hlpTime = SerializeTime(myDay, myMonth, myYear, 0, 0, 0);    // Midnight of today
@@ -1555,11 +1475,10 @@ Start:
     //RTC_SetDateTime();
     myTime = SerializeTime(myDay, myMonth, myYear, myHour, myMin, mySec);
     break;
-  /*
-  case 'd':
-    // Address
-    myAddress = GetUserInt(myAddress);
-    if (!myAddress || myAddress > 254){
+  case 'e':
+    // Slave Address
+    my.Address = GetUserInt(my.Address);
+    if (my.Address > 254){
       // illegal address - reload from eeprom
       myFromRom();
     }
@@ -1568,8 +1487,7 @@ Start:
       myToRom();
     }
     break;
-  */
-  case 'd':
+  case 'f':
     // Speed
     // Set Speed
     my.Speed = GetUserInt(my.Speed);
@@ -1582,45 +1500,39 @@ Start:
       myFromRom();
     }
     break;
-  case 'f':
-    // (Re)SetDefault
+  case 'h':
+    // Use and save actual Scan as Default
     my.Default = !my.Default;
     myToRom();
     if (my.Default){
       DefaultProbesToRom();
     }  
     break;
-  /*
-  case 'k':
-    // Erase Defaults
-    myDefault = 0;
-    myToRom();
-    break;
-  */
-  case 'h':
+  case 'j':
     // Values
     PrintValuesMenu();
     break;
-  case 'i':
+  case 'k':
     // Values
     PrintTimingsMenu();
     break;
-  case 'j':
+  case 'l':
     PrintManualMenu();
     break;
-  /*
-  case 'f':
-    // Boot for Terminal
-    myBoot = 0;
+  case 'm':
+    // Setting Name
+    GetUserString(setting.Name);
+    SettingsToRom(my.Setting);
+    break;
+  case 'n':
+  case 'o':
+  case 'p':
+    // Select Setting
+    my.Setting = pos - 'n';
+    SettingsFromRom(my.Setting);
     myToRom();
     break;
   case 'g':
-    // Boot for Slave
-    myBoot = 1;
-    myToRom();
-    break;
-  */
-  case 'e':
     // Solarized
     my.Solarized = !my.Solarized;
     fgFaint = 90 + (my.Solarized * 2);

@@ -1206,7 +1206,7 @@ void PrintActionTimes(byte ezoType){
   int32_t timeToUse = 0;
   int32_t timeToAction = 0;
 
-  byte colorState = GetAvgState(avgVal[ezoType], setting.TooLow[ezoType], setting.Low[ezoType], setting.High[ezoType], setting.TooHigh[ezoType]);
+  byte colorState = GetAvgState(avgVal[ezoType], setting.limits.TooLow[ezoType], setting.limits.Low[ezoType], setting.limits.High[ezoType], setting.limits.TooHigh[ezoType]);
   
   switch (colorState){
   case fgCyan:

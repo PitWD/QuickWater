@@ -58,16 +58,24 @@ void setup() {
     }
   }
 
+  for (byte i = 0; i < 6; i++){
+    // Set Fail-Save Values to avg_s
+    avgVal[i] = setting.limits.FailSave[i];
+  }    
+
   if (my.Default == 1 && my.Cnt && my.Cnt <= EZO_MAX_PROBES - INTERNAL_LEVEL_CNT){ 
     DefaultProbesFromRom();
     ezoCnt = my.Cnt;
+    for (byte i = 0; i < ezoCnt; i++){
+      // Set Fail-Save Values as Start-Values
+      ezoValue[i][0] = setting.limits.FailSave[ezoProbe[i].type];
+    }    
     PrintLoopMenu();
   }
   else{
     EzoScan();
     PrintMainMenu();
   }
-  
 }
 
 uint32_t ValidTimeSince(uint32_t valIN){

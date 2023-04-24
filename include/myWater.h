@@ -105,23 +105,18 @@ ezoProbeSTRUCT ezoProbe[EZO_MAX_PROBES];
 
 int32_t ezoValue[11][EZO_MAX_VALUES];
 
-struct limitsSTRUCT{
-    // 120 Byte
-    int32_t FailSave[6];
-    int32_t TooLow[6];
-    int32_t Low[6];
-    int32_t High[6];
-    int32_t TooHigh[6];
-};
-
 struct settingSTRUCT{
     // 197 Byte * 3 Modes = 591 Byte
-    uint16_t Delay[6];
-    uint16_t TooLow[6];
-    uint16_t Low[6];
-    uint16_t High[6];
-    uint16_t TooHigh[6];
-    limitsSTRUCT limits;
+    uint16_t DelayTime[6];
+    uint16_t TimeTooLow[6];
+    uint16_t TimeLow[6];
+    uint16_t TimeHigh[6];
+    uint16_t TimeTooHigh[6];
+    int32_t FailSaveValue[6];
+    int32_t ValueTooLow[6];
+    int32_t ValueLow[6];
+    int32_t ValueHigh[6];
+    int32_t ValueTooHigh[6];
     char Name[17];
 }setting;
 
@@ -297,7 +292,7 @@ void SetAvgColor(long avg, long tooLow, long low, long high, long tooHigh){
 void SetAvgColorEZO(byte ezoType){
     // - 46 Flash (5x used)
     // +128 Ram
-    SetAvgColor(avgVal[ezoType], setting.limits.TooLow[ezoType], setting.limits.Low[ezoType], setting.limits.High[ezoType], setting.limits.TooHigh[ezoType]);
+    SetAvgColor(avgVal[ezoType], setting.ValueTooLow[ezoType], setting.ValueLow[ezoType], setting.ValueHigh[ezoType], setting.ValueTooHigh[ezoType]);
 }
 
 char EzoStartValues(byte ezo){

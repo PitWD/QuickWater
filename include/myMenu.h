@@ -738,19 +738,19 @@ Start:
     PrintCentered(Fa(ezoStrLongType[i]), 9);
     PrintSpacer(0);
     PrintSmallMenuKey('a' + i);
-    PrintFloat(setting.limits.FailSave[i], 4, 2, ' ');
+    PrintFloat(setting.FailSaveValue[i], 4, 2, ' ');
     PrintSpacer(0);
     PrintSmallMenuKey('g' + i);
-    PrintFloat(setting.limits.TooLow[i], 4, 2, ' ');
+    PrintFloat(setting.ValueTooLow[i], 4, 2, ' ');
     PrintSpacer(0);
     PrintSmallMenuKey('m' + i);
-    PrintFloat(setting.limits.Low[i], 4, 2, ' ');
+    PrintFloat(setting.ValueLow[i], 4, 2, ' ');
     PrintSpacer(0);
     PrintSmallMenuKey('s' + i);
-    PrintFloat(setting.limits.High[i], 4, 2, ' ');
+    PrintFloat(setting.ValueHigh[i], 4, 2, ' ');
     PrintSpacer(0);
     PrintSmallMenuKey('A' + i);
-    PrintFloat(setting.limits.TooHigh[i], 4, 2, ' ');
+    PrintFloat(setting.ValueTooHigh[i], 4, 2, ' ');
     PrintSpacer(0);
 
     EscLocate(3, pos++);
@@ -766,31 +766,31 @@ Start:
   else if (pos >= 'a' && pos <= 'f'){
     // FailSave
     pos -= 'a';
-    setting.limits.FailSave[pos] = GetUserFloat(setting.limits.FailSave[pos]);
+    setting.FailSaveValue[pos] = GetUserFloat(setting.FailSaveValue[pos]);
     pos = 1;
   }
   else if (pos >= 'g' && pos <= 'l'){
     // tooLow
     pos -= 'g';
-    setting.limits.TooLow[pos] = GetUserFloat(setting.limits.TooLow[pos]);
+    setting.ValueTooLow[pos] = GetUserFloat(setting.ValueTooLow[pos]);
     pos = 1;
   }
   else if (pos >= 'm' && pos <= 'r'){
     // Low
     pos -= 'm';
-    setting.limits.Low[pos] = GetUserFloat(setting.limits.Low[pos]);
+    setting.ValueLow[pos] = GetUserFloat(setting.ValueLow[pos]);
     pos = 1;
   }
   else if (pos >= 's' && pos <= 'x'){
     // High
     pos -= 's';
-    setting.limits.High[pos] = GetUserFloat(setting.limits.High[pos]);
+    setting.ValueHigh[pos] = GetUserFloat(setting.ValueHigh[pos]);
     pos = 1;
   }
   else if (pos >= 'A' && pos <= 'F'){
     // tooHigh
     pos -= 'A';
-    setting.limits.TooHigh[pos] = GetUserFloat(setting.limits.TooHigh[pos]);
+    setting.ValueTooHigh[pos] = GetUserFloat(setting.ValueTooHigh[pos]);
     pos = 1;
   }
 
@@ -1060,19 +1060,19 @@ Start:
     PrintCentered(Fa(ezoStrLongType[i]), 9);
     PrintSmallSpacer();
     PrintSmallMenuKey('a' + i);
-    PrintSerTime(setting.Delay[i], 0, 1);
+    PrintSerTime(setting.DelayTime[i], 0, 1);
     PrintSmallSpacer();
     PrintSmallMenuKey('g' + i);
-    PrintSerTime(setting.TooLow[i], 0, 1);
+    PrintSerTime(setting.TimeTooLow[i], 0, 1);
     PrintSmallSpacer();
     PrintSmallMenuKey('m' + i);
-    PrintSerTime(setting.Low[i], 0, 1);
+    PrintSerTime(setting.TimeLow[i], 0, 1);
     PrintSmallSpacer();
     PrintSmallMenuKey('s' + i);
-    PrintSerTime(setting.High[i], 0, 1);
+    PrintSerTime(setting.TimeHigh[i], 0, 1);
     PrintSmallSpacer();
     PrintSmallMenuKey('A' + i);
-    PrintSerTime(setting.TooHigh[i], 0, 1);
+    PrintSerTime(setting.TimeTooHigh[i], 0, 1);
     PrintSmallSpacer();
     EscLocate(3, pos++);
   }
@@ -1087,31 +1087,31 @@ Start:
   else if (pos >= 'a' && pos <= 'f'){
     // FailSave
     pos -= 'a';
-    setting.Delay[pos] = GetUserTime(setting.Delay[pos]);
+    setting.DelayTime[pos] = GetUserTime(setting.DelayTime[pos]);
     pos = 1;
   }
   else if (pos >= 'g' && pos <= 'l'){
     // tooLow
     pos -= 'g';
-    setting.TooLow[pos] = GetUserTime(setting.TooLow[pos]);
+    setting.TimeTooLow[pos] = GetUserTime(setting.TimeTooLow[pos]);
     pos = 1;
   }
   else if (pos >= 'm' && pos <= 'r'){
     // Low
     pos -= 'm';
-    setting.Low[pos] = GetUserTime(setting.Low[pos]);
+    setting.TimeLow[pos] = GetUserTime(setting.TimeLow[pos]);
     pos = 1;
   }
   else if (pos >= 's' && pos <= 'x'){
     // High
     pos -= 's';
-    setting.High[pos] = GetUserTime(setting.High[pos]);
+    setting.TimeHigh[pos] = GetUserTime(setting.TimeHigh[pos]);
     pos = 1;
   }
   else if (pos >= 'A' && pos <= 'F'){
     // tooHigh
     pos -= 'A';
-    setting.TooHigh[pos] = GetUserTime(setting.TooHigh[pos]);
+    setting.TimeTooHigh[pos] = GetUserTime(setting.TimeTooHigh[pos]);
     pos = 1;
   }
 
@@ -1206,7 +1206,7 @@ void PrintActionTimes(byte ezoType){
   int32_t timeToUse = 0;
   int32_t timeToAction = 0;
 
-  byte colorState = GetAvgState(avgVal[ezoType], setting.limits.TooLow[ezoType], setting.limits.Low[ezoType], setting.limits.High[ezoType], setting.limits.TooHigh[ezoType]);
+  byte colorState = GetAvgState(avgVal[ezoType], setting.ValueTooLow[ezoType], setting.ValueLow[ezoType], setting.ValueHigh[ezoType], setting.ValueTooHigh[ezoType]);
   
   switch (colorState){
   case fgCyan:
@@ -1245,7 +1245,7 @@ void PrintActionTimes(byte ezoType){
 
   timeToUse = (myTime - timeToUse);            // time since state became true
   if (colorState != fgGreen){
-    timeToAction = setting.Delay[ezoType] - timeToUse;     // time until action begins
+    timeToAction = setting.DelayTime[ezoType] - timeToUse;     // time until action begins
   }
   
   EscSaveCursor();

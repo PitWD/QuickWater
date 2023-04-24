@@ -60,7 +60,7 @@ void setup() {
 
   for (byte i = 0; i < 6; i++){
     // Set Fail-Save Values to avg_s
-    avgVal[i] = setting.limits.FailSave[i];
+    avgVal[i] = setting.FailSaveValue[i];
   }    
 
   if (my.Default == 1 && my.Cnt && my.Cnt <= EZO_MAX_PROBES - INTERNAL_LEVEL_CNT){ 
@@ -68,7 +68,7 @@ void setup() {
     ezoCnt = my.Cnt;
     for (byte i = 0; i < ezoCnt; i++){
       // Set Fail-Save Values as Start-Values
-      ezoValue[i][0] = setting.limits.FailSave[ezoProbe[i].type];
+      ezoValue[i][0] = setting.FailSaveValue[ezoProbe[i].type];
     }    
     PrintLoopMenu();
   }
@@ -90,9 +90,9 @@ uint32_t checkAction(uint32_t valIN, uint32_t actionTime, byte ezotype, byte isL
   *backSet = 0;
 
   // If something is OnAction
-  if (ValidTimeSince(valIN) > setting.Delay[ezotype]){
+  if (ValidTimeSince(valIN) > setting.DelayTime[ezotype]){
     // Action Valid
-    if ((ValidTimeSince(valIN) - setting.Delay[ezotype]) > actionTime){
+    if ((ValidTimeSince(valIN) - setting.DelayTime[ezotype]) > actionTime){
       // ActionTime done
       lastAction[ezotype] = myTime;
       r = 0;
@@ -144,10 +144,10 @@ void loop() {
 
       // Check On needed/pending actions
       preToo = tooLowSince[i];
-      tooLowSince[i] = checkAction(tooLowSince[i], setting.TooLow[i], i, 1, &err);
+      tooLowSince[i] = checkAction(tooLowSince[i], setting.TimeTooLow[i], i, 1, &err);
       if (!err){
         // TooLow isn't in Action...
-        lowSince[i] = checkAction(lowSince[i], setting.Low[i], i, 1, &err);
+        lowSince[i] = checkAction(lowSince[i], setting.TimeLow[i], i, 1, &err);
         if (preToo != tooLowSince[i]){ 
           // after finished tooXYZ-Action - reset lowSince, too
           lowSince[i] = 0;
@@ -169,10 +169,10 @@ void loop() {
       }
       
       preToo = tooHighSince[i];
-      tooHighSince[i] = checkAction(tooHighSince[i], setting.TooHigh[i], i, 0, &err);
+      tooHighSince[i] = checkAction(tooHighSince[i], setting.TimeTooHigh[i], i, 0, &err);
       if (!err){
         // TooHigh isn't in Action...
-        highSince[i] = checkAction(highSince[i], setting.High[i], i, 0, &err);
+        highSince[i] = checkAction(highSince[i], setting.TimeHigh[i], i, 0, &err);
         if (preToo != tooHighSince[i]){ 
           // after finished tooXYZ-Action - reset highSince, too
           highSince[i] = 0;
@@ -199,7 +199,7 @@ void loop() {
       }
       
       // Set / Reset Since-Variables depending on high/low state...
-      switch (GetAvgState(avgVal[i], setting.limits.TooLow[i], setting.limits.Low[i], setting.limits.High[i], setting.limits.TooHigh[i])){
+      switch (GetAvgState(avgVal[i], setting.ValueTooLow[i], setting.ValueLow[i], setting.ValueHigh[i], setting.ValueTooHigh[i])){
       case fgCyan:
         // tooLow
         highSince[i] = 0;

@@ -23,7 +23,7 @@ struct mySTRUCT{
   byte Address; // = 123;
   byte Default; // = 0;
   byte Cnt; // = 0;
-  byte Model; // = 0;
+  byte Setting; // = 0;
   byte Temporary; // = 0;
 }my;
 
@@ -38,7 +38,7 @@ void myToRom(){
   EEPROM.put(1009, myModel);      // byte
   EEPROM.put(1010, myTemporary);  // byte
   */
-  EEPROM.put(1000, my);
+  EEPROM.put(997, my);
   // 1011 is next...
 }
 void myFromRom(){
@@ -53,7 +53,7 @@ void myFromRom(){
   EEPROM.get(1010, myTemporary);
   */
   // 1011 is next...
-  EEPROM.get(1000, my);
+  EEPROM.get(997, my);
   if (!IsSerialSpeedValid(my.Speed)){
     my.Speed = 9600;
   }
@@ -62,8 +62,8 @@ void myFromRom(){
     myAddress = 123;
   }
   */
-  if (my.Model > 1){
-    my.Model = 0;
+  if (my.Setting > 1){
+    my.Setting = 0;
     my.Default = 0;
   }
   if (my.Temporary > 3){
@@ -75,23 +75,24 @@ void myFromRom(){
     my.Default = 0;
   }
   
-  
   if (my.Solarized){
     fgFaint = 92;
   }
   else{
     fgFaint = 90;
   }
-
 }
 
 void DummyNameToStrDefault(void){
   strcpy_P(strDefault,(PGM_P)F( "-DummyName-"));
 }
 void EditAutoName(){
+  GetUserString(strDefault);
+  /*
   if (GetUserString(strDefault)){
     strcpy(strDefault, strHLP);
   }
+  */
 }
 void EditAutoAddress(){
   adrDefault = GetUserInt(adrDefault);
@@ -113,26 +114,26 @@ void SetAutoAddress(){
 byte PrintAllMenuOpt1(byte pos){
 
   EscLocate(5, pos);
-  PrintMenuKeyStd('A'); Serial.print(F("Reset"));
+  PrintMenuKeyStd('a'); Serial.print(F("Reset"));
   EscLocate(18, pos);
-  PrintMenuKeyStd('B'); Serial.print(F("Clear Calibration(s)"));
+  PrintMenuKeyStd('b'); Serial.print(F("Clear Calibration(s)"));
   EscLocate(46, pos++);
-  PrintMenuKeyStd('C'); Serial.print(F("Delete Name(s)"));
+  PrintMenuKeyStd('c'); Serial.print(F("Delete Name(s)"));
   PrintShortLine(pos++, 8);
   EscLocate(5, pos);
-  PrintMenuKeyStd('D'); Serial.print(F("(Auto-)Name = "));
+  PrintMenuKeyStd('d'); Serial.print(F("(Auto-)Name = "));
   EscBold(1);
   Serial.print((char*)strDefault);
   EscLocate(42, pos++);
-  PrintMenuKeyStd('E'); Serial.print(F("Do Name(s)"));
+  PrintMenuKeyStd('e'); Serial.print(F("Do Name(s)"));
   PrintShortLine(pos++, 8);
   EscLocate(5, pos);
-  PrintMenuKeyStd('F'); Serial.print(F("(1st) (Auto-)Address = "));
+  PrintMenuKeyStd('f'); Serial.print(F("(1st) (Auto-)Address = "));
   EscBold(1);
   IntToIntStr(adrDefault, 3, '0');
   Serial.print((char*)strHLP);
   EscLocate(42, pos++);
-  PrintMenuKeyStd('G'); Serial.print(F("Do Address(es)"));
+  PrintMenuKeyStd('g'); Serial.print(F("Do Address(es)"));
     
   return pos;
 
@@ -183,69 +184,6 @@ byte SwitchAllAndProbeMenu(int8_t pos, byte ezo, byte all){
   return 1;
 }
 
-void PrintAllMenu(){
-
-  adrDefault = 33;
-  DummyNameToStrDefault();
-
-Start:
-
-  int8_t pos = PrintMenuTop((char*)"- ALL Menu -");
-  pos = PrintAllMenuOpt1(pos + 1);
-
-  PrintMenuEnd(pos + 1);
-
-  pos = GetUserKey('g', -1);
-
-  SwitchAllAndProbeMenu(pos, 0, 2);
-  /*
-  switch (pos){
-  case -1:
-    // TimeOut
-  case 0:
-    // Return
-    break;
-  case 'a':
-    // Factory Reset for All
-    EzoReset(0,2);
-    break;
-  case 'c':
-    // Delete all names
-    EzoSetName((char*)"", 0, 2, 0);
-    break;
-  case 'd':
-    // Edit Auto Name
-    EditAutoName();
-    break;
-  case 'e':
-    // Set AutoNames
-    EzoSetName(strDefault,0,2,1);
-    break;
-  case 'f':
-    // Edit 1st Address
-    EditAutoAddress();
-    break;
-  case 'g':
-    // Set Addresses
-    SetAutoAddress();
-    // direct back to main
-    pos = 0;
-    break;
-  case 'b':
-    // Clear calibration
-    EzoSetCal((char*)"clear", 0, 2, 0, 5);
-    break;
-  default:
-    break;
-  }
-  */
-
-  if (pos > 0){
-    goto Start;
-  }
-  
-}
-
 void PrintProbeLine(byte ezo, byte pos, byte bold){
 
     EscLocate(5, pos);
@@ -256,7 +194,7 @@ void PrintProbeLine(byte ezo, byte pos, byte bold){
     EscLocate(26, pos);
     PrintSpacer(bold);
     // Value
-    IntToFloatStr(ezoProbe[ezo].value[0], 5, 2, ' ');
+    IntToFloatStr(ezoValue[ezo][0], 5, 2, ' ');
     SetAvgColorEZO(ezoProbe[ezo].type);
     if (!bold){
       EscFaint(1);
@@ -314,6 +252,105 @@ int8_t PrintProbesOfType(byte ezo, byte all, int8_t pos){
   PrintLine(pos++, 5, 63);
   
   return pos;
+}
+
+void PrintAllMenu(){
+
+  adrDefault = 33;
+  DummyNameToStrDefault();
+
+Start:
+
+  int8_t pos = PrintMenuTop((char*)"- ALL Menu -");
+  pos = PrintProbesOfType(255, 1, pos);
+  pos = PrintAllMenuOpt1(pos);
+  PrintShortLine(pos++, 8);
+  EscLocate(5, pos);
+  PrintMenuKeyStd('h');
+  Serial.print(F("Setting-Name = "));
+  EscBold(1);
+  EscColor(fgBlue);
+  Serial.print((char*)setting.Name);
+  EscColor(0);
+  PrintSpaces(5);
+  Serial.print(F("i-k): "));
+  EscBold(0);
+  Serial.print(F("Sel.Setting = "));
+  EscColor(fgBlue);
+  Serial.print(my.Setting + 1);
+  EscColor(0);
+  PrintMenuEnd(pos + 1);
+
+  pos = GetUserKey('k', 3);
+
+  if (!SwitchAllAndProbeMenu(pos, 0, 2)){
+    switch (pos){
+    case 'h':
+      // Set Name
+      GetUserString(setting.Name);
+      // strcpy(action.Name, strHLP);
+      SettingsToRom(my.Setting);
+      break;
+    case 'i':
+    case 'j':
+    case 'k':
+      // select Setting
+      my.Setting = pos - 'i';
+      SettingsFromRom(my.Setting);
+      myToRom();
+      break;
+    default:
+      break;
+    }
+  }
+  
+  
+  /*
+  switch (pos){
+  case -1:
+    // TimeOut
+  case 0:
+    // Return
+    break;
+  case 'a':
+    // Factory Reset for All
+    EzoReset(0,2);
+    break;
+  case 'c':
+    // Delete all names
+    EzoSetName((char*)"", 0, 2, 0);
+    break;
+  case 'd':
+    // Edit Auto Name
+    EditAutoName();
+    break;
+  case 'e':
+    // Set AutoNames
+    EzoSetName(strDefault,0,2,1);
+    break;
+  case 'f':
+    // Edit 1st Address
+    EditAutoAddress();
+    break;
+  case 'g':
+    // Set Addresses
+    SetAutoAddress();
+    // direct back to main
+    pos = 0;
+    break;
+  case 'b':
+    // Clear calibration
+    EzoSetCal((char*)"clear", 0, 2, 0, 5);
+    break;
+  default:
+    break;
+  }
+  */
+
+  if (pos > 0){
+    goto Start;
+  }
+  
 }
 
 void PrintPointEqual(uint8_t pos){
@@ -659,12 +696,12 @@ Start:
   pos = PrintAllMenuOpt1(pos + 1);
   PrintShortLine(pos++, 8);
   EscLocate(5, pos);
-  PrintMenuKeyStd('H'); Serial.print(F("Calibration(s)..."));
+  PrintMenuKeyStd('h'); Serial.print(F("Calibration(s)..."));
   EscLocate(30, pos);
-  PrintMenuKeyStd('I'); 
+  PrintMenuKeyStd('i'); 
   Serial.print(F("Select Single"));
   EscLocate(51, pos++);
-  PrintMenuKeyStd('J');
+  PrintMenuKeyStd('j');
   Serial.print(F("Select ALL"));
   //EscBold(0);
 
@@ -772,19 +809,19 @@ Start:
     PrintCentered(Fa(ezoStrLongType[i]), 9);
     PrintSpacer(0);
     PrintSmallMenuKey('a' + i);
-    PrintFloat(action.limits.FailSave[i], 4, 2, ' ');
+    PrintFloat(setting.limits.FailSave[i], 4, 2, ' ');
     PrintSpacer(0);
     PrintSmallMenuKey('g' + i);
-    PrintFloat(action.limits.TooLow[i], 4, 2, ' ');
+    PrintFloat(setting.limits.TooLow[i], 4, 2, ' ');
     PrintSpacer(0);
     PrintSmallMenuKey('m' + i);
-    PrintFloat(action.limits.Low[i], 4, 2, ' ');
+    PrintFloat(setting.limits.Low[i], 4, 2, ' ');
     PrintSpacer(0);
     PrintSmallMenuKey('s' + i);
-    PrintFloat(action.limits.High[i], 4, 2, ' ');
+    PrintFloat(setting.limits.High[i], 4, 2, ' ');
     PrintSpacer(0);
     PrintSmallMenuKey('A' + i);
-    PrintFloat(action.limits.TooHigh[i], 4, 2, ' ');
+    PrintFloat(setting.limits.TooHigh[i], 4, 2, ' ');
     PrintSpacer(0);
 
     EscLocate(3, pos++);
@@ -800,36 +837,36 @@ Start:
   else if (pos >= 'a' && pos <= 'f'){
     // FailSave
     pos -= 'a';
-    action.limits.FailSave[pos] = GetUserFloat(action.limits.FailSave[pos]);
+    setting.limits.FailSave[pos] = GetUserFloat(setting.limits.FailSave[pos]);
     pos = 1;
   }
   else if (pos >= 'g' && pos <= 'l'){
     // tooLow
     pos -= 'g';
-    action.limits.TooLow[pos] = GetUserFloat(action.limits.TooLow[pos]);
+    setting.limits.TooLow[pos] = GetUserFloat(setting.limits.TooLow[pos]);
     pos = 1;
   }
   else if (pos >= 'm' && pos <= 'r'){
     // Low
     pos -= 'm';
-    action.limits.Low[pos] = GetUserFloat(action.limits.Low[pos]);
+    setting.limits.Low[pos] = GetUserFloat(setting.limits.Low[pos]);
     pos = 1;
   }
   else if (pos >= 's' && pos <= 'x'){
     // High
     pos -= 's';
-    action.limits.High[pos] = GetUserFloat(action.limits.High[pos]);
+    setting.limits.High[pos] = GetUserFloat(setting.limits.High[pos]);
     pos = 1;
   }
   else if (pos >= 'A' && pos <= 'F'){
     // tooHigh
     pos -= 'A';
-    action.limits.TooHigh[pos] = GetUserFloat(action.limits.TooHigh[pos]);
+    setting.limits.TooHigh[pos] = GetUserFloat(setting.limits.TooHigh[pos]);
     pos = 1;
   }
 
   if (pos == 1){
-    ActionTimesToRom(my.Model);
+    SettingsToRom(my.Setting);
   }
   
 
@@ -839,6 +876,116 @@ Start:
   
 }
 
+void RunManualSetting(byte port){
+
+  struct runManualSTRUCT{
+      uint16_t runTime;
+      uint16_t offset;
+      uint16_t onTime;
+      uint16_t offTime;
+      byte state;
+      uint16_t inState;
+  }manualTiming[12];
+
+  Serial.println(F("\n"));
+  EscSaveCursor();
+
+  // Copy Low & High values to manualTiming array
+  for (byte i = 0; i < 6; i++) {
+      manualTiming[i].runTime = manual.Low[i];
+      manualTiming[i+6].runTime = i+6;
+  }
+
+  // Search longest time
+  uint16_t maxTime = 0;
+  for (byte i = 0; i < 12; i++){
+    if ((i == port || port == 255) && manualTiming[i].runTime){
+      // Port is in action...
+      if (manualTiming[i].runTime > maxTime){
+        maxTime = manualTiming[i].runTime;
+      }
+    }
+    manualTiming[i].state = 0;
+  }
+  
+  // Calc offset / onTime / offTime
+  for (byte i = 0; i < 12; i++){
+    if ((i == port || port == 255) && manualTiming[i].runTime){
+      // we're in Action and have a time...
+      uint16_t repeats = maxTime / manualTiming[i].runTime;
+      if (repeats > manualTiming[i].runTime){
+        // we can't On/Off shorter than 1sec.
+        repeats = manualTiming[i].runTime;
+      }
+      manualTiming[i].onTime = manualTiming[i].runTime / repeats;
+      manualTiming[i].offTime = (maxTime - manualTiming[i].runTime) / repeats;
+      manualTiming[i].offset = (maxTime - ((manualTiming[i].onTime + manualTiming[i].offTime) * repeats)) / 2;
+      manualTiming[i].inState = manualTiming[i].offTime;
+    }
+  }
+  
+  // Run times...
+  while (maxTime){
+    if (DoTimer()){
+      // A second is gone...
+      for (byte i = 0; i < 12; i++){
+        if ((i == port || port == 255) && manualTiming[i].runTime){
+          // port is valid & timing exist
+          if (manualTiming[i].offset){
+            // Start-Offset not reached
+            manualTiming[i].offset--;
+          }
+          else{
+            // Offset reached
+            if (manualTiming[i].state){
+              // port is ON
+              if (manualTiming[i].inState == manualTiming[i].onTime){
+                // Start OFF
+                manualTiming[i].inState = 0;
+                manualTiming[i].state = 0;
+              }
+            }
+            else{
+              // port is OFF
+              if (manualTiming[i].inState == manualTiming[i].offTime){
+                // Start ON
+                manualTiming[i].inState = 0;
+                manualTiming[i].state = 1;
+              }              
+            }
+            digitalWrite(i + 2, manualTiming[i].state);
+            manualTiming[i].inState++;        
+          }
+        }
+      }
+      maxTime--;
+    }
+    if (Serial.available()){
+      // STOP manual action...
+      Serial.read();
+      maxTime = 0;
+    }
+  }
+  OffOutPorts();
+  
+  /*
+  // Sort the manualTiming array in descending order
+  for (int i = 0; i < 11; i++) {
+      for (int j = i+1; j < 12; j++) {
+          if (manualTiming[j].runTime > manualTiming[i].runTime) {
+              uint16_t temp_times = manualTiming[i].runTime;
+              byte temp_port = manualTiming[i].onPort;
+              manualTiming[i].runTime = manualTiming[j].runTime;
+              manualTiming[i].onPort = manualTiming[j].onPort;
+              manualTiming[j].runTime = temp_times;
+              manualTiming[j].onPort = temp_port;
+          }
+      }
+  }
+  */
+
+
+}
 void PrintManualMenu(){
 
   //byte selectedSet = 0;
@@ -849,8 +996,10 @@ Start:
   byte i = 0;
   
   EscLocate(5, pos++);
-  PrintMenuKey(i + 'm', 0, '(', ' ', 0, 0, 0);
-  PrintCentered(temporary.Name, 16);
+  PrintMenuKey(i + 'm', 0, '(', ' ', 0, 1, 0);
+  EscColor(fgBlue);
+  PrintCentered(manual.Name, 16);
+  EscColor(0);
   PrintFlexSpacer(0, 6);
   Serial.print(F("LOW"));
   PrintFlexSpacer(6, 5);
@@ -864,11 +1013,11 @@ Start:
     PrintCentered(Fa(ezoStrLongType[i]), 17);
     PrintSpacer(1);
     PrintSmallMenuKey('a' + i);
-    PrintSerTime(temporary.Low[i], 0, 1);
+    PrintSerTime(manual.Low[i], 0, 1);
     PrintMenuKey(i + 'A', 1, '(', 0, 0, 0, 0);
     PrintSpacer(1);
     PrintSmallMenuKey('g' + i);
-    PrintSerTime(temporary.High[i], 0, 1);
+    PrintSerTime(manual.High[i], 0, 1);
     PrintMenuKey(i + 'G', 1, '(', 0, 0, 0, 0);
     PrintSpacer(0);
     EscLocate(8, pos++);
@@ -895,7 +1044,10 @@ Start:
   Serial.print(F("1-4):"));
   EscBold(0);
   Print1Space();
-  Serial.print(F("SelectSet"));
+  Serial.print(F("Sel.Set = "));
+  EscColor(fgBlue);
+  Serial.print(my.Temporary + 1);
+  EscColor(0);
 
   PrintMenuEnd(pos + 2);
 
@@ -907,27 +1059,30 @@ Start:
   else if (pos >= 'a' && pos <= 'f'){
     // LowTime
     pos -= 'a';
-    temporary.Low[pos] = GetUserTime(temporary.Low[pos]);
+    manual.Low[pos] = GetUserTime(manual.Low[pos]);
     pos = 1;
   }
   else if (pos >= 'g' && pos <= 'l'){
     // HighTime
     pos -= 'g';
-    temporary.High[pos] = GetUserTime(temporary.High[pos]);
+    manual.High[pos] = GetUserTime(manual.High[pos]);
     pos = 1;
   }
   else if (pos >= 'A' && pos <= 'F'){
     // Run Single LowTime
     pos -= 'A';
+    RunManualSetting(pos);
     pos = 2;
   }
   else if (pos >= 'G' && pos <= 'L'){
     // Run Single HighTime
-    pos -= 'G';
+    pos -= 'G' + 6;
+    RunManualSetting(pos);
     pos = 2;
   }
   else if (pos == '0'){
     // Run Together
+    RunManualSetting(255);
     pos = 2;
   }
   else if (pos >= '1' && pos <= '4'){
@@ -938,8 +1093,8 @@ Start:
   }
   else if (pos == 'm'){
     // Edit Name
-    GetUserString(temporary.Name);
-    strcpy(temporary.Name, strHLP);
+    GetUserString(manual.Name);
+    // strcpy(manual.Name, strHLP);
     pos = 1;
   }
   
@@ -951,6 +1106,8 @@ Start:
   if (pos > 0){
     goto Start;
   }
+
+  OffOutPorts();
   
 }
 
@@ -974,19 +1131,19 @@ Start:
     PrintCentered(Fa(ezoStrLongType[i]), 9);
     PrintSmallSpacer();
     PrintSmallMenuKey('a' + i);
-    PrintSerTime(action.Delay[i], 0, 1);
+    PrintSerTime(setting.Delay[i], 0, 1);
     PrintSmallSpacer();
     PrintSmallMenuKey('g' + i);
-    PrintSerTime(action.TooLow[i], 0, 1);
+    PrintSerTime(setting.TooLow[i], 0, 1);
     PrintSmallSpacer();
     PrintSmallMenuKey('m' + i);
-    PrintSerTime(action.Low[i], 0, 1);
+    PrintSerTime(setting.Low[i], 0, 1);
     PrintSmallSpacer();
     PrintSmallMenuKey('s' + i);
-    PrintSerTime(action.High[i], 0, 1);
+    PrintSerTime(setting.High[i], 0, 1);
     PrintSmallSpacer();
     PrintSmallMenuKey('A' + i);
-    PrintSerTime(action.TooHigh[i], 0, 1);
+    PrintSerTime(setting.TooHigh[i], 0, 1);
     PrintSmallSpacer();
     EscLocate(3, pos++);
   }
@@ -1001,36 +1158,36 @@ Start:
   else if (pos >= 'a' && pos <= 'f'){
     // FailSave
     pos -= 'a';
-    action.Delay[pos] = GetUserTime(action.Delay[pos]);
+    setting.Delay[pos] = GetUserTime(setting.Delay[pos]);
     pos = 1;
   }
   else if (pos >= 'g' && pos <= 'l'){
     // tooLow
     pos -= 'g';
-    action.TooLow[pos] = GetUserTime(action.TooLow[pos]);
+    setting.TooLow[pos] = GetUserTime(setting.TooLow[pos]);
     pos = 1;
   }
   else if (pos >= 'm' && pos <= 'r'){
     // Low
     pos -= 'm';
-    action.Low[pos] = GetUserTime(action.Low[pos]);
+    setting.Low[pos] = GetUserTime(setting.Low[pos]);
     pos = 1;
   }
   else if (pos >= 's' && pos <= 'x'){
     // High
     pos -= 's';
-    action.High[pos] = GetUserTime(action.High[pos]);
+    setting.High[pos] = GetUserTime(setting.High[pos]);
     pos = 1;
   }
   else if (pos >= 'A' && pos <= 'F'){
     // tooHigh
     pos -= 'A';
-    action.TooHigh[pos] = GetUserTime(action.TooHigh[pos]);
+    setting.TooHigh[pos] = GetUserTime(setting.TooHigh[pos]);
     pos = 1;
   }
 
   if (pos == 1){
-    ActionTimesToRom(my.Model);
+    SettingsToRom(my.Setting);
   }
   
   if (pos > 0){
@@ -1068,8 +1225,8 @@ byte PrintWaterValsHlp(byte pos, byte posX, byte ezotype, byte lz, byte dp, int 
       EscLocate(posX, pos++);
       Serial.print(i + 1);
       Serial.print(F(": "));
-      PrintBoldFloat(ezoProbe[i].value[0] / divisor, lz, dp, ' ');
-      avg += ezoProbe[i].value[0];
+      PrintBoldFloat(ezoValue[i][0] / divisor, lz, dp, ' ');
+      avg += ezoValue[i][0];
       PrintUnit(ezotype, 1, 0, 3);
     }
   }
@@ -1093,12 +1250,12 @@ byte PrintWaterVals(byte pos){
   byte posMax = 0;
   byte posAct = 0;
 
-  posMax = PrintWaterValsHlp(pos, 5, ezoRTD, 2, 2, 1); //, &avg_RTD);
+  posMax = PrintWaterValsHlp(pos, 4, ezoRTD, 2, 2, 1); //, &avg_RTD);
 
-  posAct = PrintWaterValsHlp(pos, 18, ezoEC, 4, 0, 1000); //, &avg_EC);
+  posAct = PrintWaterValsHlp(pos, 17, ezoEC, 4, 0, 1000); //, &avg_EC);
   posMax = GetPosMax(posAct, posMax);
 
-  posAct = PrintWaterValsHlp(pos, 30, ezoPH, 2, 2, 1); //, &avg_pH);
+  posAct = PrintWaterValsHlp(pos, 29, ezoPH, 2, 2, 1); //, &avg_pH);
   posMax = GetPosMax(posAct, posMax);
 
   posAct = PrintWaterValsHlp(pos, 42, ezoORP, 4, 2, 1); //, &avg_ORP);
@@ -1114,58 +1271,133 @@ byte PrintWaterVals(byte pos){
 
 }
 
+void PrintActionTimes(byte ezoType){
+  // Check which tooLow to tooHigh is actually valid
+  
+  int32_t timeToUse = 0;
+  int32_t timeToAction = 0;
+
+  byte colorState = GetAvgState(avgVal[ezoType], setting.TooLow[ezoType], setting.Low[ezoType], setting.High[ezoType], setting.TooHigh[ezoType]);
+  
+  switch (colorState){
+  case fgCyan:
+    // tooLow
+    timeToUse = tooLowSince[ezoType];
+  case fgBlue:
+    // Low
+    if (colorState == fgCyan && lowSince[ezoType] && lowSince[ezoType] < tooLowSince[ezoType]){
+      timeToUse = lowSince[ezoType];
+      colorState = fgCyan;
+    }
+    else if (colorState == fgBlue){
+      timeToUse = lowSince[ezoType];
+    }  
+    break;
+  case fgRed:
+    // tooHigh
+    timeToUse = tooHighSince[ezoType];
+  case fgYellow:
+    // High
+    if (colorState == fgRed && highSince[ezoType] && highSince[ezoType] < tooHighSince[ezoType]){
+      timeToUse = highSince[ezoType];
+      colorState = fgYellow;
+    }
+    else if (colorState == fgYellow){
+      timeToUse = highSince[ezoType];
+    }  
+    break;
+  default:
+    // OK
+    timeToUse = okSince[ezoType];
+    break;
+  } 
+  EscColor(colorState);
+  EscFaint(1);
+
+  timeToUse = (myTime - timeToUse);            // time since state became true
+  if (colorState != fgGreen){
+    timeToAction = setting.Delay[ezoType] - timeToUse;     // time until action begins
+  }
+  
+  EscSaveCursor();
+  PrintSerTime(timeToUse, 1, 1);
+  EscRestoreCursor();
+  EscCursorDown(1);
+  EscFaint(0);
+  if (timeToAction >= 0){
+    PrintSerTime(timeToAction, 1, 1);
+  }
+  else{
+    Serial.print(F("  -On Action-"));
+  }
+  
+  EscRestoreCursor();
+  EscCursorDown(2);
+  EscFaint(1);
+  timeToUse = 0;
+  if (lastAction[ezoType]){
+    timeToUse = myTime - lastAction[ezoType];
+  }
+  PrintSerTime(timeToUse, 1, 1);
+  EscFaint(0);
+  EscColor(0);
+}
+
 byte PrintAVGs(byte pos){
     
   SetAvgColorEZO(ezoRTD);
-  EscLocate(8, pos);
+  EscLocate(7, pos);
   PrintBoldFloat(avg_RTD, 2, 2, ' ');
   PrintUnit(ezoRTD, 0, 0, 3);
 
-  //EscLocate(6, pos + 2);
-  //PrintActionTimes(ezoRTD);
+  EscLocate(1, pos + 2);
+  PrintActionTimes(ezoRTD);
 
 
   SetAvgColorEZO(ezoEC);
-  EscLocate(21, pos);
+  EscLocate(20, pos);
   PrintBoldInt(avg_EC / 1000, 4, ' ');
   PrintUnit(ezoEC, 0, 0, 3);
   
-  //EscLocate(21, pos + 2);
-  //PrintActionTimes(ezoEC);
+  EscLocate(14, pos + 2);
+  PrintActionTimes(ezoEC);
 
 
   SetAvgColorEZO(ezoPH);
-  EscLocate(33, pos);
+  EscLocate(32, pos);
   PrintBoldFloat(avg_pH, 2, 2, ' ');
   PrintUnit(ezoPH, 0, 0, 3);
 
-  //EscLocate(35, pos + 2);
-  //PrintActionTimes(ezoPH);
+  EscLocate(27, pos + 2);
+  PrintActionTimes(ezoPH);
 
 
   SetAvgColorEZO(ezoORP);
-  EscLocate(45, pos);
+  EscLocate(44, pos);
   PrintBoldFloat(avg_ORP, 4, 2, ' ');
   PrintUnit(ezoORP, 0,  0 , 3);
 
-  //EscLocate(49, pos + 2);
-  //PrintActionTimes(ezoORP);
+  EscLocate(40, pos + 2);
+  PrintActionTimes(ezoORP);
 
 
   SetAvgColorEZO(ezoDiO2);
-  EscLocate(59, pos);
+  EscLocate(58, pos);
   PrintBoldFloat(avg_O2, 3, 2, ' ');
   PrintUnit(ezoDiO2, 0, 0, 3);
 
-  //EscLocate(63, pos + 2);
-  //PrintActionTimes(ezoDiO2);
+  EscLocate(53, pos + 2);
+  PrintActionTimes(ezoDiO2);
 
   SetAvgColorEZO(ezoLVL);
-  EscLocate(72, pos++);
+  EscLocate(72, pos);
   PrintBoldFloat(avg_LVL, 3, 2, ' ');
   PrintUnit(ezoLVL, 0, 0, 3);
 
-  return pos;
+  EscLocate(66, pos + 2);
+  PrintActionTimes(ezoLVL);
+
+  return pos + 1;
 
 }
 
@@ -1189,11 +1421,11 @@ void PrintLoopMenu(){
   PrintCenteredWithSpacer(FaStrange(ezoStrLongType[ezoPH]),10);
   PrintCenteredWithSpacer(FaStrange(ezoStrLongType[ezoORP]),11);
   PrintCenteredWithSpacer(FaStrange(ezoStrLongType[ezoDiO2]),9);
-  PrintCenteredWithSpacer(FaStrange(ezoStrLongType[ezoLVL]),9);
+  PrintCenteredWithSpacer(FaStrange(ezoStrLongType[ezoLVL]),8);
   PrintSpacer(0);
 
   //Serial.print(F(" | Temperature | Conductivity |     pH     |    Redox    |     O2     |"));
-  pos = PrintLine(pos, 3, 77);
+  pos = PrintLine(pos, 3, 76);
     
   //EscBold(1);
   EscBold(0);
@@ -1202,14 +1434,14 @@ void PrintLoopMenu(){
 
   pos = PrintWaterVals(pos);
 
-  pos = PrintLine(pos, 3, 77);
+  pos = PrintLine(pos, 3, 76);
   //PrintLine(pos + 1, 6, 70);
 
   // Avg 
   pos = PrintAVGs(pos);
 
   EscBold(1);
-  pos = PrintLine(pos, 3, 77);
+  pos = PrintLine(pos, 3, 76);
   EscBold(0);
 
 }
@@ -1225,18 +1457,18 @@ Start:
   pos = PrintProbesOfType(255, 1, pos);
 
   EscLocate(5, pos);
-  PrintMenuKeyStd('A'); Serial.print(F("ReBoot"));
+  PrintMenuKeyStd('a'); Serial.print(F("ReBoot"));
   EscLocate(20, pos);
-  PrintMenuKeyStd('B'); Serial.print(F("Date"));
+  PrintMenuKeyStd('b'); Serial.print(F("Date"));
   EscLocate(33, pos);
-  PrintMenuKeyStd('C'); Serial.print(F("Time"));
+  PrintMenuKeyStd('c'); Serial.print(F("Time"));
   /*
   EscLocate(38, pos);
   PrintMenuKeyStd('D'); Serial.print(F("Addr. = "));
   PrintBoldInt(myAddress, 3, '0');
   */
   EscLocate(46, pos++);
-  PrintMenuKeyStd('D'); Serial.print(F("Speed = "));
+  PrintMenuKeyStd('d'); Serial.print(F("Speed = "));
   EscBold(1);
   Serial.print(my.Speed);
   PrintShortLine(pos++, 8);
@@ -1264,16 +1496,14 @@ Start:
   }
   EscLocate(59, pos++);
   */
-  PrintMenuKeyBoldFaint('E', (my.Solarized), (!my.Solarized)); Serial.print(F("FaintHack"));
+  PrintMenuKeyBoldFaint('e', (my.Solarized), (!my.Solarized)); Serial.print(F("FaintHack"));
   //PrintMenuKey('E', 0, 0, 0, 1, (mySolarized), (!mySolarized));
   //Serial.print(F("FaintHack"));
   EscBold(0);
 
 //****************************************************
-  EscLocate(22, pos);
-  PrintMenuKeyStd('F'); Serial.print(F("All..."));
-  EscLocate(36, pos++);
-  PrintMenuKeyBoldFaint('G', (my.Default), (!my.Default)); Serial.print(F("(Re)SetDefault"));
+  EscLocate(22, pos++);
+  PrintMenuKeyBoldFaint('f', (my.Default), (!my.Default)); Serial.print(F("AsDefault"));
   //PrintMenuKey('G', 0, 0, 0, 1, (myDefault), (!myDefault)); Serial.print(F("(Re)SetDefault"));
   /*
   EscLocate(34, pos);
@@ -1281,11 +1511,16 @@ Start:
   */
   pos = PrintShortLine(pos++, 8);
   EscLocate(5, pos);
-  PrintMenuKeyStd('H'); Serial.print(F("Values..."));
-  EscLocate(22, pos);
-  PrintMenuKeyStd('I'); Serial.print(F("Times..."));
-  EscLocate(38, pos);
-  PrintMenuKeyStd('J'); Serial.print(F("Manual..."));
+  PrintMenuKeyStd('g');
+  EscColor(fgBlue);
+  Serial.print(F("More..."));
+  EscColor(0);
+  EscLocate(20, pos);
+  PrintMenuKeyStd('h'); Serial.print(F("Values..."));
+  EscLocate(37, pos);
+  PrintMenuKeyStd('i'); Serial.print(F("Times..."));
+  EscLocate(53, pos);
+  PrintMenuKeyStd('j'); Serial.print(F("Manual..."));
   
   PrintMenuEnd(pos + 1);
 
@@ -1296,7 +1531,7 @@ Start:
   case 0:
     // EXIT
     break;
-  case 'f':
+  case 'g':
     // All Menu
     PrintAllMenu();
     break;
@@ -1347,7 +1582,7 @@ Start:
       myFromRom();
     }
     break;
-  case 'g':
+  case 'f':
     // (Re)SetDefault
     my.Default = !my.Default;
     myToRom();

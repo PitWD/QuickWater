@@ -1,7 +1,7 @@
 #include "quicklib.h"
 #include <EEPROM.h>
 
-#define EZO_MAX_PROBES 13
+#define EZO_MAX_PROBES 11
 #define EZO_MAX_VALUES 1        // 3 for full HUM / 5 for full RGB...
 #define EZO_1st_ADDRESS 32
 #define EZO_LAST_ADDRESS 127
@@ -92,17 +92,18 @@ const byte ezoValCnt[] PROGMEM = {1, 1, 1, 1, 2, 1};
 const byte ezoHasCal[] PROGMEM = {1, 1, 1, 1, 1, 0};
 
 typedef struct ezoProbeSTRUCT{
-    // 27 Byte * 12(+1) Probes Max = 351 Byte
+    // 22 Byte * 10(+1) Probes Max = 242 Byte
     byte type;
     byte calibrated;
-    byte error;            // 0=OK, 1=processing, 2=syntax, 3=IIC, unknown
+    //byte error;            // 0=OK, 1=processing, 2=syntax, 3=IIC, unknown
     byte address;
     uint16_t version; 
     char name[17];
-    int32_t value[EZO_MAX_VALUES];
     //long valueLast[EZO_MAX_VALUES];
 }ezoProbeSTRUCT;
 ezoProbeSTRUCT ezoProbe[EZO_MAX_PROBES];
+
+int32_t ezoValue[11][EZO_MAX_VALUES];
 
 struct limitsSTRUCT{
     // 120 Byte
@@ -113,8 +114,8 @@ struct limitsSTRUCT{
     int32_t TooHigh[6];
 };
 
-struct actionSTRUCT{
-    // 197 Byte * 2 Modes = 394 Byte
+struct settingSTRUCT{
+    // 197 Byte * 3 Modes = 591 Byte
     uint16_t Delay[6];
     uint16_t TooLow[6];
     uint16_t Low[6];
@@ -122,43 +123,14 @@ struct actionSTRUCT{
     uint16_t TooHigh[6];
     limitsSTRUCT limits;
     char Name[17];
-}action;
+}setting;
 
-struct temporarySTRUCT{
+struct manualSTRUCT{
     // 41 Byte * 4 Sets = 164 Byte
     uint16_t Low[6];
     uint16_t High[6];
     char Name[17];
-}temporary;
-
-// Delay & ActionTimes
-#if USE_DEBUG_VALS
-    uint16_t delayTimes[] = {180, 120, 60, 0, 0, 10};
-    uint16_t actionTooLow[] = {30, 20, 10, 0, 0, 3};
-    uint16_t actionLow[] = {15, 10, 5, 0, 0, 1};
-    uint16_t actionHigh[] = {15, 10, 5, 0, 0, 1};
-    uint16_t actionTooHigh[] = {30, 20, 10, 0, 0, 3};
-#else
-    /*
-    uint16_t delayTimes[6]; // = {2700, 2400, 2400, 0, 0, 3600};
-    uint16_t actionTooLow[6]; // = {900, 10, 6, 0, 0, 30};
-    uint16_t actionLow[6]; // = {450, 5, 3, 0, 15, 15};
-    uint16_t actionHigh[6]; // = {900, 30, 3, 0, 0, 0};
-    uint16_t actionTooHigh[6]; // = {1800, 60, 6, 0, 0, 15};
-    */
-#endif
-
-/*
-// Temporary Runtimes - usable as premix...
-uint16_t temporaryLow[6];/* = {
-    {0, 60, 3, 0, 0, 900},
-    {0, 90, 4, 0, 0, 900},
-    {0, 120, 6, 0, 0, 1800},
-    {0, 180, 8, 0, 0, 1800},
-};*//*
-uint16_t temporaryHigh[6]; //  = {0, 0, 0, 0, 0, 0};
-char temporaryName[17];
-*/
+}manual;
 
 // Counter for Low/High
 uint32_t tooLowSince[6];
@@ -249,7 +221,7 @@ void DefaultProbesToRom(){
     // 27 byte * 13 = 351
     EEPROM.put(0, ezoProbe);
 }
-void ActionTimesToRom(int set){ //(int set){
+void SettingsToRom(int set){ //(int set){
     // Save Action Model (2x197 byte / end @ 745)
     //set *= 197;
     /*
@@ -259,21 +231,8 @@ void ActionTimesToRom(int set){ //(int set){
     EEPROM.put(387 + set, actionHigh);
     EEPROM.put(399 + set, actionTooHigh);
     */
-    EEPROM.put(351 + set * 197, action);
+    EEPROM.put(242 + set * 197, setting);
 }
-/*
-void LowHighValsToRom(int set){
-    // Save tooLow TO tooHigh model (2x96 byte / end @ 663 )
-    set *= 96;
-    /*
-    EEPROM.put(471 + set, tooLow);
-    EEPROM.put(495 + set, low);
-    EEPROM.put(519 + set, high);
-    EEPROM.put(543 + set, tooHigh);
-    *//*
-    EEPROM.put(471 + set, limits);
-}
-*/
 void ManualTimesToRom(int set){
     // Save temporay/manual times (4x41 byte / end @ 909)
     //set *= 41;
@@ -282,13 +241,13 @@ void ManualTimesToRom(int set){
     EEPROM.put(675 + set, temporaryHigh);
     EEPROM.put(687 + set, temporaryName);
     */
-    EEPROM.put(745 + set * 41, temporary);
+    EEPROM.put(833 + set * 41, manual);
 }
 
 void DefaultProbesFromRom(){
     EEPROM.get(0, ezoProbe);
 }
-void ActionTimesFromRom(int set){ //(int set){
+void SettingsFromRom(int set){ //(int set){
     //set *= 197;
     /*
     EEPROM.get(351 + set, delayTimes);
@@ -297,20 +256,8 @@ void ActionTimesFromRom(int set){ //(int set){
     EEPROM.get(387 + set, actionHigh);
     EEPROM.get(399 + set, actionTooHigh);
     */
-   EEPROM.get(351 + set * 197, action);
+   EEPROM.get(242 + set * 197, setting);
 }
-/*
-void LowHighValsFromRom(int set){
-    set *= 96;
-    /*
-    EEPROM.get(471 + set, tooLow);
-    EEPROM.get(495 + set, low);
-    EEPROM.get(519 + set, high);
-    EEPROM.get(543 + set, tooHigh);
-    *//*
-    EEPROM.get(471 + set, limits);
-}
-*/
 void ManualTimesFromRom(int set){
     //set *= 41;
     /*
@@ -318,9 +265,14 @@ void ManualTimesFromRom(int set){
     EEPROM.get(675 + set, temporaryLow);
     EEPROM.get(687 + set, temporaryName);
     */
-    EEPROM.get(745 + set * 41, temporary);
+    EEPROM.get(833 + set * 41, manual);
 }
 
+void OffOutPorts(){
+    for (byte i = 2; i < 14; i++){
+        digitalWrite(i, LOW);
+    }
+}
 
 byte GetAvgState(long avg, long tooLow, long low, long high, long tooHigh){
   if (avg < tooLow){
@@ -345,7 +297,7 @@ void SetAvgColor(long avg, long tooLow, long low, long high, long tooHigh){
 void SetAvgColorEZO(byte ezoType){
     // - 46 Flash (5x used)
     // +128 Ram
-    SetAvgColor(avgVal[ezoType], action.limits.TooLow[ezoType], action.limits.Low[ezoType], action.limits.High[ezoType], action.limits.TooHigh[ezoType]);
+    SetAvgColor(avgVal[ezoType], setting.limits.TooLow[ezoType], setting.limits.Low[ezoType], setting.limits.High[ezoType], setting.limits.TooHigh[ezoType]);
 }
 
 char EzoStartValues(byte ezo){
@@ -358,9 +310,9 @@ void EzoWaitValues(byte ezo){
 
 byte EzoGetValues(byte ezo){
     if (IIcGetAtlas(ezoProbe[ezo].address) > 0){
-        ezoProbe[ezo].value[0] = StrTokFloatToInt(iicStr);
+        ezoValue[ezo][0] = StrTokFloatToInt(iicStr);
         for (byte i = 1; i < Fb(ezoValCnt[ezoProbe[ezo].type]); i++){
-            ezoProbe[ezo].value[i] = StrTokFloatToInt(NULL);
+            ezoValue[ezo][i] = StrTokFloatToInt(NULL);
         }
         return 1;        
     }
@@ -566,7 +518,7 @@ int32_t GetRtdAvgForCal(){
             EzoStartValues(i);
             EzoWaitValues(i);
             EzoGetValues(i);
-            avgTemp += ezoProbe[i].value[0];
+            avgTemp += ezoValue[i][0];
         }
     }
     if (avgCnt){
@@ -611,7 +563,7 @@ START:
             EzoGetValues(i);
             PrintInt(i + 1, 2, '0');
             Serial.print(F(": "));
-            PrintBoldFloat(ezoProbe[i].value[0], 4, 2, ' ');
+            PrintBoldFloat(ezoValue[i][0], 4, 2, ' ');
             PrintSpacer(0);
             pos += 14;
             if (pos > 66){
@@ -728,33 +680,33 @@ int8_t EzoDoNext(){
             // Analyze internal Level-Ports
                 // tooLow
                 ezoAct = 0;     // temporary use for comparison 
-                ezoProbe[ezoCnt - INTERNAL_LEVEL_CNT].value[0] = 0;
+                ezoValue[ezoCnt - INTERNAL_LEVEL_CNT][0] = 0;
             if (!digitalRead(14)){
                 // Low
                 ezoAct += 25;
-                ezoProbe[ezoCnt - INTERNAL_LEVEL_CNT].value[0] = 25;
+                ezoValue[ezoCnt - INTERNAL_LEVEL_CNT][0] = 25;
             }
             if (!digitalRead(15)){
                 // OK
                 ezoAct += 25;
-                ezoProbe[ezoCnt - INTERNAL_LEVEL_CNT].value[0] = 50;
+                ezoValue[ezoCnt - INTERNAL_LEVEL_CNT][0] = 50;
             }
             if (!digitalRead(16)){
                 // High
                 ezoAct += 25;
-                ezoProbe[ezoCnt - INTERNAL_LEVEL_CNT].value[0] = 75;
+                ezoValue[ezoCnt - INTERNAL_LEVEL_CNT][0] = 75;
             }
             if (!digitalRead(17)){
                 // toHigh
                 ezoAct += 25;
-                ezoProbe[ezoCnt - INTERNAL_LEVEL_CNT].value[0] = 100;
+                ezoValue[ezoCnt - INTERNAL_LEVEL_CNT][0] = 100;
             }
-            if (ezoProbe[ezoCnt - INTERNAL_LEVEL_CNT].value[0] != ezoAct){
+            if (ezoValue[ezoCnt - INTERNAL_LEVEL_CNT][0] != ezoAct){
                 // One or some level-switches are wrong/faulty
-                ezoProbe[ezoCnt - INTERNAL_LEVEL_CNT].value[0] = 66666;
+                ezoValue[ezoCnt - INTERNAL_LEVEL_CNT][0] = 66666;
             }     
             else{
-                ezoProbe[ezoCnt - INTERNAL_LEVEL_CNT].value[0] *= 1000;
+                ezoValue[ezoCnt - INTERNAL_LEVEL_CNT][0] *= 1000;
             }
             
             ezoAct = 0;
@@ -838,6 +790,7 @@ void EzoScan(){
                         switch (iicStr[3]){
                         case 'R':
                             // RGB or RTD
+                            /*
                             switch (iicStr[4]){
                             case 'T':
                                 // RTD
@@ -847,6 +800,11 @@ void EzoScan(){
                                 // LATE ERROR
                                 break;
                             }
+                            */
+                           if (iicStr[4] == 'T'){
+                            recEzo = ezoRTD;
+                           }
+                           
                             break;
                         case 'O':
                             // ORP
@@ -903,6 +861,7 @@ void EzoScan(){
                             Serial.print(F("State: "));
                             delay(300);
                             if (IIcGetAtlas(i) > 0){
+                                /*
                                 switch (iicStr[8]){
                                 case 'P':
                                     // powered off
@@ -925,7 +884,9 @@ void EzoScan(){
                                 default:
                                     Serial.print(F("N/A"));
                                     break;
-                                }             
+                                }
+                                */
+                                Serial.print(iicStr[8]);
                                 PrintCharInSpaces('@');
                                 Serial.print(&iicStr[10]);
                                 Serial.println(F(" V"));
@@ -935,16 +896,18 @@ void EzoScan(){
                             }
                             
                             // Value(s)
-                            Serial.print(F("Val's: "));
+                            Serial.print(F("Val: "));
                             EzoStartValues(ezoCnt);
                             EzoWaitValues(ezoCnt);
                             if (EzoGetValues(ezoCnt)){
-                                Serial.print(ezoProbe[ezoCnt].value[0]);
+                                Serial.println(ezoValue[ezoCnt][0]);
+                                /*
                                 for (byte i2 = 1; i2 < Fb(ezoValCnt[recEzo]); i2++){
                                     PrintCharInSpaces(',');
                                     Serial.print(ezoProbe[ezoCnt].value[i2]);
                                 }          
                                 Serial.println(F(""));
+                                */
                             }
                             else{
                                 Serial.println(F("ERR"));
@@ -962,10 +925,11 @@ void EzoScan(){
     }
 
     // Add internal 4-step level
-    ezoProbe[ezoCnt].value[0] = 66666;
+    ezoValue[ezoCnt][0] = 66666;
     ezoProbe[ezoCnt].address = 0;
     strcpy_P(ezoProbe[ezoCnt].name, (PGM_P)F("Int. Level - 1"));
     ezoProbe[ezoCnt].type = ezoLVL;
+    ezoProbe[ezoCnt].calibrated = 0;
     ezoCnt++;
 
 }

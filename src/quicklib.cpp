@@ -537,6 +537,7 @@ byte GetUserString(char *strIN){
 
   strHLP[eos] = 0;
   EscColor(0);
+  strcpy(strIN, strHLP);
   return 1;
 
 }

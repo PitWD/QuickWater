@@ -146,17 +146,13 @@ void loop() {
         }      
         if (err){
           // Low in Action
-          strcpy_P(strHLP, (PGM_P)F("\0"));
         }
       }
       else{
         //  TooLow in Action
-        strcpy_P(strHLP, (PGM_P)F("Too"));
       }
       if (err){
         // something is in action
-        strcpy_P(&strHLP[strlen(strHLP)], (PGM_P)F("LowAction-"));
-        printAction = 1;
       }
       
       preToo = tooHighSince[i];
@@ -171,22 +167,13 @@ void loop() {
         }
         if (err){
           // High in Action
-          strcpy_P(strHLP, (PGM_P)F("\0"));
         }
       }
       else{
         //  TooHigh in Action
-        strcpy_P(strHLP, (PGM_P)F("Too"));
       }
       if (err){
         // something is in action
-        strcpy_P(&strHLP[strlen(strHLP)], (PGM_P)F("HighAction-"));
-        printAction = 1;
-      }
-      if (printAction){
-        // Print Action
-        strcpy_P(&strHLP[strlen(strHLP)], (PGM_P)pgm_read_word(&(ezoStrType[i])));
-        PrintErrorOK(0, strlen(strHLP), strHLP);
       }
       
       // Set / Reset Since-Variables depending on high/low state...

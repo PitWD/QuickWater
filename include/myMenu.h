@@ -699,6 +699,11 @@ void PrintSmallSpacer(){
 void PrintSmallMenuKey(char key){
   PrintMenuKey(key, 0, 0, ' ', 0, 0, 0);
 }
+void PrintCenteredWithSpacer(char *strIN, byte centerLen){
+  PrintSpacer(1);
+  PrintCentered(strIN, centerLen);
+}
+
 
 void PrintLowToHigh(){
   Serial.print(F("tooLow"));
@@ -832,15 +837,29 @@ void RunManualSetting(byte port){
       uint16_t offTime;
       byte state;
       uint16_t inState;
+      uint16_t repeats;
   }manualTiming[12];
 
-  Serial.println(F("\n"));
-  EscSaveCursor();
+  byte firstLine = 0;
+
+  int8_t pos = PrintMenuTop((char*)"- RUN Manual -");
+  pos++;
+  PrintErrorOK(0, 0, (char*)"RUN-Manual Loop started...");
+
+  EscLocate(18, pos++);
+  PrintCenteredWithSpacer((char*)"Offset", 8);
+  PrintCenteredWithSpacer((char*)"OnTime", 8);
+  PrintCenteredWithSpacer((char*)"OffTime", 8);
+  PrintCenteredWithSpacer((char*)"ON's_2Do", 8);
+  PrintCenteredWithSpacer((char*)"State", 8);
+  PrintSmallSpacer();
+  EscBold(1);
+  PrintLine(pos++, 7, 68);
 
   // Copy Low & High values to manualTiming array
   for (byte i = 0; i < 6; i++) {
       manualTiming[i].runTime = manual.Low[i];
-      manualTiming[i+6].runTime = i+6;
+      manualTiming[i + 6].runTime = manual.High[i];
   }
 
   // Search longest time
@@ -856,26 +875,79 @@ void RunManualSetting(byte port){
   }
   
   // Calc offset / onTime / offTime
-  for (byte i = 0; i < 12; i++){
+  for (byte i = 0; i < 6; i++){
+    
+    byte typeExist = 0;
+    byte type = i;
+
+    DoLowHigh:
+    // Low-Ports
     if ((i == port || port == 255) && manualTiming[i].runTime){
       // we're in Action and have a time...
-      uint16_t repeats = maxTime / manualTiming[i].runTime;
-      if (repeats > manualTiming[i].runTime){
+      manualTiming[i].repeats = maxTime / manualTiming[i].runTime;
+      if (manualTiming[i].repeats > manualTiming[i].runTime){
         // we can't On/Off shorter than 1sec.
-        repeats = manualTiming[i].runTime;
+        manualTiming[i].repeats = manualTiming[i].runTime;
       }
-      manualTiming[i].onTime = manualTiming[i].runTime / repeats;
-      manualTiming[i].offTime = (maxTime - manualTiming[i].runTime) / repeats;
-      manualTiming[i].offset = (maxTime - ((manualTiming[i].onTime + manualTiming[i].offTime) * repeats)) / 2;
+      manualTiming[i].onTime = manualTiming[i].runTime / manualTiming[i].repeats;
+      manualTiming[i].offTime = (maxTime - manualTiming[i].runTime) / manualTiming[i].repeats;
+      manualTiming[i].offset = (maxTime - ((manualTiming[i].onTime + manualTiming[i].offTime) * manualTiming[i].repeats)) / 2;
       manualTiming[i].inState = manualTiming[i].offTime;
+      if (!manualTiming[i].offset){
+        manualTiming[i].offset = manualTiming[i].offTime / 2;
+      }
+      
+      if (i < 6){
+        // Low-Ports
+        EscColor(fgBlue);
+      }
+      else{
+        // High-Ports
+        EscColor(fgYellow);
+      }
+      EscLocate(7, pos++);
+      EscBold(1);
+      PrintCentered(Fa(ezoStrLongType[type]), 11);
+      EscColor(0);
+      PrintSpacer(0);
+      PrintSerTime(manualTiming[i].offset, 0, 1);
+      PrintSpacer(0);
+      PrintSerTime(manualTiming[i].onTime, 0, 1);
+      PrintSpacer(0);
+      PrintSerTime(manualTiming[i].offTime, 0, 1);
+      PrintSpacer(1);
+      if (!firstLine){
+        // 1st Line
+        EscSaveCursor();
+        firstLine = 1;
+      }
+      typeExist = 1;
+      
     }
+    if (i < 6){
+      // repeat for high port
+      i += 6;
+      goto DoLowHigh;
+    }
+    i -= 6;
+    if (typeExist){
+      // Print type-separator line
+      EscBold(0);
+      PrintLine(pos++, 7, 68);
+    }
+    
   }
-  
+  firstLine = 0;
+
   // Run times...
   while (maxTime){
     if (DoTimer()){
       // A second is gone...
+
+      byte needRefresh = 0;
+
       for (byte i = 0; i < 12; i++){
+
         if ((i == port || port == 255) && manualTiming[i].runTime){
           // port is valid & timing exist
           if (manualTiming[i].offset){
@@ -890,6 +962,7 @@ void RunManualSetting(byte port){
                 // Start OFF
                 manualTiming[i].inState = 0;
                 manualTiming[i].state = 0;
+                needRefresh = 1;
               }
             }
             else{
@@ -898,6 +971,8 @@ void RunManualSetting(byte port){
                 // Start ON
                 manualTiming[i].inState = 0;
                 manualTiming[i].state = 1;
+                manualTiming[i].repeats--;
+                needRefresh = 1;
               }              
             }
             digitalWrite(i + 2, manualTiming[i].state);
@@ -906,6 +981,73 @@ void RunManualSetting(byte port){
         }
       }
       maxTime--;
+
+      if (needRefresh){
+        for (byte i = 0; i < 6; i++){
+
+          byte typeExist = 0;
+
+          DoLowHigh2:
+          // Low-Ports
+          if ((i == port || port == 255) && manualTiming[i].runTime){
+            // we're in Action and have a time...
+
+            typeExist = 1;
+
+            EscRestoreCursor();
+            if (firstLine){
+              EscCursorDown(firstLine);
+            }
+            
+            firstLine++;
+
+            if (i < 6){
+              // Low-Ports
+              EscColor(fgBlue);
+            }
+            else{
+              // High-Ports
+              EscColor(fgYellow);
+            }
+            PrintBoldInt(manualTiming[i].repeats, 8, '0');
+            EscColor(0);
+            PrintSpacer(manualTiming[i].state);
+            if (manualTiming[i].state){
+              // ON
+              EscColor(my.KeyColor);
+              PrintCentered("ON", 8);
+              EscColor(0);
+            }
+            else{
+              // OFF
+              PrintCentered("OFF", 8);
+            }
+            PrintSpacer(0);
+          }
+          if (i < 6){
+            i += 6;
+            goto DoLowHigh2;
+          }
+          i -= 6;
+          if (typeExist){
+            // separator line
+            firstLine++;
+          }
+        }
+        firstLine = 0;
+      }
+      
+      // Print Runtime
+      EscLocate(67,1);
+      EscInverse(1);
+      PrintRunTime();    
+      // Print Realtime
+      EscLocate(61,24);
+      PrintDateTime();
+      Serial.print(F(" "));
+      //EscColor(0);
+      EscInverse(0);    
+
     }
     if (Serial.available()){
       // STOP manual action...
@@ -1392,11 +1534,6 @@ byte PrintAVGs(byte pos){
 
   return pos + 1;
 
-}
-
-void PrintCenteredWithSpacer(char *strIN, byte centerLen){
-  PrintSpacer(1);
-  PrintCentered(strIN, centerLen);
 }
 
 void PrintLoopMenu(){

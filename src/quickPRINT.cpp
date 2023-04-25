@@ -194,6 +194,7 @@ void PrintMenuKey(char key, byte space, char leadChar, char trailChar, byte colo
   // "bold" sets bold on exit
   // "faint" sets faint on exit
 
+  EscColor(my.KeyColor);
   if (space){
     Print1Space();
   }
@@ -212,6 +213,7 @@ void PrintMenuKey(char key, byte space, char leadChar, char trailChar, byte colo
   if (trailChar){
     Serial.print(trailChar);
   }
+  EscColor(0);
   if (bold){
     EscBold(1);
   }

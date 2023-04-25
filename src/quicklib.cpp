@@ -581,9 +581,12 @@ char GetUserKey(byte maxChar, byte noCnt){
       else if (charIN > 64 && charIN < maxChar - 31){
         // Valid BIG Letter selected
       }
-      else if (charIN == 13){
+      else if (charIN == 13 || charIN == 27){
         // Enter - Exit - Back
         r = 0;
+      }
+      else if (charIN == '+' || charIN == '-' || charIN == '<' || charIN == '>'){
+        // Up/Down
       }
       else{
         // Refresh

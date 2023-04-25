@@ -16,16 +16,7 @@ byte myCnt = 0;
 byte myModel = 0;
 byte myTemporary = 0;
 */
-struct mySTRUCT{
-  byte Boot; // = 0;    // 0 = Terminal  /  1 = Slave
-  uint32_t Speed; // = 9600;
-  byte Solarized; // = 0;
-  byte Address; // = 123;
-  byte Default; // = 0;
-  byte Cnt; // = 0;
-  byte Setting; // = 0;
-  byte Temporary; // = 0;
-}my;
+mySTRUCT my;
 
 void myToRom(){
   /*
@@ -281,9 +272,11 @@ Start:
   EscLocate(5, pos);
   PrintMenuKeyBoldFaint('h', my.Boot, !my.Boot);
   Serial.print(F("Boot As ModBUS Slave"));
+  EscFaint(0);
   PrintSpaces(5);
   PrintMenuKeyBoldFaint('i', !my.Boot, my.Boot);
   Serial.print(F("Boot For Terminal Use"));
+  EscFaint(0);
   
   PrintMenuEnd(pos + 2);
 
@@ -662,7 +655,7 @@ Start:
   EscLocate(51, pos++);
   PrintMenuKeyBoldFaint('j', all, !all);
   Serial.print(F("Select ALL"));
-  //EscBold(0);
+  EscBold(0);
 
   PrintMenuEnd(pos);
 
@@ -720,13 +713,19 @@ void PrintLowToHigh(){
 
 int8_t PrintCopySettingTo(int8_t pos){
   EscLocate(5, pos++);
+  EscColor(my.KeyColor);
   EscBold(1);
   Serial.print(F("(1-3): "));
+  EscColor(0);
   EscBold(0);
-  Serial.print(F("Copy FULL SETTING to Setting-No.: "));
-  EscBold(1);
-  Serial.print(F("(1-3)"));
-  EscBold(0);
+  Serial.print(F("Copy FULL SETTING "));
+  EscColor(fgBlue);
+  Serial.print((char*)setting.Name);
+  Serial.print(F(" ("));
+  Serial.print(my.Setting + 1);
+  Serial.print(F(")"));
+  EscColor(0);
+  Serial.print(F(" to Setting-No. [1-3]"));
   return pos;
 }
 void PrintValuesMenu(){
@@ -974,14 +973,17 @@ Start:
   PrintLine(pos++, 5, 58);
   pos++;
   EscLocate(5, pos++);
+  EscColor(my.KeyColor);
   EscBold(1);
-  Serial.print(F("a-l):"));
+  Serial.print(F("a-l): "));
+  EscColor(0);
   EscBold(0);
-  Print1Space();
   Serial.print(F("EditTimes"));
   PrintSpaces(3);
+  EscColor(my.KeyColor);
   EscBold(1);
   Serial.print(F("A-L): "));
+  EscColor(0);
   EscBold(0);
   Serial.print(F("RunSingle"));
   PrintSpaces(3);
@@ -994,8 +996,10 @@ Start:
   PrintShortLine(pos++, 8);
 
   EscLocate(5, pos++);
+  EscColor(my.KeyColor);
   EscBold(1);
   Serial.print(F("1-4): "));
+  EscColor(0);
   EscBold(0);
   Serial.print(F("Select Manual-Set = "));
   EscColor(fgBlue);
@@ -1005,7 +1009,9 @@ Start:
   EscColor(0);
   PrintSpaces(5);
   //EscBold(1);
+  EscColor(my.KeyColor);
   Serial.print(F("(5-8): "));
+  EscColor(0);
   EscBold(0);
   Serial.print(F("Copy to Manual [1-4]"));
   
@@ -1452,10 +1458,18 @@ Start:
   EscBold(1);
   Serial.print(my.Speed);
   PrintSpaces(3);  
-  PrintMenuKeyBoldFaint('g', (my.Solarized), (!my.Solarized)); Serial.print(F("Use Faint Hack"));
+  PrintMenuKeyBoldFaint('g', (my.Solarized), (!my.Solarized)); Serial.print(F("FaintHack"));
   EscBold(0);
   PrintSpaces(3);
-  PrintMenuKeyBoldFaint('h', (my.Default), (!my.Default)); Serial.print(F("Use Scan As Default"));
+  PrintMenuKeyBoldFaint('h', (my.Default), (!my.Default)); Serial.print(F("IsDefault"));
+  PrintSpaces(3);
+  EscBold(1);
+  Serial.print(F("+/-): "));
+  EscColor(my.KeyColor);
+  EscUnder(1);
+  Serial.print(F("KeyColor"));
+  EscColor(0);
+  EscUnder(0);
 
   pos = PrintShortLine(pos++, 8);
 
@@ -1476,9 +1490,10 @@ Start:
   EscBold(1);
   EscColor(fgBlue);
   Serial.print((char*)setting.Name);
-  EscColor(0);
   PrintSpaces(3);
+  EscColor(my.KeyColor);
   Serial.print(F("n-p): "));
+  EscColor(0);
   EscBold(0);
   Serial.print(F("Sel.Setting [1-3] = "));
   EscBold(1);
@@ -1584,6 +1599,48 @@ Start:
     // Solarized
     my.Solarized = !my.Solarized;
     fgFaint = 90 + (my.Solarized * 2);
+    myToRom();
+    break;
+  case '+':
+    if (my.KeyColor == bgWhiteB){
+      my.KeyColor = 0;
+    }
+    else if (my.KeyColor == fgWhiteB){
+      my.KeyColor = 100;
+    }
+    else if (my.KeyColor == bgWhite){
+      my.KeyColor = 90;
+    }
+    else if (my.KeyColor == fgWhite){
+      my.KeyColor = 40;
+    }
+    else if (my.KeyColor == 0){
+      my.KeyColor = 30;
+    }
+    else{
+      my.KeyColor++;
+    }
+    myToRom();
+    break;    
+  case '-':
+    if (my.KeyColor == fgBlack){
+      my.KeyColor = 0;
+    }
+    else if (my.KeyColor == bgBlack){
+      my.KeyColor = 37;
+    }
+    else if (my.KeyColor == fgBlackB){
+      my.KeyColor = 47;
+    }
+    else if (my.KeyColor == bgBlackB){
+      my.KeyColor = 97;
+    }
+    else if (my.KeyColor == 0){
+      my.KeyColor = 107;
+    }
+    else{
+      my.KeyColor--;
+    }
     myToRom();
     break;
   default:

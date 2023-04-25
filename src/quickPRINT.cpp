@@ -205,10 +205,13 @@ void PrintMenuKey(char key, byte space, char leadChar, char trailChar, byte colo
   }
   Serial.print(key);
   Serial.print(F(")"));
+  if (colon){
+    Serial.print(F(":"));
+  }
   EscBold(0);
   EscUnder(0);
   if (colon){
-    Serial.print(F(": "));
+    Print1Space();
   }
   if (trailChar){
     Serial.print(trailChar);

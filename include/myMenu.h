@@ -958,12 +958,12 @@ Start:
     PrintCentered(Fa(ezoStrLongType[i]), 17);
     PrintSpacer(1);
     //PrintSmallMenuKey('a' + i);
-    PrintMenuKey('a', 0, 0, ' ', 0, 0, !manual.Low[i]);
+    PrintMenuKey(i +'a', 0, 0, ' ', 0, 0, !manual.Low[i]);
     PrintSerTime(manual.Low[i], 0, 1);
     PrintMenuKey(i + 'A', 1, '(', 0, 0, 0, 0);
     PrintSpacer(1);
     //PrintSmallMenuKey('g' + i);
-    PrintMenuKey('g', 0, 0, ' ', 0, 0, !manual.High[i]);
+    PrintMenuKey(i + 'g', 0, 0, ' ', 0, 0, !manual.High[i]);
     PrintSerTime(manual.High[i], 0, 1);
     PrintMenuKey(i + 'G', 1, '(', 0, 0, 0, 0);
     PrintSpacer(0);

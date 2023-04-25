@@ -66,12 +66,8 @@ void myFromRom(){
     my.Default = 0;
   }
   
-  if (my.Solarized){
-    fgFaint = 92;
-  }
-  else{
-    fgFaint = 90;
-  }
+  fgFaint = my.Solarized;
+
 }
 
 void DummyNameToStrDefault(void){
@@ -203,8 +199,7 @@ void PrintProbeLine(byte ezo, byte pos, byte bold, byte noKey){
       EscFaint(1);
     }
     Serial.print(strHLP);
-    EscBold(0);
-    EscColor(0);
+    EscBoldColor(0);
     EscFaint(1);
     Print1Space();
     Serial.print((char*)Fa(ezoStrUnit[ezoProbe[ezo].type]));
@@ -718,13 +713,9 @@ void PrintLowToHigh(){
 
 int8_t PrintCopySettingTo(int8_t pos){
   EscLocate(5, pos++);
-  EscColor(my.KeyColor);
-  EscBold(1);
-  EscUnder(1);
+  EscKeyStyle(1);
   Serial.print(F("1-3):"));
-  EscColor(0);
-  EscBold(0);
-  EscUnder(0);
+  EscKeyStyle(0);
   Serial.print(F(" Copy FULL SETTING "));
   EscColor(fgBlue);
   Serial.print((char*)setting.Name);
@@ -828,7 +819,7 @@ Start:
   
 }
 
-void RunManualSetting(byte port){
+void RunManualSetting(byte port, byte style){
 
   struct runManualSTRUCT{
       uint16_t runTime;
@@ -884,19 +875,39 @@ void RunManualSetting(byte port){
     // Low-Ports
     if ((i == port || port == 255) && manualTiming[i].runTime){
       // we're in Action and have a time...
-      manualTiming[i].repeats = maxTime / manualTiming[i].runTime;
-      if (manualTiming[i].repeats > manualTiming[i].runTime){
-        // we can't On/Off shorter than 1sec.
-        manualTiming[i].repeats = manualTiming[i].runTime;
+      switch (style){
+      case 0:
+        // Distributed
+        manualTiming[i].repeats = maxTime / manualTiming[i].runTime;
+        if (manualTiming[i].repeats > manualTiming[i].runTime){
+          // we can't On/Off shorter than 1sec.
+          manualTiming[i].repeats = manualTiming[i].runTime;
+        }
+        manualTiming[i].onTime = manualTiming[i].runTime / manualTiming[i].repeats;
+        manualTiming[i].offTime = (maxTime - manualTiming[i].runTime) / manualTiming[i].repeats;
+        manualTiming[i].offset = (maxTime - ((manualTiming[i].onTime + manualTiming[i].offTime) * manualTiming[i].repeats)) / 2;
+        break;
+      case 1:
+        // Centered
+        manualTiming[i].repeats = 1;
+        manualTiming[i].onTime = manualTiming[i].runTime;
+        manualTiming[i].offTime = maxTime - manualTiming[i].runTime;
+        manualTiming[i].offset = 0;
+        break;
+      default:
+        break;
       }
-      manualTiming[i].onTime = manualTiming[i].runTime / manualTiming[i].repeats;
-      manualTiming[i].offTime = (maxTime - manualTiming[i].runTime) / manualTiming[i].repeats;
-      manualTiming[i].offset = (maxTime - ((manualTiming[i].onTime + manualTiming[i].offTime) * manualTiming[i].repeats)) / 2;
       manualTiming[i].inState = manualTiming[i].offTime;
       if (!manualTiming[i].offset){
         manualTiming[i].offset = manualTiming[i].offTime / 2;
       }
+      if (manualTiming[i].repeats * manualTiming[i].onTime < manualTiming[i].runTime){
+        // prev. integer division with odd number
+        manualTiming[i].repeats++;
+        manualTiming[i].offset /= 2;
+      }
       
+
       if (i < 6){
         // Low-Ports
         EscColor(fgBlue);
@@ -1037,16 +1048,7 @@ void RunManualSetting(byte port){
         firstLine = 0;
       }
       
-      // Print Runtime
-      EscLocate(67,1);
-      EscInverse(1);
-      PrintRunTime();    
-      // Print Realtime
-      EscLocate(61,24);
-      PrintDateTime();
-      Serial.print(F(" "));
-      //EscColor(0);
-      EscInverse(0);    
+      PrintLoopTimes();    
 
     }
     if (Serial.available()){
@@ -1085,7 +1087,7 @@ Start:
   byte i = 0;
   
   EscLocate(5, pos++);
-  PrintMenuKey(i + 'm', 0, '(', ' ', 0, 1, 0);
+  PrintMenuKey(i + 'o', 0, '(', ' ', 0, 1, 0);
   EscColor(fgBlue);
   PrintCentered(manual.Name, 16);
   EscColor(0);
@@ -1117,59 +1119,46 @@ Start:
   PrintLine(pos++, 5, 58);
   pos++;
   EscLocate(5, pos++);
-  EscColor(my.KeyColor);
-  EscBold(1);
-  EscUnder(1);
+  EscKeyStyle(1);
   Serial.print(F("a-l):"));
-  EscColor(0);
-  EscBold(0);
-  EscUnder(0);
-  Serial.print(F(" EditTimes"));
+  EscKeyStyle(0);
+  Serial.print(F(" Edit"));
   PrintSpaces(3);
-  EscColor(my.KeyColor);
-  EscBold(1);
-  EscUnder(1);
+  EscKeyStyle(1);
   Serial.print(F("A-L):"));
-  EscColor(0);
-  EscBold(0);
-  EscUnder(0);
+  EscKeyStyle(0);
   Serial.print(F(" RunSingle"));
   PrintSpaces(3);
-  PrintMenuKeyStd('0');
-  Serial.print(F("RunAll"));
-  PrintSpaces(3);
   PrintMenuKeyStd('m');
-  Serial.print(F("EditName"));
-  
+  Serial.print(F("RunALL"));
+  PrintSpaces(3);
+  PrintMenuKeyStd('n');
+  Serial.print(F("RunAllCent."));
+    
   PrintShortLine(pos++, 8);
 
   EscLocate(5, pos++);
-  EscColor(my.KeyColor);
-  EscBold(1);
-  EscUnder(1);
+  PrintMenuKeyStd('o');
+  Serial.print(F("EditName"));
+  PrintSpaces(3);
+  EscKeyStyle(1);
   Serial.print(F("1-4):"));
-  EscColor(0);
-  EscBold(0);
-  EscUnder(0);
-  Serial.print(F(" Select Manual-Set = "));
+  EscKeyStyle(0);
+  Serial.print(F(" SelectSet = "));
   EscColor(fgBlue);
   EscBold(1);
   Serial.print(my.Temporary + 1);
   //EscBold(0);
   EscColor(0);
-  PrintSpaces(5);
-  //EscBold(1);
-  EscColor(my.KeyColor);
-  EscUnder(1);
+  PrintSpaces(3);
+  EscKeyStyle(1);
   Serial.print(F("5-8):"));
-  EscColor(0);
-  EscBold(0);
-  EscUnder(0);
-  Serial.print(F(" Copy to Manual [1-4]"));
+  EscKeyStyle(0);
+  Serial.print(F(" CopyToSet [1-4]"));
   
   PrintMenuEnd(pos + 1);
 
-  pos = GetUserKey('m', 8);
+  pos = GetUserKey('o', 8);
 
   if (pos < 1){
     // Exit & TimeOut
@@ -1189,18 +1178,23 @@ Start:
   else if (pos >= 'A' && pos <= 'F'){
     // Run Single LowTime
     pos -= 'A';
-    RunManualSetting(pos);
+    RunManualSetting(pos, 1);
     pos = 2;
   }
   else if (pos >= 'G' && pos <= 'L'){
     // Run Single HighTime
-    pos -= 'G' + 6;
-    RunManualSetting(pos);
+    pos = pos - 'G' + 6;
+    RunManualSetting(pos, 1);
     pos = 2;
   }
-  else if (pos == '0'){
-    // Run Together
-    RunManualSetting(255);
+  else if (pos == 'm'){
+    // Run Distributed
+    RunManualSetting(255, 0);
+    pos = 2;
+  }
+  else if (pos == 'n'){
+    // Run Centered
+    RunManualSetting(255, 1);
     pos = 2;
   }
   else if (pos >= '1' && pos <= '4'){
@@ -1214,7 +1208,7 @@ Start:
     ManualTimesToRom(pos - '5');
     pos = 2;
   }
-  else if (pos == 'm'){
+  else if (pos == 'o'){
     // Edit Name
     GetUserString(manual.Name);
     // strcpy(manual.Name, strHLP);
@@ -1604,63 +1598,51 @@ Start:
   PrintMenuKeyStd('f'); Serial.print(F("Speed = "));
   EscBold(1);
   Serial.print(my.Speed);
-  PrintSpaces(3);  
-  PrintMenuKeyBoldFaint('g', (my.Solarized), (!my.Solarized)); Serial.print(F("FaintHack"));
   EscBold(0);
+  PrintSpaces(3);  
+  PrintMenuKeyStd('g'); Serial.print(F("DimColor"));
   PrintSpaces(3);
-  PrintMenuKeyBoldFaint('h', (my.Default), (!my.Default)); Serial.print(F("IsDefault"));
+  PrintMenuKeyStd('h'); Serial.print(F("KeyColor"));
   PrintSpaces(3);
-  EscBold(1);
-  Serial.print(F("+/-): "));
-  EscColor(my.KeyColor);
-  EscUnder(1);
-  Serial.print(F("KeyColor"));
-  EscColor(0);
-  EscUnder(0);
+  PrintMenuKeyBoldFaint('i', (my.Default), (!my.Default)); Serial.print(F("IsDefault"));
 
   pos = PrintShortLine(pos++, 8);
 
   EscLocate(5, pos++);
-  PrintMenuKeyStd('i');
+  PrintMenuKeyStd('j');
   Serial.print(F("More..."));
   PrintSpaces(3);
-  PrintMenuKeyStd('j'); Serial.print(F("Values..."));
+  PrintMenuKeyStd('k'); Serial.print(F("Values..."));
   PrintSpaces(3);
-  PrintMenuKeyStd('k'); Serial.print(F("Times..."));
+  PrintMenuKeyStd('l'); Serial.print(F("Times..."));
   PrintSpaces(3);
-  PrintMenuKeyStd('l'); Serial.print(F("Manual..."));
+  PrintMenuKeyStd('m'); Serial.print(F("Manual..."));
 
   PrintShortLine(pos++, 8);
 
   EscLocate(5, pos);
-  PrintMenuKeyStd('m'); Serial.print(F("Setting-Name = "));
-  EscBold(1);
-  EscColor(fgBlue);
+  PrintMenuKeyStd('n'); Serial.print(F("Setting-Name = "));
+  EscBoldColor(fgBlue);
   Serial.print((char*)setting.Name);
   PrintSpaces(3);
-  EscColor(my.KeyColor);
-  EscUnder(1);
-  Serial.print(F("n-p):"));
-  EscColor(0);
-  EscBold(0);
-  EscUnder(0);
+  EscKeyStyle(1);
+  Serial.print(F("o-q):"));
+  EscKeyStyle(0);
   Serial.print(F(" Sel.Setting [1-3] = "));
-  EscBold(1);
-  EscColor(fgBlue);
+  EscBoldColor(fgBlue);
   Serial.print(my.Setting + 1);
-  EscColor(0);
-  EscBold(0);
+  EscBoldColor(0);
 
   PrintMenuEnd(pos + 1);
 
-  pos = GetUserKey('p', ezoCnt - INTERNAL_LEVEL_CNT);
+  pos = GetUserKey('q', ezoCnt - INTERNAL_LEVEL_CNT);
   switch (pos){
   case -1:
     // TimeOut
   case 0:
     // EXIT
     break;
-  case 'i':
+  case 'j':
     // All/More Menu
     PrintAllMenu();
     break;
@@ -1712,7 +1694,7 @@ Start:
       myFromRom();
     }
     break;
-  case 'h':
+  case 'i':
     // Use and save actual Scan as Default
     my.Default = !my.Default;
     myToRom();
@@ -1720,25 +1702,25 @@ Start:
       DefaultProbesToRom();
     }  
     break;
-  case 'j':
+  case 'k':
     // Values
     PrintValuesMenu();
     break;
-  case 'k':
+  case 'l':
     // Values
     PrintTimingsMenu();
     break;
-  case 'l':
+  case 'm':
     PrintManualMenu();
     break;
-  case 'm':
+  case 'n':
     // Setting Name
     GetUserString(setting.Name);
     SettingsToRom(my.Setting);
     break;
-  case 'n':
   case 'o':
   case 'p':
+  case 'q':
     // Select Setting
     my.Setting = pos - 'n';
     SettingsFromRom(my.Setting);
@@ -1746,52 +1728,15 @@ Start:
     break;
   case 'g':
     // Solarized
-    my.Solarized = !my.Solarized;
-    fgFaint = 90 + (my.Solarized * 2);
+    my.Solarized = EscGetNextColor(my.Solarized);
+    fgFaint = my.Solarized;
     myToRom();
     break;
-  case '+':
-    if (my.KeyColor == bgWhiteB){
-      my.KeyColor = 0;
-    }
-    else if (my.KeyColor == fgWhiteB){
-      my.KeyColor = 100;
-    }
-    else if (my.KeyColor == bgWhite){
-      my.KeyColor = 90;
-    }
-    else if (my.KeyColor == fgWhite){
-      my.KeyColor = 40;
-    }
-    else if (my.KeyColor == 0){
-      my.KeyColor = 30;
-    }
-    else{
-      my.KeyColor++;
-    }
+  case 'h':
+    // KeyColor
+    my.KeyColor = EscGetNextColor(my.KeyColor);
     myToRom();
     break;    
-  case '-':
-    if (my.KeyColor == fgBlack){
-      my.KeyColor = 0;
-    }
-    else if (my.KeyColor == bgBlack){
-      my.KeyColor = 37;
-    }
-    else if (my.KeyColor == fgBlackB){
-      my.KeyColor = 47;
-    }
-    else if (my.KeyColor == bgBlackB){
-      my.KeyColor = 97;
-    }
-    else if (my.KeyColor == 0){
-      my.KeyColor = 107;
-    }
-    else{
-      my.KeyColor--;
-    }
-    myToRom();
-    break;
   default:
     // Single Probe/Type
     PrintProbeMenu(pos - 49);

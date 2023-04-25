@@ -54,7 +54,9 @@ void PrintCharsCnt(char charToPrint, byte cnt){
     Serial.print(charToPrint);
   }
 }
-
+void PrintSpaces(byte cnt){
+  PrintCharsCnt(' ', cnt);
+}
 // Print One Space
 void Print1Space(void){
     PrintSpaces(1);
@@ -185,6 +187,17 @@ void PrintMenuEnd(byte pos){
   Serial.println(F("\n"));
   Serial.print(F("    Select key, or Enter(for return)..."));
 }
+void PrintLoopTimes(){
+    // Print Runtime
+    EscLocate(67,1);
+    EscInverse(1);
+    PrintRunTime();    
+    // Print Realtime
+    EscLocate(61,24);
+    PrintDateTime();
+    Serial.print(F(" "));
+    EscInverse(0);    
+}
 
 void PrintMenuKey(char key, byte space, char leadChar, char trailChar, byte colon, byte bold, byte faint){
   // "space" is a leading space - (as very 1st print)
@@ -194,12 +207,10 @@ void PrintMenuKey(char key, byte space, char leadChar, char trailChar, byte colo
   // "bold" sets bold on exit
   // "faint" sets faint on exit
 
-  EscColor(my.KeyColor);
   if (space){
     Print1Space();
   }
-  EscBold(1);
-  EscUnder(1);
+  EscKeyStyle(1);
   if (leadChar){
     Serial.print(leadChar);
   }

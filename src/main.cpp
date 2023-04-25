@@ -125,16 +125,7 @@ void loop() {
 
     uint32_t preToo = 0;
 
-    // Print Runtime
-    EscLocate(67,1);
-    EscInverse(1);
-    PrintRunTime();    
-    // Print Realtime
-    EscLocate(61,24);
-    PrintDateTime();
-    Serial.print(F(" "));
-    //EscColor(0);
-    EscInverse(0);    
+    PrintLoopTimes();    
 
     // Check High/Low of AVGs 
     // compare timeOuts with timing-setting

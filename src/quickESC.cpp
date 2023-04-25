@@ -162,3 +162,55 @@ void EscRestoreCursor(){
   Serial.print(F("\0338"));
 }
 
+void EscBoldColor(byte set){
+  if (set){
+    EscColor(set);
+    EscBold(1);
+  }
+  else{
+    EscBold(0);
+    EscColor(0);
+  }
+}
+
+void EscKeyStyle(byte set){
+  if (set){
+    EscBoldColor(my.KeyColor);
+    EscUnder(1);
+  }
+  else{
+    EscUnder(0);
+    EscBoldColor(0);
+  }
+}
+
+byte EscGetNextColor(byte colorIN){
+  
+  byte r = colorIN;
+  
+  if (colorIN == fgWhiteB){
+    r = 0;
+  }
+  else if (colorIN == fgWhite){
+    r = fgBlackB;
+  }
+  else if (colorIN== 0){
+    r = fgBlack;
+  }
+  else{
+    r++;
+    if (r >= fgBlack && r <= fgWhite){
+      // OK
+    }
+    else if (r >= fgBlackB && r <= fgWhiteB){
+      // OK
+    }
+    else{
+      // shit from fresh eeprom
+      r = 0;
+    }
+  }
+
+  return r;
+
+}

@@ -1404,9 +1404,9 @@ void PrintLoopMenu(){
   PrintCenteredWithSpacer(FaStrange(ezoStrLongType[ezoPH]),10);
   PrintCenteredWithSpacer(FaStrange(ezoStrLongType[ezoORP]),11);
   PrintCenteredWithSpacer(FaStrange(ezoStrLongType[ezoDiO2]),9);
-  PrintCenteredWithSpacer(FaStrange(ezoStrLongType[ezoLVL]),8);
-  PrintSpacer(0);
-
+  PrintCenteredWithSpacer(FaStrange(ezoStrLongType[ezoLVL]),9);
+  EscCursorLeft(1);
+  PrintSmallSpacer();
   //Serial.print(F(" | Temperature | Conductivity |     pH     |    Redox    |     O2     |"));
   pos = PrintLine(pos, 3, 76);
     

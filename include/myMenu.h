@@ -718,6 +718,17 @@ void PrintLowToHigh(){
   PrintFlexSpacer(2,0);
 }
 
+int8_t PrintCopySettingTo(int8_t pos){
+  EscLocate(5, pos++);
+  EscBold(1);
+  Serial.print(F("(1-3): "));
+  EscBold(0);
+  Serial.print(F("Copy FULL SETTING to Setting-No.: "));
+  EscBold(1);
+  Serial.print(F("(1-3)"));
+  EscBold(0);
+  return pos;
+}
 void PrintValuesMenu(){
 
 Start:
@@ -756,9 +767,11 @@ Start:
     EscLocate(3, pos++);
   }
 
+  pos = PrintCopySettingTo(pos);
+  
   PrintMenuEnd(pos + 1);
 
-  pos = GetUserKey('x', -1);
+  pos = GetUserKey('x', 3);
 
   if (pos < 1){
     // Exit & TimeOut
@@ -792,6 +805,10 @@ Start:
     pos -= 'A';
     setting.ValueTooHigh[pos] = GetUserFloat(setting.ValueTooHigh[pos]);
     pos = 1;
+  }
+  else if (pos >= '1' && pos <= '3'){
+    SettingsToRom(pos - '1'); 
+    pos = 2;   
   }
 
   if (pos == 1){
@@ -941,11 +958,13 @@ Start:
     EscBold(1);
     PrintCentered(Fa(ezoStrLongType[i]), 17);
     PrintSpacer(1);
-    PrintSmallMenuKey('a' + i);
+    //PrintSmallMenuKey('a' + i);
+    PrintMenuKey('a', 0, 0, ' ', 0, 0, !manual.Low[i]);
     PrintSerTime(manual.Low[i], 0, 1);
     PrintMenuKey(i + 'A', 1, '(', 0, 0, 0, 0);
     PrintSpacer(1);
-    PrintSmallMenuKey('g' + i);
+    //PrintSmallMenuKey('g' + i);
+    PrintMenuKey('g', 0, 0, ' ', 0, 0, !manual.High[i]);
     PrintSerTime(manual.High[i], 0, 1);
     PrintMenuKey(i + 'G', 1, '(', 0, 0, 0, 0);
     PrintSpacer(0);
@@ -953,34 +972,46 @@ Start:
   }
   pos--;
   PrintLine(pos++, 5, 58);
-  EscLocate(5, pos + 1);
+  pos++;
+  EscLocate(5, pos++);
   EscBold(1);
   Serial.print(F("a-l):"));
   EscBold(0);
   Print1Space();
-  Serial.print(F("Edit"));
+  Serial.print(F("EditTimes"));
   PrintSpaces(3);
   EscBold(1);
-  Serial.print(F("A-L):"));
+  Serial.print(F("A-L): "));
   EscBold(0);
-  Print1Space();
   Serial.print(F("RunSingle"));
   PrintSpaces(3);
   PrintMenuKeyStd('0');
   Serial.print(F("RunAll"));
   PrintSpaces(3);
+  PrintMenuKeyStd('m');
+  Serial.print(F("EditName"));
+  
+  PrintShortLine(pos++, 8);
+
+  EscLocate(5, pos++);
   EscBold(1);
-  Serial.print(F("1-4):"));
+  Serial.print(F("1-4): "));
   EscBold(0);
-  Print1Space();
-  Serial.print(F("Sel.Set = "));
+  Serial.print(F("Select Manual-Set = "));
   EscColor(fgBlue);
+  EscBold(1);
   Serial.print(my.Temporary + 1);
+  //EscBold(0);
   EscColor(0);
+  PrintSpaces(5);
+  //EscBold(1);
+  Serial.print(F("(5-8): "));
+  EscBold(0);
+  Serial.print(F("Copy to Manual [1-4]"));
+  
+  PrintMenuEnd(pos + 1);
 
-  PrintMenuEnd(pos + 2);
-
-  pos = GetUserKey('m', 4);
+  pos = GetUserKey('m', 8);
 
   if (pos < 1){
     // Exit & TimeOut
@@ -1019,6 +1050,11 @@ Start:
     my.Temporary = pos - '1';
     ManualTimesFromRom(my.Temporary);
     myToRom();
+  }
+  else if (pos >= '5' && pos <= '8'){
+    // Copy Set
+    ManualTimesToRom(pos - '5');
+    pos = 2;
   }
   else if (pos == 'm'){
     // Edit Name
@@ -1059,27 +1095,34 @@ Start:
     EscBold(1);
     PrintCentered(Fa(ezoStrLongType[i]), 9);
     PrintSmallSpacer();
-    PrintSmallMenuKey('a' + i);
+    //PrintSmallMenuKey('a' + i);
+    PrintMenuKey(i + 'a', 0, 0, ' ', 0, 0, !setting.DelayTime[i]);
     PrintSerTime(setting.DelayTime[i], 0, 1);
     PrintSmallSpacer();
-    PrintSmallMenuKey('g' + i);
+    //PrintSmallMenuKey('g' + i);
+    PrintMenuKey(i + 'g', 0, 0, ' ', 0, 0, !setting.DelayTime[i]);
     PrintSerTime(setting.TimeTooLow[i], 0, 1);
     PrintSmallSpacer();
-    PrintSmallMenuKey('m' + i);
+    //PrintSmallMenuKey('m' + i);
+    PrintMenuKey(i + 'm', 0, 0, ' ', 0, 0, !setting.TimeLow[i]);
     PrintSerTime(setting.TimeLow[i], 0, 1);
     PrintSmallSpacer();
-    PrintSmallMenuKey('s' + i);
+    //PrintSmallMenuKey('s' + i);
+    PrintMenuKey(i + 's', 0, 0, ' ', 0, 0, !setting.TimeHigh[i]);
     PrintSerTime(setting.TimeHigh[i], 0, 1);
     PrintSmallSpacer();
-    PrintSmallMenuKey('A' + i);
+    //PrintSmallMenuKey('A' + i);
+    PrintMenuKey(i + 'A', 0, 0, ' ', 0, 0, !setting.TimeTooHigh[i]);
     PrintSerTime(setting.TimeTooHigh[i], 0, 1);
     PrintSmallSpacer();
     EscLocate(3, pos++);
   }
 
+  pos = PrintCopySettingTo(pos);
+
   PrintMenuEnd(pos + 1);
 
-  pos = GetUserKey('x', -1);
+  pos = GetUserKey('x', 3);
 
   if (pos < 1){
     // Exit & TimeOut
@@ -1114,6 +1157,11 @@ Start:
     setting.TimeTooHigh[pos] = GetUserTime(setting.TimeTooHigh[pos]);
     pos = 1;
   }
+  else if (pos >= '1' && pos <= '3'){
+    SettingsToRom(pos - '1'); 
+    pos = 2;   
+  }
+  
 
   if (pos == 1){
     SettingsToRom(my.Setting);
@@ -1429,10 +1477,10 @@ Start:
   EscColor(fgBlue);
   Serial.print((char*)setting.Name);
   EscColor(0);
-  PrintSpaces(5);
+  PrintSpaces(3);
   Serial.print(F("n-p): "));
   EscBold(0);
-  Serial.print(F("Sel.Setting = "));
+  Serial.print(F("Sel.Setting [1-3] = "));
   EscBold(1);
   EscColor(fgBlue);
   Serial.print(my.Setting + 1);

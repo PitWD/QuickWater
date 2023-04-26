@@ -532,11 +532,11 @@ int32_t PrintValsForCal(byte ezo, byte all){
     byte startPos = 1;
     byte timeOut = 120;
 
-START:
+    START:
 
     startPos = 0;
     pos = 0;
-    if (ezoProbe[ezo].type == ezoPH || ezoProbe[ezo].type == ezoEC){
+    //if (ezoProbe[ezo].type == ezoPH || ezoProbe[ezo].type == ezoEC){
         // Need on temperature to do cal right
         avgTemp = GetRtdAvgForCal();
         avg_RTD = avgTemp;
@@ -548,7 +548,7 @@ START:
         EscCursorRight(3);
         pos += 11;
         startPos = 11;
-    }   // else no need on temp
+    //}   // else no need on temp
 
     // Read Vals of all to calibrate probes
     for (byte i = 0; i < ezoCnt - INTERNAL_LEVEL_CNT; i++){

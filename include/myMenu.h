@@ -339,7 +339,6 @@ void PrintCalMenu(byte ezo, byte all){
   myMenu.f = 1;
   myMenu.g = 1;
 
-
   Start:
 
   strcpy_P(iicStr,(PGM_P)F( "- Calibrate "));

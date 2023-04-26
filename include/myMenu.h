@@ -430,17 +430,17 @@ void PrintCalMenu(byte ezo, byte all){
   EscLocate(5, pos);
   if (myMenu.a){
     // 1-Point Cal.
-    PrintMenuKeyStd('A'); Serial.print(F("Do 1-Pt. Cal."));
+    PrintMenuKeyStd('a'); Serial.print(F("Do 1-Pt. Cal."));
     PrintSpaces(5);
   }
   if (myMenu.b){
     // 3-Point Cal.
-    PrintMenuKeyStd('B'); Serial.print(F("Do 2-Pt. Cal."));
+    PrintMenuKeyStd('b'); Serial.print(F("Do 2-Pt. Cal."));
     PrintSpaces(5);
   }
   if (myMenu.c){
     // 3-Point Cal.
-    PrintMenuKeyStd('C'); Serial.print(F("Do 3-Pt. Cal."));
+    PrintMenuKeyStd('c'); Serial.print(F("Do 3-Pt. Cal."));
   }
   pos++;
   pos = PrintShortLine(pos, 8);
@@ -448,28 +448,28 @@ void PrintCalMenu(byte ezo, byte all){
   if (myMenu.d){
     // Set Single/Mid Point
     EscLocate(5, pos);
-    PrintMenuKeyStd('D'); Serial.print(F("Set Single/Mid"));
+    PrintMenuKeyStd('d'); Serial.print(F("Set Single/Mid"));
     PrintPointEqual(pos++);
     PrintBoldFloat(calMid, 4, 2, ' ');
   }
   if (myMenu.e){
     // Use Avg as Single/Mid Point
     EscLocate(5, pos);
-    PrintMenuKeyStd('E'); Serial.print(F("Set AVG As Mid"));
+    PrintMenuKeyStd('e'); Serial.print(F("Set AVG As Mid"));
     PrintPointEqual(pos++);
     PrintBoldFloat(calAvg, 4, 2, ' ');
   }
   if (myMenu.f){
     // Set Low Point
     EscLocate(5, pos);
-    PrintMenuKeyStd('F'); Serial.print(F("Set Low"));
+    PrintMenuKeyStd('f'); Serial.print(F("Set Low"));
     PrintPointEqual(pos++);
     PrintBoldFloat(calLow, 4, 2, ' ');
 }
   if (myMenu.g){
     // Set High Point
     EscLocate(5, pos);
-    PrintMenuKeyStd('G'); Serial.print(F("Set High"));
+    PrintMenuKeyStd('g'); Serial.print(F("Set High"));
     PrintPointEqual(pos++);
     PrintBoldFloat(calHigh, 4, 2, ' ');
   }

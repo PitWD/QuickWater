@@ -1600,11 +1600,14 @@ Start:
   Serial.print(my.Speed);
   EscBold(0);
   PrintSpaces(3);  
-  PrintMenuKeyStd('g'); Serial.print(F("DimColor"));
+  PrintMenuKeyStd('g'); Serial.print(F("Dim"));
+  EscColor(fgFaint);
+  Serial.print(F("Color"));
+  EscColor(0);
   PrintSpaces(3);
   PrintMenuKeyStd('h'); Serial.print(F("KeyColor"));
   PrintSpaces(3);
-  PrintMenuKeyBoldFaint('i', (my.Default), (!my.Default)); Serial.print(F("IsDefault"));
+  PrintMenuKeyBoldFaint('i', (my.Default), (!my.Default)); Serial.print(F("AsDefault"));
 
   pos = PrintShortLine(pos++, 8);
 

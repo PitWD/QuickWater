@@ -732,7 +732,7 @@ void EzoScan(){
 
     int err;
     int recEzo;         // recognized EzoProbe[ezoCnt].module.version
-    int verPos;         // 'pointer' on 1st char of version
+    //int verPos;         // 'pointer' on 1st char of version
     int hasCal;         // has a calibration
     
     ezoCnt = 0;
@@ -777,7 +777,7 @@ void EzoScan(){
                         // It's an ezo...
 
                         recEzo = -1;
-                        verPos = 7;
+                        //verPos = 7;
                         hasCal = 1;
                         ezoProbe[ezoCnt].calibrated = 0;
                         ezoProbe[ezoCnt].name[0] = 0;
@@ -808,17 +808,17 @@ void EzoScan(){
                         case 'E':
                             // EC
                             recEzo = ezoEC;
-                            verPos = 6;
+                            //verPos = 6;
                             break;           
                         case 'p':
                             // pH
                             recEzo = ezoPH;
-                            verPos = 6;
+                            //verPos = 6;
                             break;
                         case 'D':
                             // dissolved oxygen
                             recEzo = ezoDiO2;
-                            verPos = 8;
+                            //verPos = 8;
                             break;
                         default:
                             // LATE ERROR or not supported...

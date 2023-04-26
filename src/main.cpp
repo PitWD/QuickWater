@@ -121,7 +121,6 @@ void loop() {
     // A Second is over...
 
     byte err = 1;
-    byte printAction = 0;
 
     uint32_t preToo = 0;
 
@@ -130,8 +129,6 @@ void loop() {
     // Check High/Low of AVGs 
     // compare timeOuts with timing-setting
     for (byte i = 0; i < 6; i++){
-
-      printAction = 0;
 
       // Check On needed/pending actions
       preToo = tooLowSince[i];

@@ -1026,12 +1026,12 @@ void RunManualSetting(byte port, byte style){
             if (manualTiming[i].state){
               // ON
               EscColor(my.KeyColor);
-              PrintCentered("ON", 8);
+              PrintCentered((char*)"ON", 8);
               EscColor(0);
             }
             else{
               // OFF
-              PrintCentered("OFF", 8);
+              PrintCentered((char*)"OFF", 8);
             }
             PrintSpacer(0);
           }

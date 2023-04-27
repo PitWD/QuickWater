@@ -84,7 +84,7 @@ uint32_t ValidTimeSince(uint32_t valIN){
   }
   return myTime - valIN;
 }
-uint32_t checkAction(uint32_t valIN, uint32_t actionTime, byte ezotype, byte isLowPort, byte *backSet){
+uint32_t checkAction(uint32_t valIN, uint32_t actionTime, byte ezotype, byte isHighPort, byte *backSet){
 
   uint32_t r = valIN;
   *backSet = 0;
@@ -106,9 +106,9 @@ uint32_t checkAction(uint32_t valIN, uint32_t actionTime, byte ezotype, byte isL
     // NoAction
   }
   
-  // Port 2-6 - Action ports for high / tooHigh
-  // Port 7-11 - Action ports for low / tooLow
-  digitalWrite(ezotype + 2 + (isLowPort * 6), *backSet);
+  // Port 2-6 - Action ports for low / tooLow
+  // Port 7-11 - Action ports for high / tooHigh
+  digitalWrite(ezotype + 2 + (isHighPort * 6), *backSet);
   
   return r;
 
@@ -132,10 +132,10 @@ void loop() {
 
       // Check On needed/pending actions
       preToo = tooLowSince[i];
-      tooLowSince[i] = checkAction(tooLowSince[i], setting.TimeTooLow[i], i, 1, &err);
+      tooLowSince[i] = checkAction(tooLowSince[i], setting.TimeTooLow[i], i, 0, &err);
       if (!err){
         // TooLow isn't in Action...
-        lowSince[i] = checkAction(lowSince[i], setting.TimeLow[i], i, 1, &err);
+        lowSince[i] = checkAction(lowSince[i], setting.TimeLow[i], i, 0, &err);
         if (preToo != tooLowSince[i]){ 
           // after finished tooXYZ-Action - reset lowSince, too
           lowSince[i] = 0;
@@ -153,10 +153,10 @@ void loop() {
       }
       
       preToo = tooHighSince[i];
-      tooHighSince[i] = checkAction(tooHighSince[i], setting.TimeTooHigh[i], i, 0, &err);
+      tooHighSince[i] = checkAction(tooHighSince[i], setting.TimeTooHigh[i], i, 1, &err);
       if (!err){
         // TooHigh isn't in Action...
-        highSince[i] = checkAction(highSince[i], setting.TimeHigh[i], i, 0, &err);
+        highSince[i] = checkAction(highSince[i], setting.TimeHigh[i], i, 1, &err);
         if (preToo != tooHighSince[i]){ 
           // after finished tooXYZ-Action - reset highSince, too
           highSince[i] = 0;
@@ -179,6 +179,7 @@ void loop() {
         // tooLow
         highSince[i] = 0;
         tooHighSince[i] = 0;
+        okSince[i] = 0;
         if (!tooLowSince[i]){
           // 1st time tooLow recognized
           tooLowSince[i] = myTime;
@@ -193,6 +194,7 @@ void loop() {
         highSince[i] = 0;
         tooHighSince[i] = 0;
         tooLowSince[i] = 0;
+        okSince[i] = 0;
         if (!lowSince[i]){
           // 1st time Low recognized
           lowSince[i] = myTime;
@@ -202,6 +204,7 @@ void loop() {
         // tooHigh
         lowSince[i] = 0;
         tooLowSince[i] = 0;
+        okSince[i] = 0;
         if (!tooHighSince[i]){
           // 1st time tooLow recognized
           tooHighSince[i] = myTime;
@@ -216,6 +219,7 @@ void loop() {
         lowSince[i] = 0;
         tooLowSince[i] = 0;
         tooHighSince[i] = 0;
+        okSince[i] = 0;
         if (!highSince[i]){
           // 1st time High recognized
           highSince[i] = myTime;

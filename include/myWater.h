@@ -103,7 +103,7 @@ typedef struct ezoProbeSTRUCT{
 }ezoProbeSTRUCT;
 ezoProbeSTRUCT ezoProbe[EZO_MAX_PROBES];
 
-int32_t ezoValue[11][EZO_MAX_VALUES];
+int32_t ezoValue[EZO_MAX_PROBES][EZO_MAX_VALUES];
 
 struct settingSTRUCT{
     // 197 Byte * 3 Modes = 591 Byte

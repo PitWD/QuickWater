@@ -1404,35 +1404,40 @@ void PrintActionTimes(byte ezoType){
   
   int32_t timeToUse = 0;
   int32_t timeToAction = 0;
+  byte isHighPort = 0;
 
   byte colorState = GetAvgState(avgVal[ezoType], setting.ValueTooLow[ezoType], setting.ValueLow[ezoType], setting.ValueHigh[ezoType], setting.ValueTooHigh[ezoType]);
   
   switch (colorState){
   case fgCyan:
     // tooLow
-    timeToUse = tooLowSince[ezoType];
-  case fgBlue:
-    // Low
-    if (colorState == fgCyan && lowSince[ezoType] && lowSince[ezoType] < tooLowSince[ezoType]){
+    if (lowSince[ezoType] && (lowSince[ezoType] < tooLowSince[ezoType])){
       timeToUse = lowSince[ezoType];
       colorState = fgCyan;
     }
-    else if (colorState == fgBlue){
-      timeToUse = lowSince[ezoType];
-    }  
+    else{
+      timeToUse = tooLowSince[ezoType];
+    }
+    break;
+  case fgBlue:
+    // Low
+    timeToUse = lowSince[ezoType];
     break;
   case fgRed:
     // tooHigh
-    timeToUse = tooHighSince[ezoType];
-  case fgYellow:
-    // High
-    if (colorState == fgRed && highSince[ezoType] && highSince[ezoType] < tooHighSince[ezoType]){
+    if (highSince[ezoType] && (highSince[ezoType] < tooHighSince[ezoType])){
       timeToUse = highSince[ezoType];
       colorState = fgYellow;
     }
-    else if (colorState == fgYellow){
-      timeToUse = highSince[ezoType];
-    }  
+    else{
+      timeToUse = tooHighSince[ezoType];
+    }
+    isHighPort = 1;
+    break;
+  case fgYellow:
+    // High
+    timeToUse = highSince[ezoType];  
+    isHighPort = 1;
     break;
   default:
     // OK
@@ -1456,7 +1461,17 @@ void PrintActionTimes(byte ezoType){
     PrintSerTime(timeToAction, 1, 1);
   }
   else{
-    Serial.print(F("  -On Action-"));
+    if (isHighPort){
+      isHighPort = 6;       // HighPorts-Offset
+    }
+    isHighPort += 2;        // 1st LowPort
+    isHighPort += ezoType;
+    if (digitalRead(isHighPort)){
+      Serial.print(F("  -On Action-"));
+    }
+    else{
+      Serial.print(F("-StrangeCase-"));
+    }
   }
   
   EscRestoreCursor();

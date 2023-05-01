@@ -834,7 +834,6 @@ void RunManualSetting(byte port, byte style){
 
   int8_t pos = PrintMenuTop((char*)"- RUN Manual -");
   pos++;
-  PrintErrorOK(0, 0, (char*)"RUN-Manual Loop started...");
 
   EscLocate(18, pos++);
   PrintCenteredWithSpacer((char*)"Offset", 8);
@@ -955,6 +954,10 @@ void RunManualSetting(byte port, byte style){
       // A second is gone...
 
       byte needRefresh = 0;
+      
+      PrintSerTime(maxTime, 0, 0); // Time left to strHLP2
+      strcpy(&strHLP2[8], (char*)" left...");
+      PrintErrorOK(0, strlen(strHLP2), strHLP2);
 
       for (byte i = 0; i < 12; i++){
 

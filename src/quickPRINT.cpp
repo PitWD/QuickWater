@@ -154,8 +154,9 @@ void PrintErrorOK(int8_t err, byte len, char *strIN){
     //Print1Space();
   //}
   
-  PrintDateTime();
-  Print1Space();
+  //PrintDateTime();
+  //Print1Space();
+  
   EscInverse(0);
 //Serial.println("");
 //Serial.println(strlen(strIN));
@@ -174,6 +175,7 @@ void PrintCentered(char *strIN, byte centerLen){
 byte PrintMenuTop(char *strIN){
 
   EscCls();
+  EscColor(0);
   EscInverse(1);
   EscLocate(1, 1);
   EscBold(1);

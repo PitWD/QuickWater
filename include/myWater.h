@@ -730,25 +730,45 @@ void PrintColon(){
 void EzoScan(){
     // Scan for Ezo's
 
-    int err;
-    int recEzo;         // recognized EzoProbe[ezoCnt].module.version
-    //int verPos;         // 'pointer' on 1st char of version
-    int hasCal;         // has a calibration
-    
+    int8_t err;
+    int8_t recEzo;         // recognized EzoProbe[ezoCnt].module.version
+    int8_t hasCal;         // has a calibration
+    byte lastAddr = 0;     // last read address (to check on 1-time re-read)
     ezoCnt = 0;
     Serial.println("");
 
-    for (int i = EZO_1st_ADDRESS; i < EZO_LAST_ADDRESS + 1 && ezoCnt < EZO_MAX_PROBES - INTERNAL_LEVEL_CNT; i++){
+    for (byte i = EZO_1st_ADDRESS; i < EZO_LAST_ADDRESS + 1 && ezoCnt < EZO_MAX_PROBES - INTERNAL_LEVEL_CNT; i++){
         
-        //Exclude known stuff
+        // Exclude known stuff (eeprom & rtc)
         if (!(i > 79 && i < 88) && !(i == 104)){        
 
-            Wire.beginTransmission(i);
-            err = Wire.endTransmission();
+            if (lastAddr == i){
+                // we're on a re-read
+                // Slave exist, but we failed on "i" 
+                lastAddr = 0;
+                delay(333);
+            }
+            else{
+                lastAddr = i;
+            }
+            recEzo = -1;
+
+            if (lastAddr == i){
+                Wire.beginTransmission(i);
+                err = Wire.endTransmission();
+            }
+            else{
+                // we're on a 2nd read, cause we failed on 1st try with "I"
+                err = 0;
+            }
+            //Wire.beginTransmission(i);
+            //err = Wire.endTransmission();
+
             if (!err){
                 Serial.print(F("Slave @: "));
                 Serial.print(i);
                 PrintColon();
+                delay(333);
                 // Slave found... looking for EZO-ID
                 err = IIcSetStr(i, (char*)"i", 0);
                 Serial.print(err);
@@ -776,7 +796,7 @@ void EzoScan(){
                     if (iicStr[0] == '?' && iicStr[1] == 'I'){
                         // It's an ezo...
 
-                        recEzo = -1;
+                        //recEzo = -1;
                         //verPos = 7;
                         hasCal = 1;
                         ezoProbe[ezoCnt].calibrated = 0;
@@ -853,7 +873,7 @@ void EzoScan(){
                             // Output (only stored in Module)
                             // Status
                             IIcSetStr(i, (char*)"Status", 0);
-                            Serial.print(F("State: "));
+                            Serial.print(F("Status: "));
                             delay(300);
                             if (IIcGetAtlas(i) > 0){
                                 /*
@@ -914,6 +934,11 @@ void EzoScan(){
                         }
                     } 
                     break;
+                }
+                if (recEzo < 0 && lastAddr == i){
+                    // Slave exist, but "I" wasn't working 
+                    // and it's the 1st call - so we do ONE re-read
+                    i--;
                 }
             }
         }

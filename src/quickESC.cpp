@@ -174,6 +174,7 @@ void EscBoldColor(byte set){
 }
 
 void EscKeyStyle(byte set){
+  EscFaint(0);
   if (set){
     EscBoldColor(my.KeyColor);
     EscUnder(1);

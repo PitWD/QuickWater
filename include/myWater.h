@@ -544,13 +544,8 @@ int32_t PrintValsForCal(byte ezo, byte all, int32_t refValue){
 
         EscKeyStyle(1);
         Serial.print(F("["));
-        PrintFloat(refValue, 4, 2, '0');
-        Print1Space();
-        EscKeyStyle(0);
-        EscUnder(1);
-        Serial.print((char*)Fa(ezoStrUnit[ezoProbe[ezo].type]));
-        EscKeyStyle(1);
-        Serial.print(F("]"));
+        PrintFloat(refValue, 4, 2, ' ');
+        Serial.print(F("] @:"));
         EscKeyStyle(0);
         Print1Space();
 

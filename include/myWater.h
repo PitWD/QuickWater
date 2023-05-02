@@ -525,7 +525,7 @@ int32_t GetRtdAvgForCal(){
     }
 }
 
-int32_t PrintValsForCal(byte ezo, byte all){
+int32_t PrintValsForCal(byte ezo, byte all, int32_t refValue){
     
     long avgTemp = 25;
     byte pos = 1;
@@ -541,13 +541,26 @@ int32_t PrintValsForCal(byte ezo, byte all){
         avgTemp = GetRtdAvgForCal();
         avg_RTD = avgTemp;
         Serial.println();
+
+        EscKeyStyle(1);
+        Serial.print(F("["));
+        PrintFloat(refValue, 4, 2, '0');
+        Print1Space();
+        EscKeyStyle(0);
+        EscUnder(1);
+        Serial.print((char*)Fa(ezoStrUnit[ezoProbe[ezo].type]));
+        EscKeyStyle(1);
+        Serial.print(F("]"));
+        EscKeyStyle(0);
+        Print1Space();
+
         PrintFloat(avgTemp, 3, 2, ' ');
         EscFaint(1);
         Serial.print(F("°C"));
         EscFaint(0);
         EscCursorRight(3);
-        pos += 11;
-        startPos = 11;
+        pos += 20;
+        startPos = 20;
     //}   // else no need on temp
 
     // Read Vals of all to calibrate probes

@@ -490,7 +490,7 @@ void PrintCalMenu(byte ezo, byte all){
   case 'a':
     // 1-Pt. Cal
     if (myMenu.a){
-      calTemp = PrintValsForCal(ezo, all);
+      calTemp = PrintValsForCal(ezo, all, calMid);
       if (calTemp){
         if (ezoProbe[ezo].type == ezoDiO2){
           // medium: air    cmd: "Cal"
@@ -513,7 +513,15 @@ void PrintCalMenu(byte ezo, byte all){
     // 2-Pt. Cal
     calCnt = 2;
     if (myMenu.b){
-      calTemp = PrintValsForCal(ezo, all);
+      switch (ezoProbe[ezo].type){
+      case ezoEC:
+        calTemp = PrintValsForCal(ezo, all, 0);
+        break;
+      default:
+        calTemp = PrintValsForCal(ezo, all, calMid);
+        break;
+      }
+      //calTemp = PrintValsForCal(ezo, all);
       if (calTemp){
         switch (ezoProbe[ezo].type){
         case ezoEC:
@@ -545,7 +553,15 @@ void PrintCalMenu(byte ezo, byte all){
     // 3-Pt. Cal
     calCnt = 3;
     if (myMenu.c){
-      calTemp = PrintValsForCal(ezo, all);
+      switch (ezoProbe[ezo].type){
+      case ezoEC:
+        calTemp = PrintValsForCal(ezo, all, 0);
+        break;
+      default:
+        calTemp = PrintValsForCal(ezo, all, calMid);
+        break;
+      }
+      //calTemp = PrintValsForCal(ezo, all);
       switch (ezoProbe[ezo].type){
       case ezoEC:
         // "Cal,dry" (air)
@@ -591,7 +607,7 @@ void PrintCalMenu(byte ezo, byte all){
   if (calTemp){
     EzoSetCal((char*)"", ezo, all, calVal[0], calAction[0]);
     for (byte i = 1; i < calCnt; i++){
-      calTemp = PrintValsForCal(ezo, all);
+      calTemp = PrintValsForCal(ezo, all, calVal[i]);
       if (calTemp){
         if (ezoProbe[ezo].type == ezoPH){
           // pH Temp - Compensation

@@ -1634,9 +1634,9 @@ Start:
   EscBold(0);
   PrintSpaces(3);  
   PrintMenuKeyStd('g'); Serial.print(F("Dim"));
-  EscColor(fgFaint);
+  EscFaint(1);
   Serial.print(F("Color"));
-  EscColor(0);
+  EscFaint(0);
   PrintSpaces(3);
   PrintMenuKeyStd('h'); Serial.print(F("KeyColor"));
   PrintSpaces(3);
@@ -1670,6 +1670,7 @@ Start:
   EscBoldColor(0);
 
   PrintMenuEnd(pos + 1);
+  Serial.print(my.KeyColor);
 
   pos = GetUserKey('q', ezoCnt - INTERNAL_LEVEL_CNT);
   switch (pos){

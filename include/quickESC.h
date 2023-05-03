@@ -41,7 +41,7 @@
 
 // ESC / Terminal hacks
 extern byte escFaintDeleteColor;
-extern int8_t escFaintIsActive;
+extern byte escFaintIsActive;
 extern byte fgFaint;
 
 

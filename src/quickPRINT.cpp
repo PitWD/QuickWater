@@ -240,6 +240,21 @@ void PrintMenuKey(char key, byte space, char leadChar, char trailChar, byte colo
 }
 void PrintMenuKeyBoldFaint(char key, byte bold, byte faint){
   PrintMenuKey(key, 0, 0, 0, 1, bold, faint);
+/*
+  PrintMenuKey((char)(ezo + 49), 0, '(', 0, 0, bold, !bold);
+  PrintMenuKey(key, 0, 0, ' ', 0, 0, 0); // PrintSmallMenuKey()
+  PrintMenuKey(i + 'o', 0, '(', ' ', 0, 1, 0);
+  PrintMenuKey(i +'a', 0, 0, ' ', 0, 0, !manual.Low[i]);
+  PrintMenuKey(i + 'A', 1, '(', 0, 0, 0, 0);
+  PrintMenuKey(i + 'g', 0, 0, ' ', 0, 0, !manual.High[i]);
+  PrintMenuKey(i + 'G', 1, '(', 0, 0, 0, 0);
+
+  PrintMenuKey(i + 'a', 0, 0, ' ', 0, 0, !setting.DelayTime[i]);
+  PrintMenuKey(i + 'g', 0, 0, ' ', 0, 0, !setting.DelayTime[i]);
+  PrintMenuKey(i + 'm', 0, 0, ' ', 0, 0, !setting.TimeLow[i]);
+  PrintMenuKey(i + 's', 0, 0, ' ', 0, 0, !setting.TimeHigh[i]);
+  PrintMenuKey(i + 'A', 0, 0, ' ', 0, 0, !setting.TimeTooHigh[i]);
+*/
 }
 void PrintMenuKeyStd(char key){
   PrintMenuKey(key, 0, 0, 0, 1, 0, 0);

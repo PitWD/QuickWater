@@ -2,7 +2,7 @@
 
 // ESC / Terminal hacks
 byte escFaintDeleteColor = 39;
-int8_t escFaintIsActive = 0;
+byte escFaintIsActive = 0;
 
 #if ESC_SOLARIZED
   byte fgFaint = 92;
@@ -52,8 +52,8 @@ void EscColor(byte color){
 
   #if ESC_CAN_FAINT
   #else  
-    if (escFaintIsActive == 0){
-      if(color < 40){
+    if (!escFaintIsActive){
+      if(((color >= fgBlack && color <= fgWhite) || (color >= fgBlackB && color <= fgWhiteB)) || color == 39){
         // It's a ForeColor
         escFaintDeleteColor = color;
       }
@@ -82,12 +82,12 @@ void EscFaint(byte set){
     }
   #else
     if (set){
-      escFaintIsActive = -1;
-      EscColor(fgFaint);
       escFaintIsActive = 1;
+      EscColor(fgFaint);
+      //escFaintIsActive = 1;
     }
     else{
-      escFaintIsActive = -2;
+      //escFaintIsActive = -2;
       EscColor(escFaintDeleteColor);
       escFaintIsActive = 0;
     }
@@ -190,12 +190,12 @@ byte EscGetNextColor(byte colorIN){
   byte r = colorIN;
   
   if (colorIN == fgWhiteB){
-    r = 0;
+    r = fgBlack;
   }
   else if (colorIN == fgWhite){
     r = fgBlackB;
   }
-  else if (colorIN== 0){
+  else if (colorIN == 0){
     r = fgBlack;
   }
   else{
@@ -208,7 +208,7 @@ byte EscGetNextColor(byte colorIN){
     }
     else{
       // shit from fresh eeprom
-      r = 0;
+      r = fgBlack;
     }
   }
 

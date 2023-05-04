@@ -40,8 +40,6 @@ void PrintMenuKeyStd(char key);
 void PrintMenuKeySmall(char key);
 void PrintMenuKeySmallBoldFaint(char key, byte bold, byte faint);
 
-void PrintMenuKeyBrackets(char number);
-
 void PrintOFF(void);
 void PrintON(void);
 void PrintTrue(void);

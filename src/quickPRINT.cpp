@@ -266,10 +266,6 @@ void PrintMenuKeySmallBoldFaint(char key, byte bold, byte faint){
   // "A) "
   PrintMenuKey(key, 0, 0, ' ', 0, bold, faint);
 }
-void PrintMenuKeyBrackets(char key){
-  // " (A)"
-  PrintMenuKey(key, 1, '(', 0, 0, 0, 0);
-}
 
 void PrintOFF(void){
   Serial.print(F("OFF"));

@@ -1129,7 +1129,7 @@ Start:
     //PrintSmallMenuKey('g' + i);
     PrintMenuKeySmallBoldFaint(i + 'g', 0, !manual.High[i]);
     PrintSerTime(manual.High[i], 0, 1);
-    PrintMenuKey(i + 'G', 1, '(', 0, 0, !manual.Low[i], !manual.Low[i]);
+    PrintMenuKey(i + 'G', 1, '(', 0, 0, !manual.High[i], !manual.High[i]);
     PrintSpacer(0);
     EscLocate(8, pos++);
   }

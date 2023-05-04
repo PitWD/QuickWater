@@ -204,15 +204,20 @@ void PrintLoopTimes(){
 void PrintMenuKey(char key, byte space, char leadChar, char trailChar, byte colon, byte bold, byte faint){
   // "space" is a leading space - (as very 1st print)
   // "key" is all time bold and underlined followed by a ')'
-  // "leadChar" (bold and underlined, too) is an option
-  // "colon" ': ' (not bold, nor underlined) is an option
+  // "colon" ': ' (bold, underlined) is an option
+  // "leadChar" (bold, underlined) is an option
+  // "trailChar" (not bold, nor underlined) is an option
   // "bold" sets bold on exit
   // "faint" sets faint on exit
+  // if bold and faint is true... don't do ESCKeyStyle (Hack to get faint (or whatever) - see i.e. manual-menu QuickWater)
 
   if (space){
     Print1Space();
   }
-  EscKeyStyle(1);
+  if (!(bold && faint)){
+    EscKeyStyle(1);
+  }
+  
   if (leadChar){
     Serial.print(leadChar);
   }
@@ -230,10 +235,10 @@ void PrintMenuKey(char key, byte space, char leadChar, char trailChar, byte colo
     Serial.print(trailChar);
   }
   EscColor(0);
-  if (bold){
+  if (bold && !faint){
     EscBold(1);
   }
-  else if (faint){
+  else if (faint && !bold){
     EscFaint(1);
   }
   
@@ -246,7 +251,7 @@ void PrintMenuKeyStdBoldFaint(char key, byte bold, byte faint){
   PrintMenuKey(i + 'o', 0, '(', ' ', 0, 1, 0);
   PrintMenuKey(i + 'A', 1, '(', 0, 0, 0, 0);
   PrintMenuKey(i + 'G', 1, '(', 0, 0, 0, 0);
-  
+
 */
 }
 void PrintMenuKeyStd(char key){

@@ -176,7 +176,7 @@ void PrintProbeLine(byte ezo, byte pos, byte bold, byte noKey){
     EscLocate(5, pos);
     if (!noKey){
       // Print Menu-Key
-      PrintMenuKey((char)(ezo + 49), 0, '(', 0, 0, bold, !bold);
+      PrintMenuKey(ezo + '1', 0, '(', 0, 0, bold, !bold);
       EscCursorLeft(1);
       //EscLocate(10, pos);
     }
@@ -1124,12 +1124,12 @@ Start:
     //PrintSmallMenuKey('a' + i);
     PrintMenuKeySmallBoldFaint(i +'a', 0, !manual.Low[i]);
     PrintSerTime(manual.Low[i], 0, 1);
-    PrintMenuKey(i + 'A', 1, '(', 0, 0, 0, 0);
+    PrintMenuKey(i + 'A', 1, '(', 0, 0, !manual.Low[i], !manual.Low[i]);
     PrintSpacer(1);
     //PrintSmallMenuKey('g' + i);
     PrintMenuKeySmallBoldFaint(i + 'g', 0, !manual.High[i]);
     PrintSerTime(manual.High[i], 0, 1);
-    PrintMenuKey(i + 'G', 1, '(', 0, 0, 0, 0);
+    PrintMenuKey(i + 'G', 1, '(', 0, 0, !manual.Low[i], !manual.Low[i]);
     PrintSpacer(0);
     EscLocate(8, pos++);
   }

@@ -35,9 +35,12 @@ void PrintMenuEnd(byte pos);
 void PrintLoopTimes();
 
 void PrintMenuKey(char key, byte space, char leadChar, char trailChar, byte colon, byte bold, byte faint);
-void PrintMenuKeyBoldFaint(char key, byte bold, byte faint);
+void PrintMenuKeyStdBoldFaint(char key, byte bold, byte faint);
 void PrintMenuKeyStd(char key);
-void PrintMenuNo(char number);
+void PrintMenuKeySmall(char key);
+void PrintMenuKeySmallBoldFaint(char key, byte bold, byte faint);
+
+void PrintMenuKeyBrackets(char number);
 
 void PrintOFF(void);
 void PrintON(void);

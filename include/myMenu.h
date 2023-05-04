@@ -265,11 +265,11 @@ Start:
   
   PrintShortLine(pos++, 8);
   EscLocate(5, pos);
-  PrintMenuKeyBoldFaint('h', my.Boot, !my.Boot);
+  PrintMenuKeyStdBoldFaint('h', my.Boot, !my.Boot);
   Serial.print(F("Boot As ModBUS Slave"));
   EscFaint(0);
   PrintSpaces(5);
-  PrintMenuKeyBoldFaint('i', !my.Boot, my.Boot);
+  PrintMenuKeyStdBoldFaint('i', !my.Boot, my.Boot);
   Serial.print(F("Boot For Terminal Use"));
   EscFaint(0);
   
@@ -660,10 +660,10 @@ Start:
   EscLocate(5, pos);
   PrintMenuKeyStd('h'); Serial.print(F("Calibration(s)..."));
   EscLocate(30, pos);
-  PrintMenuKeyBoldFaint('i', !all, all); 
+  PrintMenuKeyStdBoldFaint('i', !all, all); 
   Serial.print(F("Select Single"));
   EscLocate(51, pos++);
-  PrintMenuKeyBoldFaint('j', all, !all);
+  PrintMenuKeyStdBoldFaint('j', all, !all);
   Serial.print(F("Select ALL"));
   EscBold(0);
 
@@ -1122,12 +1122,12 @@ Start:
     PrintCentered(Fa(ezoStrLongType[i]), 17);
     PrintSpacer(1);
     //PrintSmallMenuKey('a' + i);
-    PrintMenuKey(i +'a', 0, 0, ' ', 0, 0, !manual.Low[i]);
+    PrintMenuKeySmallBoldFaint(i +'a', 0, !manual.Low[i]);
     PrintSerTime(manual.Low[i], 0, 1);
     PrintMenuKey(i + 'A', 1, '(', 0, 0, 0, 0);
     PrintSpacer(1);
     //PrintSmallMenuKey('g' + i);
-    PrintMenuKey(i + 'g', 0, 0, ' ', 0, 0, !manual.High[i]);
+    PrintMenuKeySmallBoldFaint(i + 'g', 0, !manual.High[i]);
     PrintSerTime(manual.High[i], 0, 1);
     PrintMenuKey(i + 'G', 1, '(', 0, 0, 0, 0);
     PrintSpacer(0);
@@ -1266,23 +1266,23 @@ Start:
     PrintCentered(Fa(ezoStrLongType[i]), 9);
     PrintSmallSpacer();
     //PrintSmallMenuKey('a' + i);
-    PrintMenuKey(i + 'a', 0, 0, ' ', 0, 0, !setting.DelayTime[i]);
+    PrintMenuKeySmallBoldFaint(i + 'a', 0, !setting.DelayTime[i]);
     PrintSerTime(setting.DelayTime[i], 0, 1);
     PrintSmallSpacer();
     //PrintSmallMenuKey('g' + i);
-    PrintMenuKey(i + 'g', 0, 0, ' ', 0, 0, !setting.DelayTime[i]);
+    PrintMenuKeySmallBoldFaint(i + 'g', 0, !setting.DelayTime[i]);
     PrintSerTime(setting.TimeTooLow[i], 0, 1);
     PrintSmallSpacer();
     //PrintSmallMenuKey('m' + i);
-    PrintMenuKey(i + 'm', 0, 0, ' ', 0, 0, !setting.TimeLow[i]);
+    PrintMenuKeySmallBoldFaint(i + 'm', 0, !setting.TimeLow[i]);
     PrintSerTime(setting.TimeLow[i], 0, 1);
     PrintSmallSpacer();
     //PrintSmallMenuKey('s' + i);
-    PrintMenuKey(i + 's', 0, 0, ' ', 0, 0, !setting.TimeHigh[i]);
+    PrintMenuKeySmallBoldFaint(i + 's', 0, !setting.TimeHigh[i]);
     PrintSerTime(setting.TimeHigh[i], 0, 1);
     PrintSmallSpacer();
     //PrintSmallMenuKey('A' + i);
-    PrintMenuKey(i + 'A', 0, 0, ' ', 0, 0, !setting.TimeTooHigh[i]);
+    PrintMenuKeySmallBoldFaint(i + 'A', 0, !setting.TimeTooHigh[i]);
     PrintSerTime(setting.TimeTooHigh[i], 0, 1);
     PrintSmallSpacer();
     EscLocate(3, pos++);
@@ -1640,7 +1640,7 @@ Start:
   PrintSpaces(3);
   PrintMenuKeyStd('h'); Serial.print(F("KeyColor"));
   PrintSpaces(3);
-  PrintMenuKeyBoldFaint('i', (my.Default), (!my.Default)); Serial.print(F("AsDefault"));
+  PrintMenuKeyStdBoldFaint('i', (my.Default), (!my.Default)); Serial.print(F("AsDefault"));
 
   pos = PrintShortLine(pos++, 8);
 
@@ -1670,7 +1670,6 @@ Start:
   EscBoldColor(0);
 
   PrintMenuEnd(pos + 1);
-  Serial.print(my.KeyColor);
 
   pos = GetUserKey('q', ezoCnt - INTERNAL_LEVEL_CNT);
   switch (pos){

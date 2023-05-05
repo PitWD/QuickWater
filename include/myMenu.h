@@ -55,11 +55,12 @@ void myFromRom(){
     myAddress = 123;
   }
   */
-  if (my.Setting > 1){
+  if (my.Setting > 2){
     my.Setting = 0;
     my.Default = 0;
   }
   if (my.Temporary > 3){
+    // Manual (Prefill) Settings
     my.Temporary = 0;
     my.Default = 0;
   }

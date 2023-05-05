@@ -39,6 +39,7 @@ void PrintMenuKeyStdBoldFaint(char key, byte bold, byte faint);
 void PrintMenuKeyStd(char key);
 void PrintMenuKeySmall(char key);
 void PrintMenuKeySmallBoldFaint(char key, byte bold, byte faint);
+void PrintMenuKeyBracketed(char key);
 
 void PrintOFF(void);
 void PrintON(void);

@@ -347,6 +347,10 @@ byte GetUserString(char *strIN){
   byte eos = strlen(strIN);   // Position of EndOfString
   byte pos = 0;               // Position of cursor
   
+  byte selPosStart = 0;
+  byte selPosStop = 0;
+  byte selIsON = 1;
+
   byte escCnt = 0;            // hlp to interpret esc-sequences
   char escErr = 0;            // hlp to interpret esc-sequences
   byte escCmd = 0;
@@ -358,7 +362,14 @@ byte GetUserString(char *strIN){
 
   if (eos){
     pos = eos;
+    
+    // On start the whole text is selected
+    selPosStart = 0;
+    selPosStop = pos - 1;
+    
+    EscInverse(1);
     Serial.print(strIN);
+    EscInverse(0);
     strcpy(strHLP, strIN);
   }
   
@@ -393,48 +404,117 @@ byte GetUserString(char *strIN){
           escCnt++;
           c = Serial.read();
           delay(12);
+//Serial.print(c);
+//Serial.print(F("'0'"));
+//Print1Space();
           switch (escCnt){
           case 1:
-            if (c != 91){
+            if (c != '['){
               // unsupported
+//Serial.print(c);
+//Serial.print(F("'1'"));
+//Print1Space();
               escErr = 1;
             }
             break;
           case 2:
             switch (c){
-            case 51:
+            case 'A':
+              // Up
+            case 'B':
+              // Down
+            case '1':
+              // pos1
+              // shiftLeft / shiftRight
+            case '4':
+              // end
+            case '3':
               // del
-            case 67:
+            case 'C':
               // right
-            case 68:
+            case 'D':
               // left
               escCmd = c;
               break;
             default:
               // unsupported
+//Serial.print(c);
+//Serial.print(F("'2'"));
+//Print1Space();
               escErr = 1;
               break;
             }
             break;
           case 3:
             switch (c){
-            case 126:
+            case '~':
               switch (escCmd){
-              case 51:
+              case '4':
+                // end
+              case '3':
                 // del
+              case '1':
+                // pos1
                 break;
               default:
+//Serial.print(c);
+//Serial.print(F("'3'"));
+//Print1Space();
                 escErr = 1;
                 break;
               }
               break;
+            case ';':
+              // shiftLeft / shiftRight
+              // shiftUp / shiftDown
+              break;
             default:
+//Serial.print(c);
+//Serial.print(F("'4'"));
+//Print1Space();
+              escErr = 1;
+              break;
+            }
+            break;
+          case 4:
+            switch (c){
+            case '2':
+              // shiftLeft / shiftRight
+              // shiftUp / shiftDown
+              break;
+            default:
+//Serial.print(c);
+//Serial.print(F("'5'"));
+//Print1Space();
+              escErr = 1;
+              break;
+            }
+            break;
+          case 5:
+            switch (c){
+            case 'A':
+              // Up
+            case 'B':
+              // Down
+            case 'D':
+              // shiftLeft
+            case 'C':
+              // shiftRight
+              escCmd = c + 127;   // move 127, cause left/right without SHIFT has the same key...
+              break;
+            default:
+//Serial.print(c);
+//Serial.print(F("'6'"));
+//Print1Space();
               escErr = 1;
               break;
             }
             break;
           default:
             // unsupported
+//Serial.print(c);
+//Serial.print(F("'7'"));
+//Print1Space();
             escErr = 1;
             break;
           }
@@ -450,21 +530,43 @@ byte GetUserString(char *strIN){
           if (!escErr){
             // Known Sequence
             switch (escCmd){
-            case 67:
+            case 'C' + 127:
+              // shift right
+              break;
+            case 'D' + 127:
+              // shift left
+              break;
+            case 'A' + 127:
+              // shift up
+              break;
+            case 'B' + 127:
+              // shift down
+              break;
+            case 'A':
+              // Up (like pos1)
+            case '1':
+              // pos1
+              break;
+            case 'B':
+              // Down (like end)
+            case '4':
+              // end
+              break;
+            case 'C':
               // right
               if (pos < eos){
                 pos++;
                 EscCursorRight(1);
               }
               break;
-            case 68:
+            case 'D':
               // left
               if (pos){
                 pos--;
                 EscCursorLeft(1);
               }
               break;
-            case 51:
+            case '3':
               // del
               if (pos < eos){
                 memmove(&strHLP[pos], &strHLP[pos + 1], eos - pos);

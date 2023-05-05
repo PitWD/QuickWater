@@ -1494,7 +1494,7 @@ void PrintActionTimes(byte ezoType, byte posX, byte posY){
       Serial.print(F("  -On Action-"));
     }
     else{
-      Serial.print(F("-StrangeCase-"));
+      Serial.print(F("  StrangeCase"));
     }
   }
   

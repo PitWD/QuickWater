@@ -1801,7 +1801,7 @@ Start:
   case 'p':
   case 'q':
     // Select Setting
-    my.Setting = pos - 'n';
+    my.Setting = pos - 'o';
     SettingsFromRom(my.Setting);
     myToRom();
     break;

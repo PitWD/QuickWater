@@ -124,6 +124,8 @@ void loop() {
 
     uint32_t preToo = 0;
 
+    PrintPortStates();
+
     PrintLoopTimes();    
 
     // Check High/Low of AVGs 

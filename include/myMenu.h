@@ -18,6 +18,8 @@ byte myTemporary = 0;
 */
 mySTRUCT my;
 
+byte myLastLine = 0;
+
 void myToRom(){
   /*
   EEPROM.put(1000, myBoot);       // byte
@@ -1122,7 +1124,7 @@ Start:
     PrintCentered(Fa(ezoStrLongType[i]), 17);
     PrintSpacer(1);
     //PrintSmallMenuKey('a' + i);
-    PrintMenuKeySmallBoldFaint(i +'a', 0, !manual.Low[i]);
+    PrintMenuKeySmallBoldFaint(i + 'a', 0, !manual.Low[i]);
     PrintSerTime(manual.Low[i], 0, 1);
     PrintMenuKey(i + 'A', 1, '(', 0, 0, !manual.Low[i], !manual.Low[i]);
     PrintSpacer(1);
@@ -1418,7 +1420,7 @@ byte PrintWaterVals(byte pos){
 
 }
 
-void PrintActionTimes(byte ezoType){
+void PrintActionTimes(byte ezoType, byte posX, byte posY){
   // Check which tooLow to tooHigh is actually valid
   
   int32_t timeToUse = 0;
@@ -1427,6 +1429,8 @@ void PrintActionTimes(byte ezoType){
 
   byte colorState = GetAvgState(avgVal[ezoType], setting.ValueTooLow[ezoType], setting.ValueLow[ezoType], setting.ValueHigh[ezoType], setting.ValueTooHigh[ezoType]);
   
+  EscLocate(posX, posY);
+
   switch (colorState){
   case fgCyan:
     // tooLow
@@ -1505,6 +1509,42 @@ void PrintActionTimes(byte ezoType){
   EscColor(0);
 }
 
+void PrintPortStates(){
+
+  byte ezoType;
+
+  EscLocate(8, myLastLine);
+
+  for (ezoType = 0; ezoType < 6; ezoType++){
+    if (digitalRead(ezoType + 2)){
+      // (too)Low port active...
+      EscBoldColor(fgBlue);
+      Serial.print(F(">"));
+      EscColor(0);
+    }
+    else{
+      Print1Space();
+      EscColor(fgGreen);
+    }
+    EscCursorRight(1);
+    if (digitalRead(ezoType + 8)){
+      // (too)High port active...
+      EscBoldColor(fgYellow);
+      Serial.print(F("<"));
+      EscColor(0);
+    }
+    else{
+      Print1Space();
+    }
+    EscCursorLeft(2);
+    EscBold(0);
+    Serial.print(F("~"));
+    EscCursorRight(11);
+  }
+  EscColor(0);
+  
+}
+
 byte PrintAVGs(byte pos){
     
   SetAvgColorEZO(ezoRTD);
@@ -1512,8 +1552,7 @@ byte PrintAVGs(byte pos){
   PrintBoldFloat(avg_RTD, 2, 2, ' ');
   PrintUnit(ezoRTD, 0, 0, 3);
 
-  EscLocate(1, pos + 2);
-  PrintActionTimes(ezoRTD);
+  PrintActionTimes(ezoRTD, 1, pos + 2);
 
 
   SetAvgColorEZO(ezoEC);
@@ -1521,8 +1560,7 @@ byte PrintAVGs(byte pos){
   PrintBoldInt(avg_EC / 1000, 4, ' ');
   PrintUnit(ezoEC, 0, 0, 3);
   
-  EscLocate(14, pos + 2);
-  PrintActionTimes(ezoEC);
+  PrintActionTimes(ezoEC, 14, pos + 2);
 
 
   SetAvgColorEZO(ezoPH);
@@ -1530,8 +1568,7 @@ byte PrintAVGs(byte pos){
   PrintBoldFloat(avg_pH, 2, 2, ' ');
   PrintUnit(ezoPH, 0, 0, 3);
 
-  EscLocate(27, pos + 2);
-  PrintActionTimes(ezoPH);
+  PrintActionTimes(ezoPH, 27, pos + 2);
 
 
   SetAvgColorEZO(ezoORP);
@@ -1539,8 +1576,7 @@ byte PrintAVGs(byte pos){
   PrintBoldFloat(avg_ORP, 4, 2, ' ');
   PrintUnit(ezoORP, 0,  0 , 3);
 
-  EscLocate(40, pos + 2);
-  PrintActionTimes(ezoORP);
+  PrintActionTimes(ezoORP, 40, pos + 2);
 
 
   SetAvgColorEZO(ezoDiO2);
@@ -1548,16 +1584,14 @@ byte PrintAVGs(byte pos){
   PrintBoldFloat(avg_O2, 3, 2, ' ');
   PrintUnit(ezoDiO2, 0, 0, 3);
 
-  EscLocate(53, pos + 2);
-  PrintActionTimes(ezoDiO2);
+  PrintActionTimes(ezoDiO2, 53, pos + 2);
 
   SetAvgColorEZO(ezoLVL);
   EscLocate(72, pos);
   PrintBoldFloat(avg_LVL, 3, 2, ' ');
   PrintUnit(ezoLVL, 0, 0, 3);
 
-  EscLocate(66, pos + 2);
-  PrintActionTimes(ezoLVL);
+  PrintActionTimes(ezoLVL, 66, pos + 2);
 
   return pos + 1;
 
@@ -1600,6 +1634,12 @@ void PrintLoopMenu(){
   EscBold(1);
   pos = PrintLine(pos, 3, 76);
   EscBold(0);
+  pos = PrintLine(pos + 3, 3, 76);
+
+  // we need this pos in loop()
+  myLastLine = pos;
+
+  PrintLine(pos + 1, 3, 76);
 
 }
 

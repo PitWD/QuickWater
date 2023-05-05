@@ -1494,6 +1494,8 @@ void PrintActionTimes(byte ezoType, byte posX, byte posY){
       Serial.print(F("  -On Action-"));
     }
     else{
+      // sample cases:
+      //    not in read-loop while delayTime triggers 
       Serial.print(F("  StrangeCase"));
     }
   }

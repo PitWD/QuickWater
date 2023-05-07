@@ -347,9 +347,15 @@ byte GetUserString(char *strIN){
   byte eos = strlen(strIN);   // Position of EndOfString
   byte pos = 0;               // Position of cursor
   
-  byte selPosStart = 0;
-  byte selPosStop = 0;
-  byte selIsON = 1;
+  byte sel1st = 0;        // pos of 1st selected char
+  byte selCnt = 0;        // cnt of selected chars
+  byte selPosLeft = 0;    // 0 = right of selection / 1 = left of selection
+  byte shift = 0;         // Shift was pressed
+  byte selTo1st = 0;      // cnt of chars from cursor to pos1
+  byte selToEnd = 0;      // cnt of chars from cursor to pos1
+
+  byte reDraw = 0;        // redraw needed
+  int8_t moveCursor = 0;  // negative to the left / positive to the right
 
   byte escCnt = 0;            // hlp to interpret esc-sequences
   char escErr = 0;            // hlp to interpret esc-sequences
@@ -357,6 +363,7 @@ byte GetUserString(char *strIN){
 
   EscBold(1);
   Serial.print(F(">> "));
+  EscSaveCursor();
   EscBold(0);
   EscColor(fgCyan);
 
@@ -364,8 +371,7 @@ byte GetUserString(char *strIN){
     pos = eos;
     
     // On start the whole text is selected
-    selPosStart = 0;
-    selPosStop = pos - 1;
+    selCnt = pos;
     
     EscInverse(1);
     Serial.print(strIN);
@@ -528,55 +534,185 @@ byte GetUserString(char *strIN){
         }
         else{
           if (!escErr){
-            // Known Sequence
+            // Known ESC Sequence recognized
+            
+            selTo1st = 0;
+            selToEnd = 0;
+            if (selCnt){
+              // We have a selection
+              selPosLeft = (pos <= selCnt - sel1st);  // If cursor is left or right of selection
+              selTo1st = pos;
+              selToEnd = eos - pos;                
+            }
+            shift = 0;
+            moveCursor = 0;
+            reDraw = 0;
+            
             switch (escCmd){
             case 'C' + 127:
               // shift right
+              if (pos < eos){
+                shift = 1;
+                moveCursor = 1;
+              }              
               break;
             case 'D' + 127:
               // shift left
+              if (pos){
+                shift = 1;
+                moveCursor = -1;
+              }              
               break;
             case 'A' + 127:
-              // shift up
+              // shift up (as substitute for shift pos-1)
+              if (selTo1st){
+                shift = 1;
+                moveCursor = selTo1st * -1;
+              }
               break;
             case 'B' + 127:
-              // shift down
+              // shift down (as substitute for shift end)
+              if (selToEnd){
+                shift = 1;
+                moveCursor = selToEnd;
+              }              
               break;
             case 'A':
               // Up (like pos1)
             case '1':
               // pos1
+              moveCursor = selTo1st * -1;
               break;
             case 'B':
               // Down (like end)
             case '4':
               // end
+              moveCursor = selToEnd;
               break;
             case 'C':
               // right
               if (pos < eos){
+                moveCursor = 1;
+              }            
+              /*
+              if (pos < eos){
                 pos++;
                 EscCursorRight(1);
               }
+              */
               break;
             case 'D':
               // left
               if (pos){
+                moveCursor = -1;
+              }
+              /*            
+              if (pos){
                 pos--;
                 EscCursorLeft(1);
               }
+              */
               break;
             case '3':
-              // del
-              if (pos < eos){
-                memmove(&strHLP[pos], &strHLP[pos + 1], eos - pos);
-                Serial.print(&strHLP[pos]);
-                Print1Space();
-                EscCursorLeft(eos - pos);
-                eos--;
+              // del (!! we're "mis"-using/overwriting sel-variables !!)
+              if (selCnt){
+                // a selection
+                selTo1st = sel1st;
+                selToEnd = sel1st + selCnt;
+                selCnt = eos - selToEnd + 1;
+                moveCursor = sel1st;   // pos of cursor after redraw            
               }
+              else{
+                // a char
+                selTo1st = pos;
+                selToEnd = pos + 1;
+                selCnt = eos - pos;
+                moveCursor = pos;      // pos of cursor after redraw  
+              }
+              reDraw = 1;              
+              if (pos < eos){
+                memmove(&strHLP[selTo1st], &strHLP[selToEnd], selCnt);
+                //Serial.print(&strHLP[pos]); - it's in ReDraw now
+                //Print1Space(); - it's in ReDraw now
+                //EscCursorLeft(eos - pos); - it's in moveCursor (after ReDraw) now
+                //eos--;
+                //eos -= selToEnd - selTo1st;
+              }
+              selCnt = 0;   // to not interfere with a selection
               break;
             }
+            
+            if (shift){
+              // calculate to (de)select area
+              if (selPosLeft){
+                // Cursor left of selection
+                if (moveCursor > 0){
+                  // selection smaller or selEnd+1 becomes sel1st
+                  if (moveCursor >= selCnt - 1){
+                    sel1st = sel1st + selCnt;
+                    selCnt = eos - sel1st + 1; 
+                  }
+                  else{
+                    sel1st += moveCursor;
+                    selCnt -= moveCursor;
+                  }
+                }
+                else{
+                  // selection greater up to pos1
+                  sel1st += moveCursor;
+                  selCnt += moveCursor;
+                }
+              }
+              else{
+                // Cursor right of selection
+                if (moveCursor > 0){
+                  // selection greater up to end
+                  selCnt += moveCursor;
+                }
+                else{
+                  // selection smaller or sel1st-1 becomes selEnd
+                  if (moveCursor >= selCnt - 1){
+                    selCnt = sel1st + 1; 
+                    sel1st = 0;
+                  }
+                  else{
+                    selCnt -= moveCursor;
+                  }
+                }
+              }
+              reDraw = 1;              
+              moveCursor += pos;  // Absolute position of curser after Redraw
+            }
+
+            if (reDraw){
+              EscRestoreCursor();
+              //PrintSpaces(STR_HLP_LEN - 1);
+              if (!selCnt){
+                // without selection - adjust sel1st
+                sel1st = eos + 1;
+              }
+              // text in front of selection (and full unselected text)
+              for (byte i = 0; i < sel1st; i++){
+                Serial.print(strHLP[i]);
+              }
+              // text / selected part
+              if (selCnt){
+                // text after selection
+              }
+            }
+
+            if (moveCursor && !reDraw){
+              pos += moveCursor;
+              if (moveCursor > 0){
+                // Right
+                EscCursorRight(moveCursor);
+              }
+              else{
+                // Left
+                EscCursorLeft(moveCursor * -1);
+              }
+            }
+
           }
         }
         break;

@@ -444,10 +444,12 @@ byte GetUserString(char *strIN){
           selToEnd = posToEnd;
         }
 
-        // Reset all "what happened" & "what to do" variables
+        // Reset all common "what happened" & "what to do" variables
         shift = 0;
         moveCursor = 0;
         reDraw = 0;
+        doDel = 0;
+        doInsert = 0;
         // ------------------------------------------------------------
         
       switch (c){
@@ -455,7 +457,7 @@ byte GetUserString(char *strIN){
         // Take all other chars from SerialBuffer and check on cursor movement and unsupported ESC-Sequences
         // Single ESC is a user-esc
   
-        // Reset all "what happened" & "what to do" variables
+        // Reset all ESC "what happened" & "what to do" variables
         escErr = 0;
         escCnt = 0;
         escCmd = 0;
@@ -650,7 +652,7 @@ byte GetUserString(char *strIN){
             case '3':
               // del 
               if (!selCnt){
-                // just a char (the selection case is pre-calculated)
+                // just a char (the selection case is already pre-calculated)
                 if (pos < eos){
                   mmDest = pos;
                   mmOrig = pos + 1;
@@ -658,21 +660,17 @@ byte GetUserString(char *strIN){
                   selCnt = 1;
                 }                
               }
-              //if (pos < eos || moveCursor){
               if (selCnt){
-                memmove(&strHLP[mmDest], &strHLP[mmOrig], mmCnt);
-                reDraw = 1;             // char(s) removed - we need to redraw           
-                moveCursor = mmDest;  // absolute pos of cursor after redraw
-                eos -= selCnt;
+                // Delete is needed
+                doDel = 1;
               }
-              selCnt = 0;   // if we were selected - we're not selected anymore
               break;
             }
 
             // Common variables for a valid ESC-sequence got set.
             // Look what happened & what to do related to the state before the sequence
             // ----------------------------------------------------------------------
-            if (!shift && selCnt){
+            if (!shift && selCnt && !doDel){
               // we had a selection, but we did a non-shift cursor-move => deselect & redraw..
               selCnt = 0;
               reDraw = 1;
@@ -740,7 +738,7 @@ byte GetUserString(char *strIN){
       case 127:
         // Back (!! we're "mis"-using/overwriting sel-variables & moveCursor !!)
         if (!selCnt){
-          // just a char
+          // just a char (the selection case is already pre-calculated)
           if (pos){
             mmDest = pos - 1;
             mmOrig = pos;
@@ -748,36 +746,10 @@ byte GetUserString(char *strIN){
             selCnt = 1;
           }
         }
-        //if (pos || moveCursor){
         if (selCnt){
-          memmove(&strHLP[mmDest], &strHLP[mmOrig], mmCnt);
-          reDraw = 1;             // char(s) removed - we need to redraw           
-          moveCursor = mmDest;  // absolute pos of cursor after redraw
-          eos -= selCnt;
+          // Delete is needed
+          doDel = 1;
         }
-        selCnt = 0;               // if we were selected - we're not selected anymore (and we misused vars !!)
-        
-        /*
-        if (pos && (pos == eos)){
-          // Cursor is at the end
-          eos--;
-          pos--;
-          EscCursorLeft(1);
-          Print1Space();
-          EscCursorLeft(1);
-          strHLP[eos] = 0;
-        }
-        else if (pos && (pos < eos)){
-          // Cursor is 'somewhere' - shift chars 1 to left
-          pos--;
-          memmove(&strHLP[pos], &strHLP[pos + 1], eos - pos + 2);
-          EscCursorLeft(1);
-          Serial.print(&strHLP[pos]);
-          Print1Space();
-          EscCursorLeft(eos - pos);
-          eos--;
-        }
-        */               
         break;
       case 10:
       case 13:
@@ -817,6 +789,16 @@ byte GetUserString(char *strIN){
 
       // We're done with the char and know eventually todo commands...
       //  reDraW & moveCursor & doDel & doInsert - knowing exactly what to do...
+
+      if (doDel){
+        // We've something to delete from the string
+        memmove(&strHLP[mmDest], &strHLP[mmOrig], mmCnt);
+        reDraw = 1;             // char(s) removed - we need to redraw           
+        moveCursor = mmDest;  // absolute pos of cursor after redraw
+        eos -= selCnt;
+        selCnt = 0;
+      }
+      
 
       if (reDraw){
         // we have to redraw the line

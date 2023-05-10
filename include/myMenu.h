@@ -895,13 +895,18 @@ void RunManualSetting(byte port, byte style){
       switch (style){
       case 0:
         // Distributed
-        manualTiming[i].repeats = maxTime / manualTiming[i].runTime;
+        manualTiming[i].repeats = ((maxTime - manualTiming[i].runTime) / manualTiming[i].runTime) + 1;
+        
         if (manualTiming[i].repeats > manualTiming[i].runTime){
           // we can't On/Off shorter than 1sec.
           manualTiming[i].repeats = manualTiming[i].runTime;
         }
         manualTiming[i].onTime = manualTiming[i].runTime / manualTiming[i].repeats;
-        manualTiming[i].offTime = (maxTime - manualTiming[i].runTime) / manualTiming[i].repeats;
+        if ((manualTiming[i].onTime * manualTiming[i].repeats) < manualTiming[i].runTime){
+          // odd onTime - raise repeats with existing onTime
+          manualTiming[i].repeats += (manualTiming[i].runTime - manualTiming[i].onTime * manualTiming[i].repeats) / manualTiming[i].onTime;
+        }
+        manualTiming[i].offTime = (maxTime - manualTiming[i].runTime) / manualTiming[i].repeats;               
         manualTiming[i].offset = (maxTime - ((manualTiming[i].onTime + manualTiming[i].offTime) * manualTiming[i].repeats)) / 2;
         break;
       case 1:
@@ -1273,7 +1278,7 @@ Start:
     PrintSerTime(setting.DelayTime[i], 0, 1);
     PrintSmallSpacer();
     //PrintSmallMenuKey('g' + i);
-    PrintMenuKeySmallBoldFaint(i + 'g', 0, !setting.DelayTime[i]);
+    PrintMenuKeySmallBoldFaint(i + 'g', 0, !setting.TimeTooLow[i]);
     PrintSerTime(setting.TimeTooLow[i], 0, 1);
     PrintSmallSpacer();
     //PrintSmallMenuKey('m' + i);

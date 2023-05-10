@@ -342,16 +342,18 @@ byte GetUserString(char *strIN){
   
   // my tiny edlin...
   //  I never underestimated a function more like this one...
-  //  Getting it with selection small & stable took at least one long day more than expected
+  //  Getting it with selection small & stable took at least one very long day more than expected
   //  For readability it's using some redundant variables...
   //  To save flash-size I'm wasting "massive" CPU time during receiving chars.
-  //  All shared variables of all ESC-sequence-cases get new calculated - after every single char.
+  //  (All shared variables of all ESC-sequence-cases get new calculated - after every single char.)
+
+  #define PRINT_ESC_DEBUG 0             // ESC-Sequences infos
 
   char c = 0;                           // actual received char
   byte timeOut = 60;
   byte eos = strlen(strIN);             // Position of EndOfString (termination - 00)
   byte pos = 0;                         // Position of cursor (0 = in front of 1st char)
-  #define strMaxLen (STR_HLP_LEN - 1)
+  #define strMaxLen (STR_HLP_LEN - 1)   // max len of string without termination
   
   byte sel1st = 0;                      // pos of 1st selected char
   byte selCnt = 0;                      // cnt of selected chars
@@ -391,7 +393,7 @@ byte GetUserString(char *strIN){
     Serial.print(strIN);
     EscInverse(0);
   }
-  // We're not working with the original....
+  // We're not working with the original...
   strcpy(strHLP, strIN);
   
   // Facts are better than trust...
@@ -418,9 +420,11 @@ byte GetUserString(char *strIN){
       // Get the char
       c = Serial.read();
 
+      // -----------------------------------------------------------------------------------------
       // We need (parts of) this multiple times (selection cursor-move, del, back, insert)
       // Yes, it's CPU-"wasting" to do it with every incoming char, but only then it's
       // covering all kinds of ESC and non-ESC commands
+      // -----------------------------------------------------------------------------------------
 
         // Cursor-distances to pos1/end
         posTo1st = pos;         // Cursor results (EscCursorLeft(posTo1st)) left of 1st char 
@@ -451,7 +455,9 @@ byte GetUserString(char *strIN){
         reDraw = 0;
         doDel = 0;
         doInsert = 0;
-        // ------------------------------------------------------------
+
+      // -----------------------------------------------------------------------------------------
+      // -----------------------------------------------------------------------------------------
         
       switch (c){
       case 27:
@@ -471,16 +477,20 @@ byte GetUserString(char *strIN){
           escCnt++;
           c = Serial.read();
           delay(12);
-//Serial.print(c);
-//Serial.print(F("'0'"));
-//Print1Space();
+#if PRINT_ESC_DEBUG
+  Serial.print(c);
+  Serial.print(F("'0'"));
+  Print1Space();
+#endif
           switch (escCnt){
           case 1:
             if (c != '['){
               // unsupported
-//Serial.print(c);
-//Serial.print(F("'1'"));
-//Print1Space();
+#if PRINT_ESC_DEBUG
+  Serial.print(c);
+  Serial.print(F("'1'"));
+  Print1Space();
+#endif
               escErr = 1;
             }
             break;
@@ -505,9 +515,11 @@ byte GetUserString(char *strIN){
               break;
             default:
               // unsupported
-//Serial.print(c);
-//Serial.print(F("'2'"));
-//Print1Space();
+#if PRINT_ESC_DEBUG
+  Serial.print(c);
+  Serial.print(F("'2'"));
+  Print1Space();
+#endif
               escErr = 1;
               break;
             }
@@ -524,9 +536,11 @@ byte GetUserString(char *strIN){
                 // pos1
                 break;
               default:
-//Serial.print(c);
-//Serial.print(F("'3'"));
-//Print1Space();
+#if PRINT_ESC_DEBUG
+  Serial.print(c);
+  Serial.print(F("'3'"));
+  Print1Space();
+#endif
                 escErr = 1;
                 break;
               }
@@ -536,9 +550,11 @@ byte GetUserString(char *strIN){
               // shiftUp / shiftDown
               break;
             default:
-//Serial.print(c);
-//Serial.print(F("'4'"));
-//Print1Space();
+#if PRINT_ESC_DEBUG
+  Serial.print(c);
+  Serial.print(F("'4'"));
+  Print1Space();
+#endif
               escErr = 1;
               break;
             }
@@ -550,9 +566,11 @@ byte GetUserString(char *strIN){
               // shiftUp / shiftDown
               break;
             default:
-//Serial.print(c);
-//Serial.print(F("'5'"));
-//Print1Space();
+#if PRINT_ESC_DEBUG
+  Serial.print(c);
+  Serial.print(F("'5'"));
+  Print1Space();
+#endif
               escErr = 1;
               break;
             }
@@ -570,18 +588,22 @@ byte GetUserString(char *strIN){
               escCmd = c + 127;   // move 127, cause left/right without SHIFT has the same key...
               break;
             default:
-//Serial.print(c);
-//Serial.print(F("'6'"));
-//Print1Space();
+#if PRINT_ESC_DEBUG
+  Serial.print(c);
+  Serial.print(F("'6'"));
+  Print1Space();
+#endif
               escErr = 1;
               break;
             }
             break;
           default:
             // unsupported
-//Serial.print(c);
-//Serial.print(F("'7'"));
-//Print1Space();
+#if PRINT_ESC_DEBUG
+  Serial.print(c);
+  Serial.print(F("'7'"));
+  Print1Space();
+#endif
             escErr = 1;
             break;
           }
@@ -668,69 +690,73 @@ byte GetUserString(char *strIN){
               break;
             }
 
+            // -----------------------------------------------------------------------------------------
             // Common variables for a valid ESC-sequence got set.
             // Look what happened & what to do related to the state before the sequence
-            // ----------------------------------------------------------------------
-            if (!shift && selCnt && !doDel){
-              // we had a selection, but we did a non-shift cursor-move => deselect & redraw..
-              selCnt = 0;
-              reDraw = 1;
-              moveCursor += pos;
-            }
+            // -----------------------------------------------------------------------------------------
 
-            else if (shift && selCnt && moveCursor){
-              // we had a selection and we are extending/reducing the selection
+              if (!shift && selCnt && !doDel){
+                // we had a selection, but we did a non-shift cursor-move => deselect & redraw..
+                selCnt = 0;
+                reDraw = 1;
+                moveCursor += pos;
+              }
 
-              // (re)use shift as absolute position of end of selection
-              shift = selCnt + sel1st;
-              reDraw = 1;
+              else if (shift && selCnt && moveCursor){
+                // we had a selection and we are extending/reducing the selection
 
-              if (selPosLeft ){
-                // Cursor is in front of selection
-                sel1st += moveCursor;
-                moveCursor = sel1st;  
-                if (sel1st >= shift){
-                  // Flip selection from shift to... up to end
-                  selCnt = sel1st - shift;
-                  sel1st = shift;
-                  shift = sel1st + selCnt;
+                // (re)use shift as absolute position of end of selection
+                shift = selCnt + sel1st;
+                reDraw = 1;
+
+                if (selPosLeft ){
+                  // Cursor is in front of selection
+                  sel1st += moveCursor;
+                  moveCursor = sel1st;  
+                  if (sel1st >= shift){
+                    // Flip selection from shift to... up to end
+                    selCnt = sel1st - shift;
+                    sel1st = shift;
+                    shift = sel1st + selCnt;
+                    moveCursor = shift;
+                  }
+                }
+                else{
+                  // Cursor is at the end of selection
+                  shift += moveCursor;
                   moveCursor = shift;
+                  if (shift <= sel1st){
+                    // Flip selection from sel1st to... up to pos1
+                    selCnt = sel1st - shift;
+                    shift = sel1st;
+                    sel1st = shift - selCnt;
+                    moveCursor = sel1st;
+                  }
                 }
+              
+                // calc new size of selection
+                selCnt = shift - sel1st;
+
               }
-              else{
-                // Cursor is at the end of selection
-                shift += moveCursor;
-                moveCursor = shift;
-                if (shift <= sel1st){
-                  // Flip selection from sel1st to... up to pos1
-                  selCnt = sel1st - shift;
-                  shift = sel1st;
-                  sel1st = shift - selCnt;
-                  moveCursor = sel1st;
+
+              else if (shift && !selCnt && moveCursor){
+                // we're starting a selection
+                reDraw = 1;
+                if (moveCursor > 0){
+                  // To the right
+                  sel1st = pos;
+                  selCnt = moveCursor;
                 }
+                else if (moveCursor < 0){
+                  // To the left
+                  sel1st = pos + moveCursor;
+                  selCnt = moveCursor * -1;
+                }
+                moveCursor += pos;
               }
-             
-              // calc new size of selection
-              selCnt = shift - sel1st;
 
-            }
-
-            else if (shift && !selCnt && moveCursor){
-              // we're starting a selection
-              reDraw = 1;
-              if (moveCursor > 0){
-                // To the right
-                sel1st = pos;
-                selCnt = moveCursor;
-              }
-              else if (moveCursor < 0){
-                // To the left
-                sel1st = pos + moveCursor;
-                selCnt = moveCursor * -1;
-              }
-              moveCursor += pos;
-            }
-            // ----------------------------------------------------------------------
+            // -----------------------------------------------------------------------------------------
+            // -----------------------------------------------------------------------------------------
             
           }
         }

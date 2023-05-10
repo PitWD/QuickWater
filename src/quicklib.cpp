@@ -345,34 +345,35 @@ byte GetUserString(char *strIN){
   //  Getting it with selection small & stable took at least one long day more than expected
   //  For readability it's using some redundant variables...
   //  To save flash-size I'm wasting "massive" CPU time during receiving chars.
-  //    All shared variables of all ESC-sequence-cases get new calculated - after every single char.
+  //  All shared variables of all ESC-sequence-cases get new calculated - after every single char.
 
-  char c = 0;                 // actual received char
+  char c = 0;                           // actual received char
   byte timeOut = 60;
-  byte eos = strlen(strIN);   // Position of EndOfString (termination - 00)
-  byte pos = 0;               // Position of cursor (0 = in front of 1st char)
+  byte eos = strlen(strIN);             // Position of EndOfString (termination - 00)
+  byte pos = 0;                         // Position of cursor (0 = in front of 1st char)
+  #define strMaxLen (STR_HLP_LEN - 1)
   
-  byte sel1st = 0;            // pos of 1st selected char
-  byte selCnt = 0;            // cnt of selected chars
-  byte selPosLeft = 0;        // 0 = cursor is right of selection / 1 = left of selection
-  byte selTo1st = 0;          // cnt of 1st selected char to pos1
-  byte selToEnd = 0;          // cnt of last selected char to end
-  byte posTo1st = 0;          // cnt of cursor to pos1
-  byte posToEnd = 0;          // cnt of cursor to end
+  byte sel1st = 0;                      // pos of 1st selected char
+  byte selCnt = 0;                      // cnt of selected chars
+  byte selPosLeft = 0;                  // 0 = cursor is right of selection / 1 = left of selection
+  byte selTo1st = 0;                    // cnt of 1st selected char to pos1
+  byte selToEnd = 0;                    // cnt of last selected char to end
+  byte posTo1st = 0;                    // cnt of cursor to pos1
+  byte posToEnd = 0;                    // cnt of cursor to end
 
-  byte reDraw = 0;            // redraw needed
-  int8_t moveCursor = 0;      // negative to the left / positive to the right
-  byte doDel = 0;             // remove "something" from string (see mmVariables)
-  char doInsert = 0;          // insert char
+  byte reDraw = 0;                      // redraw needed
+  int8_t moveCursor = 0;                // negative to the left / positive to the right
+  byte doDel = 0;                       // remove "something" from string (see mmVariables)
+  char doInsert = 0;                    // insert char
 
-  byte mmDest = 0;            // where to memmove
-  byte mmOrig = 0;            // from where
-  byte mmCnt = 0;             // how much
+  byte mmDest = 0;                      // where to memmove
+  byte mmOrig = 0;                      // from where
+  byte mmCnt = 0;                       // how much
 
-  byte shift = 0;             // Shift was pressed
-  byte escCnt = 0;            // hlp to interpret esc-sequences
-  char escErr = 0;            // hlp to interpret esc-sequences
-  byte escCmd = 0;            // hlp to interpret esc-sequences
+  byte shift = 0;                       // Shift was pressed
+  byte escCnt = 0;                      // hlp to interpret esc-sequences
+  char escErr = 0;                      // hlp to interpret esc-sequences
+  byte escCmd = 0;                      // hlp to interpret esc-sequences
 
   EscBold(1);
   Serial.print(F(">> "));
@@ -756,10 +757,10 @@ byte GetUserString(char *strIN){
         break;
       default:
         if (c > 31 && c < 127){
-          // Valid char
+          // Insert a valid char
           
-          if (eos < STR_HLP_LEN - 1 || selCnt){
-            // enough space in string to add a char
+          if (eos < strMaxLen || selCnt){
+            // enough space in string to add the char
             doInsert = 1;
           }
           
@@ -770,38 +771,6 @@ byte GetUserString(char *strIN){
           else{
             // nothing to delete - just eventually insert the char
           }
-          
-          
-          
-
-          /*
-          if (pos == STR_HLP_LEN - 1){
-            // MaxLen reached - cursor at the end
-            EscCursorLeft(1);
-            pos--;
-            eos--;
-          }
-          else if (eos == STR_HLP_LEN - 1){
-            // MaxLen reached - cursor "somewhere"
-            eos--;
-          }
-          else if (pos < eos){
-            // Cursor is 'somewhere' - shift chars 1 to right
-            memmove(&strHLP[pos + 1], &strHLP[pos], posToEnd + 1);
-            EscCursorRight(1);
-            Serial.print(&strHLP[pos + 1]);
-            EscCursorLeft(posToEnd + 1);
-          }
-          else{
-            // pos & eos at the 1st or last position of string
-            strHLP[pos + 1] = 0;
-          }        
-          Serial.print(c);
-          strHLP[pos] = c;
-          pos++;
-          eos++;
-          */
-
         }        
         break;
       }
@@ -814,7 +783,7 @@ byte GetUserString(char *strIN){
         memmove(&strHLP[mmDest], &strHLP[mmOrig], mmCnt);
         reDraw = 1;             // char(s) removed - we need to redraw           
         moveCursor = mmDest;    // absolute pos of cursor after redraw
-        pos = moveCursor;       // to do "doInsert" right
+        pos = moveCursor;       // set pos here, too! to do following "doInsert" right
         eos -= selCnt;
         selCnt = 0;
       }
@@ -867,7 +836,7 @@ byte GetUserString(char *strIN){
         }
 
         // Delete possibly too much chars from previous print
-        PrintSpaces(STR_HLP_LEN - eos);
+        PrintSpaces(strMaxLen - eos);
         
         // Place Cursor on front again... to be right for an eventually moveCurser
         EscRestoreCursor();
@@ -965,10 +934,3 @@ char GetUserKey(byte maxChar, byte noCnt){
 
 }
 
-/*
-char *Fa(PGM_P strIN){
-  //return strcpy_P(buf, (PGM_P)pgm_read_word(&(strIN)));
-  static char buf[STR_HLP_LEN];
-  return strcpy_P(buf, (PGM_P)strIN);
-}
-*/

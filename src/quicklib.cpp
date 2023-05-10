@@ -755,8 +755,26 @@ byte GetUserString(char *strIN){
       case 13:
         break;
       default:
-        if (c > 31 && c < 255){
+        if (c > 31 && c < 127){
           // Valid char
+          
+          if (eos < STR_HLP_LEN - 1 || selCnt){
+            // enough space in string to add a char
+            doInsert = 1;
+          }
+          
+          if (selCnt){
+            // before insert we need to remove selection
+            doDel = 1;
+          }
+          else{
+            // nothing to delete - just eventually insert the char
+          }
+          
+          
+          
+
+          /*
           if (pos == STR_HLP_LEN - 1){
             // MaxLen reached - cursor at the end
             EscCursorLeft(1);
@@ -782,23 +800,41 @@ byte GetUserString(char *strIN){
           strHLP[pos] = c;
           pos++;
           eos++;
+          */
 
         }        
         break;
       }
 
-      // We're done with the char and know eventually todo commands...
+      // We're done with the char and know the eventually to-do commands...
       //  reDraW & moveCursor & doDel & doInsert - knowing exactly what to do...
 
       if (doDel){
         // We've something to delete from the string
         memmove(&strHLP[mmDest], &strHLP[mmOrig], mmCnt);
         reDraw = 1;             // char(s) removed - we need to redraw           
-        moveCursor = mmDest;  // absolute pos of cursor after redraw
+        moveCursor = mmDest;    // absolute pos of cursor after redraw
+        pos = moveCursor;       // to do "doInsert" right
         eos -= selCnt;
         selCnt = 0;
       }
-      
+
+      if (doInsert){
+        // char to insert
+        if (pos < eos){
+          // Cursor is 'somewhere' - shift chars 1 to the right
+          memmove(&strHLP[pos + 1], &strHLP[pos], posToEnd + 1);
+        }
+        else{
+          // Cursor (pos) & eos at the 1st or last position of string
+          // termination needed
+          strHLP[pos + 1] = 0;
+        }
+        strHLP[pos] = c;
+        moveCursor = pos + 1;
+        eos++;
+        reDraw = 1;
+      }
 
       if (reDraw){
         // we have to redraw the line

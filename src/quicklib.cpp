@@ -656,7 +656,7 @@ byte GetUserString(char *strIN){
                 if (pos < eos){
                   mmDest = pos;
                   mmOrig = pos + 1;
-                  mmCnt = eos - pos;
+                  mmCnt = posToEnd;
                   selCnt = 1;
                 }                
               }
@@ -742,7 +742,7 @@ byte GetUserString(char *strIN){
           if (pos){
             mmDest = pos - 1;
             mmOrig = pos;
-            mmCnt = eos - pos + 1;
+            mmCnt = posToEnd + 1;
             selCnt = 1;
           }
         }
@@ -769,10 +769,10 @@ byte GetUserString(char *strIN){
           }
           else if (pos < eos){
             // Cursor is 'somewhere' - shift chars 1 to right
-            memmove(&strHLP[pos + 1], &strHLP[pos], eos - pos + 1);
+            memmove(&strHLP[pos + 1], &strHLP[pos], posToEnd + 1);
             EscCursorRight(1);
             Serial.print(&strHLP[pos + 1]);
-            EscCursorLeft(eos - pos + 1);
+            EscCursorLeft(posToEnd + 1);
           }
           else{
             // pos & eos at the 1st or last position of string

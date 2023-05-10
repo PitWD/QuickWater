@@ -341,71 +341,129 @@ long StrTokFloatIntToInt(char *strIN, int8_t autoScale){
 byte GetUserString(char *strIN){
   
   // my tiny edlin...
+  //  I never underestimated a function more like this one...
+  //  Getting it with selection small & stable took at least one long day more than expected
+  //  For readability it's using some redundant variables...
+  //  To save flash-size I'm wasting "massive" CPU time during receiving chars.
+  //    All shared variables of all ESC-sequence-cases get new calculated - after every single char.
 
-  char c = 0;
+  char c = 0;                 // actual received char
   byte timeOut = 60;
-  byte eos = strlen(strIN);   // Position of EndOfString
-  byte pos = 0;               // Position of cursor
+  byte eos = strlen(strIN);   // Position of EndOfString (termination - 00)
+  byte pos = 0;               // Position of cursor (0 = in front of 1st char)
   
-  byte sel1st = 0;        // pos of 1st selected char
-  byte selCnt = 0;        // cnt of selected chars
-  byte selPosLeft = 0;    // 0 = right of selection / 1 = left of selection
-  byte shift = 0;         // Shift was pressed
-  byte selTo1st = 0;      // cnt of chars from cursor to pos1
-  byte selToEnd = 0;      // cnt of chars from cursor to pos1
+  byte sel1st = 0;            // pos of 1st selected char
+  byte selCnt = 0;            // cnt of selected chars
+  byte selPosLeft = 0;        // 0 = cursor is right of selection / 1 = left of selection
+  byte selTo1st = 0;          // cnt of 1st selected char to pos1
+  byte selToEnd = 0;          // cnt of last selected char to end
+  byte posTo1st = 0;          // cnt of cursor to pos1
+  byte posToEnd = 0;          // cnt of cursor to end
 
-  byte reDraw = 0;        // redraw needed
-  int8_t moveCursor = 0;  // negative to the left / positive to the right
+  byte reDraw = 0;            // redraw needed
+  int8_t moveCursor = 0;      // negative to the left / positive to the right
+  byte doDel = 0;             // remove "something" from string (see mmVariables)
+  char doInsert = 0;          // insert char
 
+  byte mmDest = 0;            // where to memmove
+  byte mmOrig = 0;            // from where
+  byte mmCnt = 0;             // how much
+
+  byte shift = 0;             // Shift was pressed
   byte escCnt = 0;            // hlp to interpret esc-sequences
   char escErr = 0;            // hlp to interpret esc-sequences
-  byte escCmd = 0;
+  byte escCmd = 0;            // hlp to interpret esc-sequences
 
   EscBold(1);
   Serial.print(F(">> "));
-  EscSaveCursor();
   EscBold(0);
   EscColor(fgCyan);
+  EscSaveCursor();            // save start for reDraw
 
   if (eos){
+    // Cursor at the end
     pos = eos;
-    
     // On start the whole text is selected
     selCnt = pos;
-    
+    // Print text as selected
     EscInverse(1);
     Serial.print(strIN);
     EscInverse(0);
-    strcpy(strHLP, strIN);
   }
+  // We're not working with the original....
+  strcpy(strHLP, strIN);
   
+  // Facts are better than trust...
   strHLP[eos] = 0;
 
+  // listen char-wise on stdIN () until ENTER
   while (c != 13){
 
+    // Check on TimeOut
     if (DoTimer()){
       timeOut--;
       if (!timeOut){
-        strcpy(strHLP, strIN);
         EscColor(0);
         return 0;
       }
     }
 
     if (Serial.available()){
-      
+      // New char(s) received
+
+      // Reset TimeOut
       timeOut = 60;
 
+      // Get the char
       c = Serial.read();
 
+      // We need (parts of) this multiple times (selection cursor-move, del, back, insert)
+      // Yes, it's CPU-"wasting" to do it with every incoming char, but only then it's
+      // covering all kinds of ESC and non-ESC commands
+
+        // Cursor-distances to pos1/end
+        posTo1st = pos;         // Cursor results (EscCursorLeft(posTo1st)) left of 1st char 
+        posToEnd = eos - pos;   // Cursor results (EscCursorRight(posToEnd)) right of last char (left of termination)
+        
+        // Selection-distances to pos1/end
+        if (selCnt){
+          // We have a selection
+          
+          selPosLeft = (pos == sel1st);  // If cursor is left or right of selection
+          selTo1st = sel1st;
+          selToEnd = eos - (sel1st + selCnt); 
+          
+          // when a selection needs a doDel (Del & Back & insert char)
+          mmDest = sel1st;
+          mmOrig = sel1st + selCnt;
+          mmCnt = selToEnd + 1;
+        }
+        else{
+          // Single Cursor without selection
+          selTo1st = posTo1st;
+          selToEnd = posToEnd;
+        }
+
+        // Reset all "what happened" & "what to do" variables
+        shift = 0;
+        moveCursor = 0;
+        reDraw = 0;
+        // ------------------------------------------------------------
+        
       switch (c){
       case 27:
         // Take all other chars from SerialBuffer and check on cursor movement and unsupported ESC-Sequences
         // Single ESC is a user-esc
+  
+        // Reset all "what happened" & "what to do" variables
         escErr = 0;
         escCnt = 0;
         escCmd = 0;
+
+        // Time for next char (lowest is 1200 baud - but as higher the speeds don't keep keys pressed)
+        // AND TimeOut to recognize single user ESC
         delay(12);
+        
         while (Serial.available()){
           escCnt++;
           c = Serial.read();
@@ -525,200 +583,181 @@ byte GetUserString(char *strIN){
             break;
           }
         }
+
         if (!escCnt){
           // Single User ESC
-          // Restore text and return
-          strcpy(strHLP, strIN);
-          eos = strlen(strHLP);
-          c = 13;
+          // Restore color and return
+          EscColor(0);
+          return 0;
         }
         else{
           if (!escErr){
             // Known ESC Sequence recognized
             
-            selTo1st = 0;
-            selToEnd = 0;
-            if (selCnt){
-              // We have a selection
-              selPosLeft = (pos <= selCnt - sel1st);  // If cursor is left or right of selection
-              selTo1st = pos;
-              selToEnd = eos - pos;                
-            }
-            shift = 0;
-            moveCursor = 0;
-            reDraw = 0;
-            
             switch (escCmd){
             case 'C' + 127:
               // shift right
-              if (pos < eos){
-                shift = 1;
+              if (posToEnd){
                 moveCursor = 1;
               }              
+              shift = 1;
               break;
             case 'D' + 127:
               // shift left
               if (pos){
-                shift = 1;
                 moveCursor = -1;
               }              
+              shift = 1;
               break;
             case 'A' + 127:
               // shift up (as substitute for shift pos-1)
-              if (selTo1st){
-                shift = 1;
-                moveCursor = selTo1st * -1;
+              if (posTo1st){
+                moveCursor = posTo1st * -1;
               }
+              shift = 1;
               break;
             case 'B' + 127:
               // shift down (as substitute for shift end)
-              if (selToEnd){
-                shift = 1;
-                moveCursor = selToEnd;
+              if (posToEnd){
+                moveCursor = posToEnd;
               }              
+              shift = 1;
               break;
             case 'A':
               // Up (like pos1)
             case '1':
               // pos1
-              moveCursor = selTo1st * -1;
+              moveCursor = posTo1st * -1;
               break;
             case 'B':
               // Down (like end)
             case '4':
               // end
-              moveCursor = selToEnd;
+              moveCursor = posToEnd;
               break;
             case 'C':
               // right
-              if (pos < eos){
+              if (posToEnd){
                 moveCursor = 1;
               }            
-              /*
-              if (pos < eos){
-                pos++;
-                EscCursorRight(1);
-              }
-              */
               break;
             case 'D':
               // left
-              if (pos){
+              if (posTo1st){
                 moveCursor = -1;
               }
-              /*            
-              if (pos){
-                pos--;
-                EscCursorLeft(1);
-              }
-              */
               break;
             case '3':
-              // del (!! we're "mis"-using/overwriting sel-variables !!)
+              // del 
+              if (!selCnt){
+                // just a char (the selection case is pre-calculated)
+                if (pos < eos){
+                  mmDest = pos;
+                  mmOrig = pos + 1;
+                  mmCnt = eos - pos;
+                  selCnt = 1;
+                }                
+              }
+              //if (pos < eos || moveCursor){
               if (selCnt){
-                // a selection
-                selTo1st = sel1st;
-                selToEnd = sel1st + selCnt;
-                selCnt = eos - selToEnd + 1;
-                moveCursor = sel1st;   // pos of cursor after redraw            
+                memmove(&strHLP[mmDest], &strHLP[mmOrig], mmCnt);
+                reDraw = 1;             // char(s) removed - we need to redraw           
+                moveCursor = mmDest;  // absolute pos of cursor after redraw
+                eos -= selCnt;
               }
-              else{
-                // a char
-                selTo1st = pos;
-                selToEnd = pos + 1;
-                selCnt = eos - pos;
-                moveCursor = pos;      // pos of cursor after redraw  
-              }
-              reDraw = 1;              
-              if (pos < eos){
-                memmove(&strHLP[selTo1st], &strHLP[selToEnd], selCnt);
-                //Serial.print(&strHLP[pos]); - it's in ReDraw now
-                //Print1Space(); - it's in ReDraw now
-                //EscCursorLeft(eos - pos); - it's in moveCursor (after ReDraw) now
-                //eos--;
-                //eos -= selToEnd - selTo1st;
-              }
-              selCnt = 0;   // to not interfere with a selection
+              selCnt = 0;   // if we were selected - we're not selected anymore
               break;
             }
-            
-            if (shift){
-              // calculate to (de)select area
-              if (selPosLeft){
-                // Cursor left of selection
-                if (moveCursor > 0){
-                  // selection smaller or selEnd+1 becomes sel1st
-                  if (moveCursor >= selCnt - 1){
-                    sel1st = sel1st + selCnt;
-                    selCnt = eos - sel1st + 1; 
-                  }
-                  else{
-                    sel1st += moveCursor;
-                    selCnt -= moveCursor;
-                  }
-                }
-                else{
-                  // selection greater up to pos1
-                  sel1st += moveCursor;
-                  selCnt += moveCursor;
+
+            // Common variables for a valid ESC-sequence got set.
+            // Look what happened & what to do related to the state before the sequence
+            // ----------------------------------------------------------------------
+            if (!shift && selCnt){
+              // we had a selection, but we did a non-shift cursor-move => deselect & redraw..
+              selCnt = 0;
+              reDraw = 1;
+              moveCursor += pos;
+            }
+
+            else if (shift && selCnt && moveCursor){
+              // we had a selection and we are extending/reducing the selection
+
+              // (re)use shift as absolute position of end of selection
+              shift = selCnt + sel1st;
+              reDraw = 1;
+
+              if (selPosLeft ){
+                // Cursor is in front of selection
+                sel1st += moveCursor;
+                moveCursor = sel1st;  
+                if (sel1st >= shift){
+                  // Flip selection from shift to... up to end
+                  selCnt = sel1st - shift;
+                  sel1st = shift;
+                  shift = sel1st + selCnt;
+                  moveCursor = shift;
                 }
               }
               else{
-                // Cursor right of selection
-                if (moveCursor > 0){
-                  // selection greater up to end
-                  selCnt += moveCursor;
-                }
-                else{
-                  // selection smaller or sel1st-1 becomes selEnd
-                  if (moveCursor >= selCnt - 1){
-                    selCnt = sel1st + 1; 
-                    sel1st = 0;
-                  }
-                  else{
-                    selCnt -= moveCursor;
-                  }
+                // Cursor is at the end of selection
+                shift += moveCursor;
+                moveCursor = shift;
+                if (shift <= sel1st){
+                  // Flip selection from sel1st to... up to pos1
+                  selCnt = sel1st - shift;
+                  shift = sel1st;
+                  sel1st = shift - selCnt;
+                  moveCursor = sel1st;
                 }
               }
-              reDraw = 1;              
-              moveCursor += pos;  // Absolute position of curser after Redraw
+             
+              // calc new size of selection
+              selCnt = shift - sel1st;
+
             }
 
-            if (reDraw){
-              EscRestoreCursor();
-              //PrintSpaces(STR_HLP_LEN - 1);
-              if (!selCnt){
-                // without selection - adjust sel1st
-                sel1st = eos + 1;
-              }
-              // text in front of selection (and full unselected text)
-              for (byte i = 0; i < sel1st; i++){
-                Serial.print(strHLP[i]);
-              }
-              // text / selected part
-              if (selCnt){
-                // text after selection
-              }
-            }
-
-            if (moveCursor && !reDraw){
-              pos += moveCursor;
+            else if (shift && !selCnt && moveCursor){
+              // we're starting a selection
+              reDraw = 1;
               if (moveCursor > 0){
-                // Right
-                EscCursorRight(moveCursor);
+                // To the right
+                sel1st = pos;
+                selCnt = moveCursor;
               }
-              else{
-                // Left
-                EscCursorLeft(moveCursor * -1);
+              else if (moveCursor < 0){
+                // To the left
+                sel1st = pos + moveCursor;
+                selCnt = moveCursor * -1;
               }
+              moveCursor += pos;
             }
-
+            // ----------------------------------------------------------------------
+            
           }
         }
         break;
       case 8:
       case 127:
-        // Back
+        // Back (!! we're "mis"-using/overwriting sel-variables & moveCursor !!)
+        if (!selCnt){
+          // just a char
+          if (pos){
+            mmDest = pos - 1;
+            mmOrig = pos;
+            mmCnt = eos - pos + 1;
+            selCnt = 1;
+          }
+        }
+        //if (pos || moveCursor){
+        if (selCnt){
+          memmove(&strHLP[mmDest], &strHLP[mmOrig], mmCnt);
+          reDraw = 1;             // char(s) removed - we need to redraw           
+          moveCursor = mmDest;  // absolute pos of cursor after redraw
+          eos -= selCnt;
+        }
+        selCnt = 0;               // if we were selected - we're not selected anymore (and we misused vars !!)
+        
+        /*
         if (pos && (pos == eos)){
           // Cursor is at the end
           eos--;
@@ -737,19 +776,23 @@ byte GetUserString(char *strIN){
           Print1Space();
           EscCursorLeft(eos - pos);
           eos--;
-        }                
+        }
+        */               
         break;
       case 10:
       case 13:
         break;
       default:
-        // Print and save char
         if (c > 31 && c < 255){
           // Valid char
           if (pos == STR_HLP_LEN - 1){
-            // MaxLen reached
+            // MaxLen reached - cursor at the end
             EscCursorLeft(1);
             pos--;
+            eos--;
+          }
+          else if (eos == STR_HLP_LEN - 1){
+            // MaxLen reached - cursor "somewhere"
             eos--;
           }
           else if (pos < eos){
@@ -767,14 +810,78 @@ byte GetUserString(char *strIN){
           strHLP[pos] = c;
           pos++;
           eos++;
+
         }        
         break;
       }
+
+      // We're done with the char and know eventually todo commands...
+      //  reDraW & moveCursor & doDel & doInsert - knowing exactly what to do...
+
+      if (reDraw){
+        // we have to redraw the line
+
+        EscRestoreCursor();
+        
+        if (!selCnt){
+          // without selection - adjust sel1st (kind of a mis-use of sel1st)
+          sel1st = eos;
+        }
+
+        if (sel1st){
+          // unselected text in front of selection (or full unselected text)
+          for (byte i = 0; i < sel1st; i++){
+            Serial.print(strHLP[i]);
+          }
+        }              
+  
+        if (selCnt){
+          // we have selected text
+          EscInverse(1);
+          for (byte i = sel1st; i < sel1st + selCnt; i++){
+            Serial.print(strHLP[i]);
+          }
+          EscInverse(0);
+          // unselected text after selection
+          for (byte i = sel1st + selCnt; i < eos; i++){
+            Serial.print(strHLP[i]);
+          }
+        }
+
+        // Delete possibly too much chars from previous print
+        PrintSpaces(STR_HLP_LEN - eos);
+        
+        // Place Cursor on front again... to be right for an eventually moveCurser
+        EscRestoreCursor();
+        pos = 0;
+      }
+
+      if (moveCursor){
+        // we need to move the cursor
+
+        pos += moveCursor;
+
+        if (moveCursor > 0){
+          // Right
+          EscCursorRight(moveCursor);
+        }
+        else{
+          // Left
+          EscCursorLeft(moveCursor * -1);
+        }
+      }
+
     }
+    // Nothing in buffer (wait for char / timeout)
   }
 
+  // Enter got pressed - RETURN
+
+  // Facts are better than trust...
   strHLP[eos] = 0;
+  // Reset color
   EscColor(0);
+  // copy result into original
   strcpy(strIN, strHLP);
   return 1;
 

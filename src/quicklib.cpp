@@ -423,7 +423,7 @@ byte GetUserString(char *strIN){
       // -----------------------------------------------------------------------------------------
       // We need (parts of) this multiple times (selection cursor-move, del, back, insert)
       // Yes, it's CPU-"wasting" to do it with every incoming char, but only then it's
-      // covering all kinds of ESC and non-ESC commands
+      // covering all kinds of ESC and non-ESC commands without wasting flash-memory
       // -----------------------------------------------------------------------------------------
 
         // Cursor-distances to pos1/end
@@ -796,6 +796,7 @@ byte GetUserString(char *strIN){
         break;
       case 10:
       case 13:
+        // with 13 next check in while results in return, cause "c" is still 13...
         break;
       default:
         if (c > 31 && c < 127){
@@ -817,88 +818,93 @@ byte GetUserString(char *strIN){
         break;
       }
 
+      // ---------------------------------------------------------------------------
       // We're done with the char and know the eventually to-do commands...
-      //  reDraW & moveCursor & doDel & doInsert - knowing exactly what to do...
+      // reDraW & moveCursor & doDel & doInsert + linked sel-Vars & pos-Vars
+      // knowing exactly what and how to do...
+      // ---------------------------------------------------------------------------
 
-      if (doDel){
-        // We've something to delete from the string
-        memmove(&strHLP[mmDest], &strHLP[mmOrig], mmCnt);
-        reDraw = 1;             // char(s) removed - we need to redraw           
-        moveCursor = mmDest;    // absolute pos of cursor after redraw
-        pos = moveCursor;       // set pos here, too! to do following "doInsert" right
-        eos -= selCnt;
-        selCnt = 0;
-      }
-
-      if (doInsert){
-        // char to insert
-        if (pos < eos){
-          // Cursor is 'somewhere' - shift chars 1 to the right
-          memmove(&strHLP[pos + 1], &strHLP[pos], posToEnd + 1);
-        }
-        else{
-          // Cursor (pos) & eos at the 1st or last position of string
-          // termination needed
-          strHLP[pos + 1] = 0;
-        }
-        strHLP[pos] = c;
-        moveCursor = pos + 1;
-        eos++;
-        reDraw = 1;
-      }
-
-      if (reDraw){
-        // we have to redraw the line
-
-        EscRestoreCursor();
-        
-        if (!selCnt){
-          // without selection - adjust sel1st (kind of a mis-use of sel1st)
-          sel1st = eos;
+        if (doDel){
+          // We've something to delete from the string
+          memmove(&strHLP[mmDest], &strHLP[mmOrig], mmCnt);
+          reDraw = 1;             // char(s) removed - we need to redraw           
+          moveCursor = mmDest;    // absolute pos of cursor after redraw
+          pos = moveCursor;       // set pos here, too! to do following "doInsert" right
+          eos -= selCnt;
+          selCnt = 0;
         }
 
-        if (sel1st){
-          // unselected text in front of selection (or full unselected text)
-          for (byte i = 0; i < sel1st; i++){
-            Serial.print(strHLP[i]);
+        if (doInsert){
+          // char to insert
+          if (pos < eos){
+            // Cursor is 'somewhere' - shift chars 1 to the right
+            memmove(&strHLP[pos + 1], &strHLP[pos], posToEnd + 1);
           }
-        }              
-  
-        if (selCnt){
-          // we have selected text
-          EscInverse(1);
-          for (byte i = sel1st; i < sel1st + selCnt; i++){
-            Serial.print(strHLP[i]);
+          else{
+            // Cursor (pos) & eos at the 1st or last position of string
+            // termination needed
+            strHLP[pos + 1] = 0;
           }
-          EscInverse(0);
-          // unselected text after selection
-          for (byte i = sel1st + selCnt; i < eos; i++){
-            Serial.print(strHLP[i]);
+          strHLP[pos] = c;
+          moveCursor = pos + 1;
+          eos++;
+          reDraw = 1;
+        }
+
+        if (reDraw){
+          // we have to redraw the line
+
+          EscRestoreCursor();
+          
+          if (!selCnt){
+            // without selection - adjust sel1st (kind of a mis-use of sel1st)
+            sel1st = eos;
+          }
+
+          if (sel1st){
+            // unselected text in front of selection (or full unselected text)
+            for (byte i = 0; i < sel1st; i++){
+              Serial.print(strHLP[i]);
+            }
+          }              
+    
+          if (selCnt){
+            // we have selected text
+            EscInverse(1);
+            for (byte i = sel1st; i < sel1st + selCnt; i++){
+              Serial.print(strHLP[i]);
+            }
+            EscInverse(0);
+            // unselected text after selection
+            for (byte i = sel1st + selCnt; i < eos; i++){
+              Serial.print(strHLP[i]);
+            }
+          }
+
+          // Delete possibly too much chars from previous print
+          PrintSpaces(strMaxLen - eos);
+          
+          // Place Cursor on front again... to be right for an eventually moveCurser
+          EscRestoreCursor();
+          pos = 0;
+        }
+
+        if (moveCursor){
+          // we need to move the cursor
+
+          pos += moveCursor;
+
+          if (moveCursor > 0){
+            // Right
+            EscCursorRight(moveCursor);
+          }
+          else{
+            // Left
+            EscCursorLeft(moveCursor * -1);
           }
         }
-
-        // Delete possibly too much chars from previous print
-        PrintSpaces(strMaxLen - eos);
-        
-        // Place Cursor on front again... to be right for an eventually moveCurser
-        EscRestoreCursor();
-        pos = 0;
-      }
-
-      if (moveCursor){
-        // we need to move the cursor
-
-        pos += moveCursor;
-
-        if (moveCursor > 0){
-          // Right
-          EscCursorRight(moveCursor);
-        }
-        else{
-          // Left
-          EscCursorLeft(moveCursor * -1);
-        }
-      }
+      // ---------------------------------------------------------------------------
+      // ---------------------------------------------------------------------------
 
     }
     // Nothing in buffer (wait for char / timeout)

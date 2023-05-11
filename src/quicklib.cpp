@@ -653,24 +653,40 @@ byte GetUserString(char *strIN){
             case '1':
               // pos1
               moveCursor = posTo1st * -1;
+              if (selCnt){
+                // to start of selection
+                moveCursor = (posTo1st - sel1st) * -1;
+              }                          
               break;
             case 'B':
               // Down (like end)
             case '4':
               // end
               moveCursor = posToEnd;
+              if (selCnt){
+                // to end of selection
+                moveCursor = posToEnd - selToEnd;
+              }                          
               break;
             case 'C':
               // right
               if (posToEnd){
                 moveCursor = 1;
-              }            
+              }
+              if (selCnt){
+                // to end of selection
+                moveCursor = posToEnd - selToEnd;
+              }                          
               break;
             case 'D':
               // left
               if (posTo1st){
                 moveCursor = -1;
               }
+              if (selCnt){
+                // to start of selection
+                moveCursor = (posTo1st - sel1st) * -1;
+              }                          
               break;
             case '3':
               // del 

@@ -901,10 +901,19 @@ void RunManualSetting(byte port, byte style){
           // we can't On/Off shorter than 1sec.
           manualTiming[i].repeats = manualTiming[i].runTime;
         }
+        
+        ReCalc:
         manualTiming[i].onTime = manualTiming[i].runTime / manualTiming[i].repeats;
         if ((manualTiming[i].onTime * manualTiming[i].repeats) < manualTiming[i].runTime){
-          // odd onTime - raise repeats with existing onTime
-          manualTiming[i].repeats += (manualTiming[i].runTime - manualTiming[i].onTime * manualTiming[i].repeats) / manualTiming[i].onTime;
+          // onTime too short - raise onTime
+          manualTiming[i].onTime++;
+        }
+        if ((manualTiming[i].onTime * manualTiming[i].repeats) > manualTiming[i].runTime){
+          // onTime too long - lower repeats
+          if (manualTiming[i].repeats){
+            manualTiming[i].repeats--;
+            goto ReCalc;
+          }          
         }
         manualTiming[i].offTime = (maxTime - manualTiming[i].runTime) / manualTiming[i].repeats;               
         manualTiming[i].offset = (maxTime - ((manualTiming[i].onTime + manualTiming[i].offTime) * manualTiming[i].repeats)) / 2;
@@ -923,12 +932,6 @@ void RunManualSetting(byte port, byte style){
       if (!manualTiming[i].offset){
         manualTiming[i].offset = manualTiming[i].offTime / 2;
       }
-      if (manualTiming[i].repeats * manualTiming[i].onTime < manualTiming[i].runTime){
-        // prev. integer division with odd number
-        manualTiming[i].repeats++;
-        manualTiming[i].offset /= 2;
-      }
-      
 
       if (i < 6){
         // Low-Ports
@@ -1084,23 +1087,6 @@ void RunManualSetting(byte port, byte style){
     }
   }
   OffOutPorts();
-  
-  /*
-  // Sort the manualTiming array in descending order
-  for (int i = 0; i < 11; i++) {
-      for (int j = i+1; j < 12; j++) {
-          if (manualTiming[j].runTime > manualTiming[i].runTime) {
-              uint16_t temp_times = manualTiming[i].runTime;
-              byte temp_port = manualTiming[i].onPort;
-              manualTiming[i].runTime = manualTiming[j].runTime;
-              manualTiming[i].onPort = manualTiming[j].onPort;
-              manualTiming[j].runTime = temp_times;
-              manualTiming[j].onPort = temp_port;
-          }
-      }
-  }
-  */
-
 
 }
 void PrintManualMenu(){

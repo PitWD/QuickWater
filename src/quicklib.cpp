@@ -417,7 +417,7 @@ byte GetUserString(char *strIN){
       // Reset TimeOut
       timeOut = 60;
 
-      // Get the char
+      // Get the 1st char
       c = Serial.read();
 
       // -----------------------------------------------------------------------------------------
@@ -461,8 +461,8 @@ byte GetUserString(char *strIN){
         
       switch (c){
       case 27:
-        // Take all other chars from SerialBuffer and check on cursor movement and unsupported ESC-Sequences
-        // Single ESC is a user-esc
+        // Take all "fast enough" following chars from a extra loop fto check on supported and unsupported ESC-Sequences
+        // Single ESC is a single user-esc
   
         // Reset all ESC "what happened" & "what to do" variables
         escErr = 0;
@@ -474,9 +474,12 @@ byte GetUserString(char *strIN){
         delay(12);
         
         while (Serial.available()){
+          // Read an ESC-Sequence
+
           escCnt++;
           c = Serial.read();
-          delay(12);
+          delay(12);                  // max time between two chars @1200baud
+                                      // no char in next round = timeout = end of unknown/broken sequence 
 #if PRINT_ESC_DEBUG
   Serial.print(c);
   Serial.print(F("'0'"));
@@ -484,6 +487,7 @@ byte GetUserString(char *strIN){
 #endif
           switch (escCnt){
           case 1:
+            // check 1st (after ESC) char - check on CSI
             if (c != '['){
               // unsupported
 #if PRINT_ESC_DEBUG
@@ -495,6 +499,7 @@ byte GetUserString(char *strIN){
             }
             break;
           case 2:
+            // check 2nd char...
             switch (c){
             case 'A':
               // Up
@@ -525,6 +530,7 @@ byte GetUserString(char *strIN){
             }
             break;
           case 3:
+            // check 3rd char
             switch (c){
             case '~':
               switch (escCmd){

@@ -895,26 +895,29 @@ void RunManualSetting(byte port, byte style){
       switch (style){
       case 0:
         // Distributed
-        manualTiming[i].repeats = ((maxTime - manualTiming[i].runTime) / manualTiming[i].runTime) + 1;
+
+        manualTiming[i].repeats = (maxTime / manualTiming[i].runTime);
         
         if (manualTiming[i].repeats > manualTiming[i].runTime){
           // we can't On/Off shorter than 1sec.
           manualTiming[i].repeats = manualTiming[i].runTime;
         }
         
-        ReCalc:
+        ReCalc:   // sucking integer resolution need this up & down
+                  // to get total onTime exact but also as distributed as possible
         manualTiming[i].onTime = manualTiming[i].runTime / manualTiming[i].repeats;
         if ((manualTiming[i].onTime * manualTiming[i].repeats) < manualTiming[i].runTime){
-          // onTime too short - raise onTime
+          // onTime too short - raise onTime (suck - 1)
           manualTiming[i].onTime++;
         }
         if ((manualTiming[i].onTime * manualTiming[i].repeats) > manualTiming[i].runTime){
-          // onTime too long - lower repeats
+          // onTime too long - lower repeats (suck - 2)
           if (manualTiming[i].repeats){
             manualTiming[i].repeats--;
             goto ReCalc;
           }          
         }
+
         manualTiming[i].offTime = (maxTime - manualTiming[i].runTime) / manualTiming[i].repeats;               
         manualTiming[i].offset = (maxTime - ((manualTiming[i].onTime + manualTiming[i].offTime) * manualTiming[i].repeats)) / 2;
         break;

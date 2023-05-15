@@ -28,7 +28,7 @@ Untested right now, but terminal-apps for mobile phones will be able to controls
 **CannaWatery** has two siblings...
 - <a href="https://github.com/PitWD/QuickTimer"> CannaClocky</a> to get any timings, to grow plants, done. As you can read in another repository from me: <a href="https://github.com/CannaParts/LetsGrowSmart/blob/main/FastVegaFlowerLowPower.md">To grow Cannabis based on 24h cycles is wasted time and energy.</a> To do such timings - you will need CannaClocky.
 
-- <a href="https://github.com/PitWD/QuickAir"> CannaBreeze</a> to measure and regulate °C, humidity, CO2, O2. *All climate/air specific sensors/modules from <a href="https://atlas-scientific.com/"> Atlas-Scientific</a> are supported.*
+- <a href="https://github.com/PitWD/QuickAir"> CannaBreezy</a> to measure and regulate °C, humidity, CO2, O2. *All climate/air specific sensors/modules from <a href="https://atlas-scientific.com/"> Atlas-Scientific</a> are supported.*
 
 All three together are the base to have a very solid control over your grow. Their ability to function as ModBUS slaves makes it possible to let (multiple of) them act in a bigger context under control of more complex controllers, HMIs and 3rd party products.
 

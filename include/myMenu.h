@@ -1377,6 +1377,12 @@ byte PrintWaterValsHlp(byte pos, byte posX, byte ezotype, byte lz, byte dp, int 
 
   if (posAct){
     avgVal[ezotype] = avg / (long)posAct;
+    if (ezotype == ezoORP){
+      // Value of probe (eH/mV) is just the Redox-Potential
+      // The Redox-Value (redox-capability) need the pH...
+      // rH = eH /28.9 + (2 * pH)
+      avgVal[ezoORP] = (avgVal[ezoORP] * 10) / (int32_t)289 + (2 * avgVal[ezoPH]);
+    }    
   }
 
   return posAct;

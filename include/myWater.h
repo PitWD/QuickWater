@@ -8,6 +8,8 @@
 
 #define INTERNAL_LEVEL_CNT 1    // cnt of internal level sensors
 
+#define TRIPLE_EC 1             // If we have three EC-Low actions
+
 // What is the actual Action
 // 0 = all read
 // 1 = write command(s)

@@ -124,8 +124,8 @@ struct settingSTRUCT{
 
 struct manualSTRUCT{
     // 41 Byte * 4 Sets = 164 Byte
-    uint16_t Low[6];
-    uint16_t High[6];
+    uint16_t Low[8];    // Three EC-Low-Ports !!
+    uint16_t High[4];   // No Redox-High-, no O2-High-Ports
     char Name[17];
 }manual;
 

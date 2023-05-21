@@ -865,9 +865,11 @@ void RunManualSetting(byte port, byte style){
   PrintLine(pos++, 7, 68);
 
   // Copy Low & High values to manualTiming array
-  for (byte i = 0; i < 6; i++) {
-      manualTiming[i].runTime = manual.Low[i];
-      manualTiming[i + 6].runTime = manual.High[i];
+  for (byte i = 0; i < 8; i++) {
+    manualTiming[i].runTime = manual.Low[i];
+    if (i < 4){
+      manualTiming[i + 8].runTime = manual.High[i];
+    }      
   }
 
   // Search longest time
@@ -1113,8 +1115,10 @@ Start:
   PrintFlexSpacer(6, 0);
 
   PrintLine(pos++, 5, 58);
-  EscLocate(8, pos++);
+  byte ecCnt = 0;
+
   for (i = 0; i < 6; i++){
+    /*
     EscBold(1);
     PrintCentered(Fa(ezoStrLongType[i]), 17);
     PrintSpacer(1);
@@ -1129,8 +1133,58 @@ Start:
     PrintMenuKey(i + 'G', 1, '(', 0, 0, !manual.High[i], !manual.High[i]);
     PrintSpacer(0);
     EscLocate(8, pos++);
+    */
+    byte iOffset = 0;
+    RedoEC:
+    EscLocate(8, pos++);
+    EscBold(1);
+    PrintCentered(Fa(ezoStrLongType[i]), 17);
+    PrintSpacer(1);
+    //PrintSmallMenuKey('a' + i);
+    PrintMenuKeySmallBoldFaint(i + 'a' + ecCnt, 0, !manual.Low[i + ecCnt]);
+    PrintSerTime(manual.Low[i + ecCnt], 0, 1);
+    PrintMenuKey(i + ecCnt + 'A', 1, '(', 0, 0, !manual.Low[i + ecCnt], !manual.Low[i + ecCnt]);
+    PrintSpacer(1);
+
+    if (i == ezoEC && ecCnt && ecCnt < 3){
+      // EC - three times...
+      // 2nd & 3rd EC having no high-action ports
+      ecCnt++;
+      PrintFlexSpacer(15,0);
+      if (ecCnt < 3){
+        goto RedoEC;
+      }    
+      ecCnt--;
+    }
+    else{
+      //PrintSmallMenuKey('g' + i);
+      iOffset = i;
+      if (i == ezoORP || i == ezoDiO2){
+        // They do not have high-ports
+        PrintFlexSpacer(15,0);
+      }
+      else{
+        if (i == ezoLVL){
+          iOffset = 3;
+        }
+        
+        PrintMenuKeySmallBoldFaint(iOffset + 'i', 0, !manual.High[iOffset]);
+        PrintSerTime(manual.High[iOffset], 0, 1);
+        PrintMenuKey(iOffset + 'I', 1, '(', 0, 0, !manual.High[iOffset], !manual.High[iOffset]);
+        PrintSpacer(0);
+      }
+            
+      //EscLocate(8, pos++);
+
+      if (i == ezoEC){
+        // EC - three times...
+        ecCnt++;
+        goto RedoEC;
+      }
+    }
+
   }
-  pos--;
+  //pos--;
   PrintLine(pos++, 5, 58);
   pos++;
   EscLocate(5, pos++);
@@ -1178,27 +1232,27 @@ Start:
   if (pos < 1){
     // Exit & TimeOut
   }
-  else if (pos >= 'a' && pos <= 'f'){
+  else if (pos >= 'a' && pos <= 'h'){
     // LowTime
     pos -= 'a';
     manual.Low[pos] = GetUserTime(manual.Low[pos]);
     pos = 1;
   }
-  else if (pos >= 'g' && pos <= 'l'){
+  else if (pos >= 'i' && pos <= 'l'){
     // HighTime
-    pos -= 'g';
+    pos -= 'i';
     manual.High[pos] = GetUserTime(manual.High[pos]);
     pos = 1;
   }
-  else if (pos >= 'A' && pos <= 'F'){
+  else if (pos >= 'A' && pos <= 'H'){
     // Run Single LowTime
     pos -= 'A';
     RunManualSetting(pos, 1);
     pos = 2;
   }
-  else if (pos >= 'G' && pos <= 'L'){
+  else if (pos >= 'I' && pos <= 'L'){
     // Run Single HighTime
-    pos = pos - 'G' + 6;
+    pos = pos - 'I' + 6;
     RunManualSetting(pos, 1);
     pos = 2;
   }
@@ -1577,7 +1631,9 @@ byte PrintAVGs(byte pos){
   SetAvgColorEZO(ezoORP);
   EscLocate(44, pos);
   PrintBoldFloat(avg_ORP, 4, 2, ' ');
-  PrintUnit(ezoORP, 0,  0 , 3);
+  //PrintUnit(ezoORP, 0,  0 , 3);
+  EscColor(0);
+  Serial.print(F("rH"));
 
   PrintActionTimes(ezoORP, 40, pos + 2);
 

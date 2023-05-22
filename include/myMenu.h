@@ -885,14 +885,31 @@ void RunManualSetting(byte port, byte style){
   }
   
   // Calc offset / onTime / offTime
-  for (byte i = 0; i < 6; i++){
+  //for (byte i = 0; i < 6; i++){
+  for (byte i = 0; i < 8; i++){
     
     byte typeExist = 0;
     byte type = i;
 
+    // Correct type for the three times EC
+    if (i == 2){
+      type = 1;
+    }
+    else if (i > 2){
+      type -= 2;
+    }
+    
     DoLowHigh:
     // Low-Ports
+    /*
+    Serial.print(i);
+    Serial.print(F(":"));
+    Serial.print(port);
+    Serial.print(F(":"));
+    Serial.println(manualTiming[i].runTime);
+    */
     if ((i == port || port == 255) && manualTiming[i].runTime){
+
       // we're in Action and have a time...
       switch (style){
       case 0:
@@ -938,7 +955,8 @@ void RunManualSetting(byte port, byte style){
         manualTiming[i].offset = manualTiming[i].offTime / 2;
       }
 
-      if (i < 6){
+      //if (i < 6){
+      if (i < 8){
         // Low-Ports
         EscColor(fgBlue);
       }
@@ -965,13 +983,37 @@ void RunManualSetting(byte port, byte style){
       typeExist = 1;
       
     }
-    if (i < 6){
-      // repeat for high port
-      i += 6;
+    //if (i < 6){
+    if (i < 2){
+      // set repeat for temp & 1st EC high port
+      i += 8;
       goto DoLowHigh;
     }
-    i -= 6;
-    if (typeExist){
+    else if (i == 4){
+      // set repeat for pH high port
+      i = 10;
+      goto DoLowHigh;
+    }
+    else if (i == 7){
+      // set repeat for level high port
+      i = 11;
+      goto DoLowHigh;
+    }
+    
+    
+    //i -= 6;
+    // set back i from high-port
+    if (i == 11){
+      i = 7;
+    }
+    else if (i == 10){
+      i = 4;
+    }
+    else if (i > 7){
+      i -= 8;
+    }
+    
+    if ((typeExist && type != ezoEC) || (typeExist && i == 3)){
       // Print type-separator line
       EscBold(0);
       PrintLine(pos++, 7, 68);
@@ -986,7 +1028,9 @@ void RunManualSetting(byte port, byte style){
       // A second is gone...
 
       byte needRefresh = 0;
-      
+
+      maxTime--;
+
       PrintSerTime(maxTime, 0, 0); // Time left to strHLP2
       strcpy(&strHLP2[8], (char*)" left...");
       PrintErrorOK(0, strlen(strHLP2), strHLP2);
@@ -1025,12 +1069,21 @@ void RunManualSetting(byte port, byte style){
           }
         }
       }
-      maxTime--;
 
       if (needRefresh){
-        for (byte i = 0; i < 6; i++){
+        //for (byte i = 0; i < 6; i++){
+        for (byte i = 0; i < 8; i++){
 
           byte typeExist = 0;
+          byte type = i;
+
+          // Correct type for the three times EC
+          if (i == 2){
+            type = 1;
+          }
+          else if (i > 2){
+            type -= 2;
+          }
 
           DoLowHigh2:
           // Low-Ports
@@ -1046,7 +1099,7 @@ void RunManualSetting(byte port, byte style){
             
             firstLine++;
 
-            if (i < 6){
+            if (i < 8){
               // Low-Ports
               EscColor(fgBlue);
             }
@@ -1069,6 +1122,7 @@ void RunManualSetting(byte port, byte style){
             }
             PrintSpacer(0);
           }
+          /*
           if (i < 6){
             i += 6;
             goto DoLowHigh2;
@@ -1078,6 +1132,37 @@ void RunManualSetting(byte port, byte style){
             // separator line
             firstLine++;
           }
+          */
+          if (i < 2){
+            // set repeat for temp & 1st EC high port
+            i += 8;
+            goto DoLowHigh2;
+          }
+          else if (i == 4){
+            // set repeat for pH high port
+            i = 10;
+            goto DoLowHigh2;
+          }
+          else if (i == 7){
+            // set repeat for level high port
+            i = 11;
+            goto DoLowHigh2;
+          }
+          // set back i from high-port
+          if (i == 11){
+            i = 7;
+          }
+          else if (i == 10){
+            i = 4;
+          }
+          else if (i > 7){
+            i -= 8;
+          }
+          if ((typeExist && type != ezoEC) || (typeExist && i == 3)){
+            // separator line
+            firstLine++;
+          }
+                   
         }
         firstLine = 0;
       }

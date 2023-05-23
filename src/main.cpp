@@ -106,8 +106,10 @@ uint32_t checkAction(uint32_t valIN, uint32_t actionTime, byte ezotype, byte isH
     // NoAction
   }
   
-  // Port 2-6 - Action ports for low / tooLow
-  // Port 7-11 - Action ports for high / tooHigh
+  // Port 2-8 - Action ports for low / tooLow
+      // Temp / EC-1 / EC-2 / EC-3 / pH / redox / O2 / level
+  // Port 9-11 - Action ports for high / tooHigh
+      // Temp / EC / pH / level
   digitalWrite(ezotype + 2 + (isHighPort * 6), *backSet);
   
   return r;
@@ -130,17 +132,29 @@ void loop() {
 
     // Check High/Low of AVGs 
     // compare timeOuts with timing-setting
-    for (byte i = 0; i < 6; i++){
+    //for (byte i = 0; i < 6; i++){
+    for (byte i = 0; i < 8; i++){
+
+      byte type = i;
+      // Correct type for the three times EC
+      if (i == 2){
+        type = 1;
+      }
+      else if (i > 2){
+        type -= 2;
+      }
 
       // Check On needed/pending actions
-      preToo = tooLowSince[i];
-      tooLowSince[i] = checkAction(tooLowSince[i], setting.TimeTooLow[i], i, 0, &err);
+      //preToo = tooLowSince[i];
+      //tooLowSince[i] = checkAction(tooLowSince[i], setting.TimeTooLow[i], i, 0, &err);
+      preToo = tooLowSince[type];
+      tooLowSince[type] = checkAction(tooLowSince[type], setting.TimeTooLow[i], i, 0, &err);
       if (!err){
         // TooLow isn't in Action...
-        lowSince[i] = checkAction(lowSince[i], setting.TimeLow[i], i, 0, &err);
-        if (preToo != tooLowSince[i]){ 
+        //if (preToo != tooLowSince[i]){ 
+        if (preToo != tooLowSince[type]){ 
           // after finished tooXYZ-Action - reset lowSince, too
-          lowSince[i] = 0;
+          lowSince[type] = 0;
           err = 0;
         }      
         if (err){

@@ -1388,6 +1388,7 @@ Start:
 
   int8_t pos = PrintMenuTop((char*)"- Set Timings -") + 1;
   byte i = 0;
+
   
   EscLocate(12, pos++);
   PrintSpacer(1);
@@ -1398,28 +1399,74 @@ Start:
   PrintLine(pos++, 3, 76);
   EscLocate(3, pos++);
   for (i = 0; i < 6; i++){
+
+    byte type = i;
+    // Correct type for the three times EC
+    if (i == 2){
+      type = 1;
+    }
+    else if (i > 2){
+      type -= 2;
+    }
+
     EscBold(1);
-    PrintCentered(Fa(ezoStrLongType[i]), 9);
+    PrintCentered(Fa(ezoStrLongType[type]), 9);
     PrintSmallSpacer();
+    
     //PrintSmallMenuKey('a' + i);
-    PrintMenuKeySmallBoldFaint(i + 'a', 0, !setting.DelayTime[i]);
-    PrintSerTime(setting.DelayTime[i], 0, 1);
+    if (type == ezoEC && i > ezoEC){
+      // 2nd and 3rd EC
+      PrintSpaces(11);
+    }
+    else{
+      PrintMenuKeySmallBoldFaint(type + 'a', 0, !setting.DelayTime[i]);
+      PrintSerTime(setting.DelayTime[i], 0, 1);
+    }
     PrintSmallSpacer();
+    
     //PrintSmallMenuKey('g' + i);
     PrintMenuKeySmallBoldFaint(i + 'g', 0, !setting.TimeTooLow[i]);
     PrintSerTime(setting.TimeTooLow[i], 0, 1);
     PrintSmallSpacer();
     //PrintSmallMenuKey('m' + i);
-    PrintMenuKeySmallBoldFaint(i + 'm', 0, !setting.TimeLow[i]);
+    PrintMenuKeySmallBoldFaint(i + 'o', 0, !setting.TimeLow[i]);
     PrintSerTime(setting.TimeLow[i], 0, 1);
     PrintSmallSpacer();
+    
+    // 0 & 1 as they are
+    // 2 & 3 NOT
+    // 4 = 2
+    // 5 & 6 NOT
+    // 7 = 3
     //PrintSmallMenuKey('s' + i);
-    PrintMenuKeySmallBoldFaint(i + 's', 0, !setting.TimeHigh[i]);
-    PrintSerTime(setting.TimeHigh[i], 0, 1);
-    PrintSmallSpacer();
-    //PrintSmallMenuKey('A' + i);
-    PrintMenuKeySmallBoldFaint(i + 'A', 0, !setting.TimeTooHigh[i]);
-    PrintSerTime(setting.TimeTooHigh[i], 0, 1);
+    type = i;     // to set TimeHigh & TimeTooHigh index right
+    switch (i){
+    case 2 ... 3:
+      // 2nd & 3rd EC
+    case 5 ... 6:
+      // Redox / O2
+      type = 0;
+      break;
+    case 4:
+      type = 2;
+      break;
+    case 7:
+      type = 3;
+    default:
+      break;
+    }    
+    if (type || (!type && !i)){
+      PrintMenuKeySmallBoldFaint(type + 'w', 0, !setting.TimeHigh[type]);
+      PrintSerTime(setting.TimeHigh[type], 0, 1);
+      PrintSmallSpacer();
+      //PrintSmallMenuKey('A' + i);
+      PrintMenuKeySmallBoldFaint(type + 'A', 0, !setting.TimeTooHigh[type]);
+      PrintSerTime(setting.TimeTooHigh[type], 0, 1);
+    }
+    else{
+      PrintFlexSpacer(11, 11);
+    }
+    
     PrintSmallSpacer();
     EscLocate(3, pos++);
   }
@@ -1428,7 +1475,7 @@ Start:
 
   PrintMenuEnd(pos + 1);
 
-  pos = GetUserKey('x', 3);
+  pos = GetUserKey('z', 3);
 
   if (pos < 1){
     // Exit & TimeOut
@@ -1439,25 +1486,25 @@ Start:
     setting.DelayTime[pos] = GetUserTime(setting.DelayTime[pos]);
     pos = 1;
   }
-  else if (pos >= 'g' && pos <= 'l'){
+  else if (pos >= 'g' && pos <= 'n'){
     // tooLow
     pos -= 'g';
     setting.TimeTooLow[pos] = GetUserTime(setting.TimeTooLow[pos]);
     pos = 1;
   }
-  else if (pos >= 'm' && pos <= 'r'){
+  else if (pos >= 'o' && pos <= 'v'){
     // Low
-    pos -= 'm';
+    pos -= 'o';
     setting.TimeLow[pos] = GetUserTime(setting.TimeLow[pos]);
     pos = 1;
   }
-  else if (pos >= 's' && pos <= 'x'){
+  else if (pos >= 'w' && pos <= 'z'){
     // High
-    pos -= 's';
+    pos -= 'w';
     setting.TimeHigh[pos] = GetUserTime(setting.TimeHigh[pos]);
     pos = 1;
   }
-  else if (pos >= 'A' && pos <= 'F'){
+  else if (pos >= 'A' && pos <= 'D'){
     // tooHigh
     pos -= 'A';
     setting.TimeTooHigh[pos] = GetUserTime(setting.TimeTooHigh[pos]);

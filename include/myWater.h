@@ -107,6 +107,7 @@ ezoProbeSTRUCT ezoProbe[EZO_MAX_PROBES];
 
 int32_t ezoValue[EZO_MAX_PROBES][EZO_MAX_VALUES];
 
+/*
 struct settingSTRUCT{
     // 197 Byte * 3 Modes = 591 Byte
     uint16_t DelayTime[6];
@@ -114,6 +115,21 @@ struct settingSTRUCT{
     uint16_t TimeLow[6];
     uint16_t TimeHigh[6];
     uint16_t TimeTooHigh[6];
+    int32_t FailSaveValue[6];
+    int32_t ValueTooLow[6];
+    int32_t ValueLow[6];
+    int32_t ValueHigh[6];
+    int32_t ValueTooHigh[6];
+    char Name[17];
+}setting;
+*/
+struct settingSTRUCT{
+    // 197 Byte * 3 Modes = 591 Byte
+    uint16_t DelayTime[6];
+    uint16_t TimeTooLow[8];
+    uint16_t TimeLow[8];
+    uint16_t TimeHigh[4];
+    uint16_t TimeTooHigh[4];
     int32_t FailSaveValue[6];
     int32_t ValueTooLow[6];
     int32_t ValueLow[6];

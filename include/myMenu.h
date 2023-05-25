@@ -1419,8 +1419,8 @@ Start:
       PrintSpaces(11);
     }
     else{
-      PrintMenuKeySmallBoldFaint(type + 'a', 0, !setting.DelayTime[i]);
-      PrintSerTime(setting.DelayTime[i], 0, 1);
+      PrintMenuKeySmallBoldFaint(type + 'a', 0, !setting.DelayTime[type]);
+      PrintSerTime(setting.DelayTime[type], 0, 1);
     }
     PrintSmallSpacer();
     

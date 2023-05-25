@@ -121,10 +121,12 @@ uint32_t checkAction(uint32_t valIN, uint32_t actionTime, byte ezotype, byte i, 
       break;
     case 4:
       // pH
-      i = 11;
+      i = 12;
+      break;
     case 7:
       // Level
-      i = 12;
+      i = 13;
+      break;
     default:
       i += 10;
       break;
@@ -214,6 +216,7 @@ void loop() {
       }    
 
       if (j || (!j && !i)){
+        
         tooHighSince[i] = checkAction(tooHighSince[i], setting.TimeTooHigh[j], type, i, 1, &err);
         if (!err){
           // TooHigh isn't in Action...

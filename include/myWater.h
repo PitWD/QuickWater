@@ -146,13 +146,13 @@ struct manualSTRUCT{
 }manual;
 
 // Counter for Low/High
-uint32_t tooLowSince[6];
-uint32_t lowSince[6];
-uint32_t okSince[6];
-uint32_t highSince[6];
-uint32_t tooHighSince[6];
+uint32_t tooLowSince[8];
+uint32_t lowSince[8];
+uint32_t okSince[8];
+uint32_t highSince[8];
+uint32_t tooHighSince[8];
 // Time of last action 
-uint32_t lastAction[6];
+uint32_t lastAction[8];
 
 long avgVal[6]; //  = {21000L, 1250000L, 6000L, 225000L, 99999L, 66666L};
 #define avg_RTD avgVal[0]

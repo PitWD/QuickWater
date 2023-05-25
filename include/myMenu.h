@@ -1398,7 +1398,7 @@ Start:
 
   PrintLine(pos++, 3, 76);
   EscLocate(3, pos++);
-  for (i = 0; i < 6; i++){
+  for (i = 0; i < 8; i++){
 
     byte type = i;
     // Correct type for the three times EC
@@ -1464,7 +1464,7 @@ Start:
       PrintSerTime(setting.TimeTooHigh[type], 0, 1);
     }
     else{
-      PrintFlexSpacer(11, 11);
+      PrintFlexSpacer(11, 10);
     }
     
     PrintSmallSpacer();

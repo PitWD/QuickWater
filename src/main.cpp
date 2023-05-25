@@ -84,7 +84,7 @@ uint32_t ValidTimeSince(uint32_t valIN){
   }
   return myTime - valIN;
 }
-uint32_t checkAction(uint32_t valIN, uint32_t actionTime, byte ezotype, byte isHighPort, byte *backSet){
+uint32_t checkAction(uint32_t valIN, uint32_t actionTime, byte ezotype, byte i, byte isHighPort, byte *backSet){
 
   uint32_t r = valIN;
   *backSet = 0;
@@ -94,7 +94,7 @@ uint32_t checkAction(uint32_t valIN, uint32_t actionTime, byte ezotype, byte isH
     // Action Valid
     if ((ValidTimeSince(valIN) - setting.DelayTime[ezotype]) > actionTime){
       // ActionTime done
-      lastAction[ezotype] = myTime;
+      lastAction[i] = myTime;
       r = 0;
     }
     else{
@@ -110,8 +110,34 @@ uint32_t checkAction(uint32_t valIN, uint32_t actionTime, byte ezotype, byte isH
       // Temp / EC-1 / EC-2 / EC-3 / pH / redox / O2 / level
   // Port 9-11 - Action ports for high / tooHigh
       // Temp / EC / pH / level
-  digitalWrite(ezotype + 2 + (isHighPort * 6), *backSet);
+  //digitalWrite(ezotype + 2 + (isHighPort * 6), *backSet);
+  if (isHighPort){
+    switch (i){
+    case 2 ... 3:
+      // 2nd & 3rd EC
+    case 5 ... 6:
+      // Redox & O2  
+      i = 0;
+      break;
+    case 4:
+      // pH
+      i = 11;
+    case 7:
+      // Level
+      i = 12;
+    default:
+      i += 10;
+      break;
+    }
+  }
+  else{
+    i += 2;
+  }
   
+  if (i){
+    digitalWrite(i, *backSet);
+  }
+
   return r;
 
 }
@@ -145,16 +171,15 @@ void loop() {
       }
 
       // Check On needed/pending actions
-      //preToo = tooLowSince[i];
-      //tooLowSince[i] = checkAction(tooLowSince[i], setting.TimeTooLow[i], i, 0, &err);
-      preToo = tooLowSince[type];
-      tooLowSince[type] = checkAction(tooLowSince[type], setting.TimeTooLow[i], i, 0, &err);
+      preToo = tooLowSince[i];
+      tooLowSince[i] = checkAction(tooLowSince[i], setting.TimeTooLow[i], type, i, 0, &err);
       if (!err){
         // TooLow isn't in Action...
+        lowSince[i] = checkAction(lowSince[i], setting.TimeLow[i], type, i, 0, &err);
         //if (preToo != tooLowSince[i]){ 
-        if (preToo != tooLowSince[type]){ 
-          // after finished tooXYZ-Action - reset lowSince, too
-          lowSince[type] = 0;
+        if (preToo != tooLowSince[i]){ 
+          // after finished tooXYZ-Action - reset lowSince, too          
+          lowSince[i] = 0;
           err = 0;
         }      
         if (err){
@@ -169,28 +194,50 @@ void loop() {
       }
       
       preToo = tooHighSince[i];
-      tooHighSince[i] = checkAction(tooHighSince[i], setting.TimeTooHigh[i], i, 1, &err);
-      if (!err){
-        // TooHigh isn't in Action...
-        highSince[i] = checkAction(highSince[i], setting.TimeHigh[i], i, 1, &err);
-        if (preToo != tooHighSince[i]){ 
-          // after finished tooXYZ-Action - reset highSince, too
-          highSince[i] = 0;
-          err = 0;
+      
+      // we've just 4 high-actions... (Temp, EC, pH, Level)
+      byte j = i;
+      switch (i){
+      case 2 ... 3:
+        // 2nd & 3rd EC
+      case 5 ... 6:
+        // Redox / O2
+        j = 0;
+        break;
+      case 4:
+        j = 2;
+        break;
+      case 7:
+        j = 3;
+      default:
+        break;
+      }    
+
+      if (j || (!j && !i)){
+        tooHighSince[i] = checkAction(tooHighSince[i], setting.TimeTooHigh[j], type, i, 1, &err);
+        if (!err){
+          // TooHigh isn't in Action...
+          highSince[i] = checkAction(highSince[i], setting.TimeHigh[j], type, i, 1, &err);
+          if (preToo != tooHighSince[i]){ 
+            // after finished tooXYZ-Action - reset highSince, too
+            highSince[i] = 0;
+            err = 0;
+          }
+          if (err){
+            // High in Action
+          }
+        }
+        else{
+          //  TooHigh in Action
         }
         if (err){
-          // High in Action
+          // something is in action
         }
       }
-      else{
-        //  TooHigh in Action
-      }
-      if (err){
-        // something is in action
-      }
+      
       
       // Set / Reset Since-Variables depending on high/low state...
-      switch (GetAvgState(avgVal[i], setting.ValueTooLow[i], setting.ValueLow[i], setting.ValueHigh[i], setting.ValueTooHigh[i])){
+      switch (GetAvgState(avgVal[type], setting.ValueTooLow[type], setting.ValueLow[type], setting.ValueHigh[type], setting.ValueTooHigh[type])){
       case fgCyan:
         // tooLow
         highSince[i] = 0;

@@ -1700,37 +1700,42 @@ void PrintActionTimes(byte ezoType, byte posX, byte posY){
 
 void PrintPortStates(){
 
-  byte ezoType;
+  // 8 low-ports / 4 high ports
+  byte posOfPort[] = {8, 16, 21, 25, 34, 47, 60, 73, 10, 18, 36, 75};
 
-  EscLocate(8, myLastLine);
 
-  for (ezoType = 0; ezoType < 6; ezoType++){
-    if (digitalRead(ezoType + 2)){
-      // (too)Low port active...
+  for (byte i = 0; i < 8; i++){
+    // Low-Ports
+    EscLocate(posOfPort[i], myLastLine);
+    if (digitalRead(i + 2)){
       EscBoldColor(fgBlue);
       Serial.print(F(">"));
-      EscColor(0);
+      EscFaint(1);
     }
     else{
-      Print1Space();
-      EscColor(fgGreen);
+      EscFaint(1);
+      Serial.print(F(">"));
+      EscBoldColor(fgGreen);
     }
-    EscCursorRight(1);
-    if (digitalRead(ezoType + 8)){
-      // (too)High port active...
-      EscBoldColor(fgYellow);
-      Serial.print(F("<"));
-      EscColor(0);
-    }
-    else{
-      Print1Space();
-    }
-    EscCursorLeft(2);
-    EscBold(0);
     Serial.print(F("~"));
-    EscCursorRight(11);
   }
-  EscColor(0);
+  for (byte i = 8; i < 12; i++){
+    // High-Ports
+    EscLocate(posOfPort[i], myLastLine);
+    if (digitalRead(i + 2)){
+      EscBoldColor(fgYellow);
+      Serial.print(F("<"));        
+      EscCursorLeft(2);
+      EscFaint(1);
+      Serial.print(F("~"));
+    }
+    else{
+      EscFaint(1);
+      Serial.print(F("<"));        
+    }
+  }
+  
+  EscBoldColor(0);
   
 }
 
@@ -1741,7 +1746,7 @@ byte PrintAVGs(byte pos){
   PrintBoldFloat(avg_RTD, 2, 2, ' ');
   PrintUnit(ezoRTD, 0, 0, 3);
 
-  PrintActionTimes(ezoRTD, 1, pos + 2);
+  //PrintActionTimes(ezoRTD, 1, pos + 2);
 
 
   SetAvgColorEZO(ezoEC);
@@ -1749,7 +1754,7 @@ byte PrintAVGs(byte pos){
   PrintBoldInt(avg_EC / 1000, 4, ' ');
   PrintUnit(ezoEC, 0, 0, 3);
   
-  PrintActionTimes(ezoEC, 14, pos + 2);
+  //PrintActionTimes(ezoEC, 14, pos + 2);
 
 
   SetAvgColorEZO(ezoPH);
@@ -1757,7 +1762,7 @@ byte PrintAVGs(byte pos){
   PrintBoldFloat(avg_pH, 2, 2, ' ');
   PrintUnit(ezoPH, 0, 0, 3);
 
-  PrintActionTimes(ezoPH, 27, pos + 2);
+  //PrintActionTimes(ezoPH, 27, pos + 2);
 
 
   SetAvgColorEZO(ezoORP);
@@ -1767,7 +1772,7 @@ byte PrintAVGs(byte pos){
   EscColor(0);
   Serial.print(F("rH"));
 
-  PrintActionTimes(ezoORP, 40, pos + 2);
+  //PrintActionTimes(ezoORP, 40, pos + 2);
 
 
   SetAvgColorEZO(ezoDiO2);
@@ -1775,14 +1780,14 @@ byte PrintAVGs(byte pos){
   PrintBoldFloat(avg_O2, 3, 2, ' ');
   PrintUnit(ezoDiO2, 0, 0, 3);
 
-  PrintActionTimes(ezoDiO2, 53, pos + 2);
+  //PrintActionTimes(ezoDiO2, 53, pos + 2);
 
   SetAvgColorEZO(ezoLVL);
   EscLocate(72, pos);
   PrintBoldFloat(avg_LVL, 3, 2, ' ');
   PrintUnit(ezoLVL, 0, 0, 3);
 
-  PrintActionTimes(ezoLVL, 66, pos + 2);
+  //PrintActionTimes(ezoLVL, 66, pos + 2);
 
   return pos + 1;
 
@@ -1822,10 +1827,11 @@ void PrintLoopMenu(){
   // Avg 
   pos = PrintAVGs(pos);
 
-  EscBold(1);
+  //EscBold(1);
   pos = PrintLine(pos, 3, 76);
-  EscBold(0);
-  pos = PrintLine(pos + 3, 3, 76);
+  
+  EscBold(1);
+  //pos = PrintLine(pos + 3, 3, 76);
 
   // we need this pos in loop()
   myLastLine = pos;

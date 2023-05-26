@@ -1701,7 +1701,7 @@ void PrintActionTimes(byte ezoType, byte posX, byte posY){
 void PrintPortStates(){
 
   // 8 low-ports / 4 high ports
-  byte posOfPort[] = {8, 16, 21, 25, 34, 47, 60, 73, 10, 18, 36, 75};
+  byte posOfPort[] = {8, 17, 22, 26, 34, 47, 60, 73, 10, 19, 36, 75};
 
 
   for (byte i = 0; i < 8; i++){

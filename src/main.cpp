@@ -238,7 +238,6 @@ void loop() {
         }
       }
       
-      
       // Set / Reset Since-Variables depending on high/low state...
       switch (GetAvgState(avgVal[type], setting.ValueTooLow[type], setting.ValueLow[type], setting.ValueHigh[type], setting.ValueTooHigh[type])){
       case fgCyan:
@@ -249,11 +248,11 @@ void loop() {
         if (!tooLowSince[i]){
           // 1st time tooLow recognized
           tooLowSince[i] = myTime;
-          if (!lowSince[i]){
-            // If tooXYZ is active... regular state becomes active too
-            lowSince[i] = myTime;
-          }  
         }
+        if (!lowSince[i]){
+          // If tooXYZ is active... regular state becomes active too
+          lowSince[i] = tooLowSince[i];
+        }  
         break;
       case fgBlue:
         // Low
@@ -274,10 +273,10 @@ void loop() {
         if (!tooHighSince[i]){
           // 1st time tooLow recognized
           tooHighSince[i] = myTime;
-          if (!highSince[i]){
-            // If tooXYZ is active... regular state becomes active too
-            highSince[i] = myTime;
-          }
+        }
+        if (!highSince[i]){
+          // If tooXYZ is active... regular state becomes active too
+          highSince[i] = tooHighSince[i];
         }
         break;
       case fgYellow:
@@ -304,56 +303,53 @@ void loop() {
         break;
       }
       
-      if (type == ezoEC){
-        // Check for EC synchronization
-        type = 0;   // use to save if one of the EC-Ports is active
-        for (byte i = 3; i < 6; i++){
-          // Low Ports
-          if (digitalRead(i)){
-            type = 1;
-          }          
-        }
-        if (digitalRead(11)){
-          // High Port
-          type = 1;
-        }          
-        
-        uint32_t minmax;
-        if (!type){
-          // Al EC action-ports are OFF
-          minmax = tooLowSince[1];  // use type as highest / lowest
-          for (byte i = 2; i < 4; i++){
-            minmax = ((minmax) > (tooLowSince[i]) ? (minmax) : (tooLowSince[i]));
-          }
-          for (byte i = 1; i < 4; i++){
-            tooLowSince[i] = minmax;
-          }
-          minmax = lowSince[1];  // use type as highest / lowest
-          for (byte i = 2; i < 4; i++){
-            minmax = ((minmax) > (lowSince[i]) ? (minmax) : (lowSince[i]));
-          }
-          for (byte i = 1; i < 4; i++){
-            lowSince[i] = minmax;
-          }
+    }
 
-          minmax = highSince[1];  // use type as highest / lowest
-          for (byte i = 2; i < 4; i++){
-            minmax = ((minmax) > (highSince[i]) ? (minmax) : (highSince[i]));
-          }
-          for (byte i = 1; i < 4; i++){
-            highSince[i] = minmax;
-          }
-          minmax = tooHighSince[1];  // use type as highest / lowest
-          for (byte i = 2; i < 4; i++){
-            minmax = ((minmax) > (tooHighSince[i]) ? (minmax) : (tooHighSince[i]));
-          }
-          for (byte i = 1; i < 4; i++){
-            tooHighSince[i] = minmax;
-          }
-        }
-              
+    // Check for EC synchronization
+    err = 0;   // use to save if one of the EC-Ports is active
+    for (byte i = 3; i < 6; i++){
+      // Low Ports
+      if (digitalRead(i)){
+        err = 1;
+      }          
+    }
+    if (digitalRead(11)){
+      // High Port
+      err = 1;
+    }          
+    
+    uint32_t minmax;
+    if (!err){
+      // Al EC action-ports are OFF
+      minmax = tooLowSince[1];  // use type as highest / lowest
+      for (byte i = 2; i < 4; i++){
+        minmax = ((minmax) > (tooLowSince[i]) ? (minmax) : (tooLowSince[i]));
       }
-      
+      for (byte i = 1; i < 4; i++){
+        tooLowSince[i] = minmax;
+      }
+      minmax = lowSince[1];  // use type as highest / lowest
+      for (byte i = 2; i < 4; i++){
+        minmax = ((minmax) > (lowSince[i]) ? (minmax) : (lowSince[i]));
+      }
+      for (byte i = 1; i < 4; i++){
+        lowSince[i] = minmax;
+      }
+
+      minmax = highSince[1];  // use type as highest / lowest
+      for (byte i = 2; i < 4; i++){
+        minmax = ((minmax) > (highSince[i]) ? (minmax) : (highSince[i]));
+      }
+      for (byte i = 1; i < 4; i++){
+        highSince[i] = minmax;
+      }
+      minmax = tooHighSince[1];  // use type as highest / lowest
+      for (byte i = 2; i < 4; i++){
+        minmax = ((minmax) > (tooHighSince[i]) ? (minmax) : (tooHighSince[i]));
+      }
+      for (byte i = 1; i < 4; i++){
+        tooHighSince[i] = minmax;
+      }
     }
 
     //Read EZO's

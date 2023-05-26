@@ -35,8 +35,8 @@ All three together are the base to have a very solid control over your grow. The
 <br>
 
 The **loop screen** during runtime. Visualization of all probes and their averaged value.  
-The states "TooLow", "Low", "OK", "High", "TooHigh" get visualized in different colors. You're absolutely free to define of what "(Too)High" and "(Too)Low" is, so that it will fit best to your needs. In the last line you see, that the level action-port for "(Too)Low" is active, cause the timeout for "level" expired and a action-time is set for that case (see later screenshots).  
-*The three lines with times are an debug-feature and will get removed soon from this screen.*
+The states "TooLow", "Low", "OK", "High", "TooHigh" get visualized in different colors. You're absolutely free to define of what "(Too)High" and "(Too)Low" is, so that it will fit best to your needs. In the last line you see, that the level action-port for "(Too)Low" and the temperature action-port for "(Too)High" is active, cause their timeout for (too)low/(too)high expired and a action-time is set for that case (see later screenshots).  
+*~~The three lines with times are an debug-feature and will get removed soon from this screen.~~*
 ![Loop Screen](/images/Auswahl_001.png)
 
 <br>
@@ -94,6 +94,6 @@ The **Manual Run Screen** is visualizing the process of running a manual setting
 
 <br>
 
-I can't declare this project actually as that useable like I do for <a href="https://github.com/PitWD/QuickTimer"> CannaClocky</a>. The communication-part with the Atlas-Scientific modules and visualization of the read values is 100% usable - some prototypes are working perfect since nearly three months. Just the actions are not that hard tested - but first real running prototypes exist and working pretty fine, too.  
+I can't declare this project actually as that useable like I do for <a href="https://github.com/PitWD/QuickTimer"> CannaClocky</a>. The communication-part with the Atlas-Scientific modules and visualization of the read values is 100% usable - some prototypes are working perfect since nearly three months. Just the actions got ~~not that hard tested~~ actually an massive update - but first real running prototypes exist and working pretty fine, too.  
 Some planned extensions will break the actual structure of the internal eeprom - this will break the user made settings. There is actually no safe "fuse" to prevent that re-flashed µC's with a then broken eeprom will boot in a usable state.
 

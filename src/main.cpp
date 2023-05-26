@@ -303,6 +303,57 @@ void loop() {
         }
         break;
       }
+      
+      if (type == ezoEC){
+        // Check for EC synchronization
+        type = 0;   // use to save if one of the EC-Ports is active
+        for (byte i = 3; i < 6; i++){
+          // Low Ports
+          if (digitalRead(i)){
+            type = 1;
+          }          
+        }
+        if (digitalRead(11)){
+          // High Port
+          type = 1;
+        }          
+        
+        uint32_t minmax;
+        if (!type){
+          // Al EC action-ports are OFF
+          minmax = tooLowSince[1];  // use type as highest / lowest
+          for (byte i = 2; i < 4; i++){
+            minmax = ((minmax) > (tooLowSince[i]) ? (minmax) : (tooLowSince[i]));
+          }
+          for (byte i = 1; i < 4; i++){
+            tooLowSince[i] = minmax;
+          }
+          minmax = lowSince[1];  // use type as highest / lowest
+          for (byte i = 2; i < 4; i++){
+            minmax = ((minmax) > (lowSince[i]) ? (minmax) : (lowSince[i]));
+          }
+          for (byte i = 1; i < 4; i++){
+            lowSince[i] = minmax;
+          }
+
+          minmax = highSince[1];  // use type as highest / lowest
+          for (byte i = 2; i < 4; i++){
+            minmax = ((minmax) > (highSince[i]) ? (minmax) : (highSince[i]));
+          }
+          for (byte i = 1; i < 4; i++){
+            highSince[i] = minmax;
+          }
+          minmax = tooHighSince[1];  // use type as highest / lowest
+          for (byte i = 2; i < 4; i++){
+            minmax = ((minmax) > (tooHighSince[i]) ? (minmax) : (tooHighSince[i]));
+          }
+          for (byte i = 1; i < 4; i++){
+            tooHighSince[i] = minmax;
+          }
+        }
+              
+      }
+      
     }
 
     //Read EZO's

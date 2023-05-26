@@ -41,7 +41,7 @@ The states "TooLow", "Low", "OK", "High", "TooHigh" get visualized in different 
 
 <br>
 
-The *primary* **main settings menu**. This menu gives you access on generic settings and instaled probes/modules.  
+The *primary* **main settings menu**. This menu gives you access on generic settings and installed probes/modules.  
 You can individually setup the color and style of the menu-key and the dimmed text style, to have a nice appearance fitting to your terminal/desktop style. The screenshots are made with an "solarized terminal" just the green is a little greener than from the original solarized green.  
 ![Primary Main Screen](/images/Auswahl_002.png)
 Key color changed:
@@ -95,5 +95,5 @@ The **Manual Run Screen** is visualizing the process of running a manual setting
 <br>
 
 I can't declare this project actually as that useable like I do for <a href="https://github.com/PitWD/QuickTimer"> CannaClocky</a>. The communication-part with the Atlas-Scientific modules and visualization of the read values is 100% usable - some prototypes are working perfect since nearly three months. Just the actions got ~~not that hard tested~~ actually an massive update - but first real running prototypes exist and working pretty fine, too.  
-Some planned extensions will break the actual structure of the internal eeprom - this will break the user made settings. There is actually no safe "fuse" to prevent that re-flashed µC's with a then broken eeprom will boot in a usable state.
+Some planned extensions will break the actual structure of the internal EPROM - this will break the user made settings. There is actually no safe "fuse" to prevent that re-flashed µC's with a then broken EPROM will boot in a usable state.
 

@@ -115,9 +115,14 @@ uint32_t checkAction(uint32_t valIN, uint32_t actionTime, byte ezotype, byte i, 
     switch (i){
     case 2 ... 3:
       // 2nd & 3rd EC
-    case 5 ... 6:
-      // Redox & O2  
+    case 6:
+      // O2  
       i = 0;
+      break;
+    case 5:
+      // ORPs low-port is high-port, too
+      // cause (too) high/low ORPs need the same action (change/waste water)
+      i = 7;
       break;
     case 4:
       // pH
@@ -172,7 +177,7 @@ void loop() {
         type -= 2;
       }
 
-      // Check On needed/pending actions
+      // Check On needed/pending low-actions
       preToo = tooLowSince[i];
       tooLowSince[i] = checkAction(tooLowSince[i], setting.TimeTooLow[i], type, i, 0, &err);
       if (!err){
@@ -195,6 +200,8 @@ void loop() {
         // something is in action
       }
       
+
+      // Check On needed/pending high-actions
       preToo = tooHighSince[i];
       
       // we've just 4 high-actions... (Temp, EC, pH, Level)
@@ -202,9 +209,13 @@ void loop() {
       switch (i){
       case 2 ... 3:
         // 2nd & 3rd EC
-      case 5 ... 6:
-        // Redox / O2
+      case 6:
+        // O2
         j = 0;
+        break;
+      case 5:
+        // ORP
+        // j = 5;
         break;
       case 4:
         j = 2;
@@ -215,12 +226,22 @@ void loop() {
         break;
       }    
 
+      uint16_t highToUse = setting.TimeHigh[j];
+      uint16_t tooHighToUse = setting.TimeTooHigh[j];
+      if (j == 5){
+        // ORPs (too)High timing is same like ORPs (too)Low timing
+        // ORP can't be fixed if it's high/low - change/waste water is the only option
+        highToUse = setting.TimeLow[j];
+        tooHighToUse = setting.TimeTooLow[j];
+      }
+      
+      
       if (j || (!j && !i)){
         
-        tooHighSince[i] = checkAction(tooHighSince[i], setting.TimeTooHigh[j], type, i, 1, &err);
+        tooHighSince[i] = checkAction(tooHighSince[i], tooHighToUse, type, i, 1, &err);
         if (!err){
           // TooHigh isn't in Action...
-          highSince[i] = checkAction(highSince[i], setting.TimeHigh[j], type, i, 1, &err);
+          highSince[i] = checkAction(highSince[i], highToUse, type, i, 1, &err);
           if (preToo != tooHighSince[i]){ 
             // after finished tooXYZ-Action - reset highSince, too
             highSince[i] = 0;

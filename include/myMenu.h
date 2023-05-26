@@ -1703,39 +1703,54 @@ void PrintPortStates(){
   // 8 low-ports / 4 high ports
   byte posOfPort[] = {8, 17, 22, 26, 34, 47, 60, 73, 10, 19, 36, 75};
 
+  static byte firstRun = 0;
+  static byte lastVal[12];
+  byte isChanged = 0;
 
-  for (byte i = 0; i < 8; i++){
-    // Low-Ports
-    EscLocate(posOfPort[i], myLastLine);
-    if (digitalRead(i + 2)){
-      EscBoldColor(fgBlue);
-      Serial.print(F(">"));
-      EscFaint(1);
-    }
-    else{
-      EscFaint(1);
-      Serial.print(F(">"));
-      EscBoldColor(fgGreen);
-    }
-    Serial.print(F("~"));
-  }
-  for (byte i = 8; i < 12; i++){
-    // High-Ports
-    EscLocate(posOfPort[i], myLastLine);
-    if (digitalRead(i + 2)){
-      EscBoldColor(fgYellow);
-      Serial.print(F("<"));        
-      EscCursorLeft(2);
-      EscFaint(1);
-      Serial.print(F("~"));
-    }
-    else{
-      EscFaint(1);
-      Serial.print(F("<"));        
+  // Check on Port_Change
+  for (byte i = 0; i < 12; i++){
+    byte val = digitalRead(i + 2);
+    if (val != lastVal[i]){
+      lastVal[i] = val;
+      isChanged = 1;
     }
   }
   
-  EscBoldColor(0);
+  if (isChanged || !firstRun){
+    for (byte i = 0; i < 8; i++){
+      // Low-Ports
+      EscLocate(posOfPort[i], myLastLine);
+      if (lastVal[i]){
+        EscBoldColor(fgBlue);
+        Serial.print(F(">"));
+        EscFaint(1);
+      }
+      else{
+        EscFaint(1);
+        Serial.print(F(">"));
+        EscBoldColor(fgGreen);
+      }
+      Serial.print(F("~"));
+    }
+    for (byte i = 8; i < 12; i++){
+      // High-Ports
+      EscLocate(posOfPort[i], myLastLine);
+      if (lastVal[i]){
+        EscBoldColor(fgYellow);
+        Serial.print(F("<"));        
+        EscCursorLeft(2);
+        EscFaint(1);
+        Serial.print(F("~"));
+      }
+      else{
+        EscFaint(1);
+        Serial.print(F("<"));        
+      }
+    }
+    firstRun = 1;
+    EscBoldColor(0);
+  }
+  
   
 }
 

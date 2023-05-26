@@ -1812,7 +1812,7 @@ void PrintLoopMenu(){
 
   EscCls();
   EscInverse(1);
-  byte pos = PrintMenuTop((char*)"- QuickWater 1.01 -");
+  byte pos = PrintMenuTop((char*)"- QuickWater 1.02 -");
   EscInverse(0);
   pos++;
 
@@ -1859,7 +1859,7 @@ void PrintMainMenu(){
 
 Start:
 
-  int pos = PrintMenuTop((char*)"- QuickWater 1.01 -");
+  int pos = PrintMenuTop((char*)"- QuickWater 1.02 -");
   
   uint32_t hlpTime = 0;
 

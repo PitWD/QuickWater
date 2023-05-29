@@ -749,10 +749,20 @@ void PrintValuesMenuHlp(char key, byte i, uint32_t value){
 byte PrintValuesMenuChangeVal(int32_t *valIN){
   // THIS IS STRANGE
   //    Using this just two times has a lower flash use than
-  //    if it's used more or less times
+  //    if it's used more or less times as replacement for:
+  //        pos -= 'a';
+  //        setting.FailSaveValue[pos] = GetUserFloat(setting.FailSaveValue[pos]);
+  //        pos = 1;
   // THIS IS STRANGE
   *valIN = GetUserFloat(*valIN);
   return 1;
+}
+byte IsKeyBetween(char key, char start, char stop){
+  // THIS IS STRANGE
+  //    Using this some times has a lower flash use than
+  //    if it's used more or less times
+  // THIS IS STRANGE
+  return (key >= start && key <= stop);
 }
 void PrintValuesMenu(){
 
@@ -796,28 +806,29 @@ Start:
   if (pos < 1){
     // Exit & TimeOut
   }
-  else if (pos >= 'a' && pos <= 'f'){
+  
+  else if (IsKeyBetween(pos, 'a', 'f')){
     // FailSave
     //pos = PrintValuesMenuChangeVal(&setting.FailSaveValue[pos - 'a']);
     pos -= 'a';
     setting.FailSaveValue[pos] = GetUserFloat(setting.FailSaveValue[pos]);
     pos = 1;
   }
-  else if (pos >= 'g' && pos <= 'l'){
+  else if (IsKeyBetween(pos, 'g', 'l')){
     // tooLow
     //pos = PrintValuesMenuChangeVal(&setting.ValueTooLow[pos - 'g']);
     pos -= 'g';
     setting.ValueTooLow[pos] = GetUserFloat(setting.ValueTooLow[pos]);
     pos = 1;
   }
-  else if (pos >= 'm' && pos <= 'r'){
+  else if (IsKeyBetween(pos, 'm', 'r')){
     // Low
     pos = PrintValuesMenuChangeVal(&setting.ValueLow[pos - 'm']);
     //pos -= 'm';
     //setting.ValueLow[pos] = GetUserFloat(setting.ValueLow[pos]);
     //pos = 1;
   }
-  else if (pos >= 's' && pos <= 'x'){
+  else if (IsKeyBetween(pos, 's', 'x')){
     // High
     pos = PrintValuesMenuChangeVal(&setting.ValueHigh[pos - 's']);
     //pos -= 's';
@@ -1309,7 +1320,7 @@ Start:
   if (pos < 1){
     // Exit & TimeOut
   }
-  else if (pos >= 'a' && pos <= 'h'){
+  else if (IsKeyBetween(pos, 'a', 'h')){
     // LowTime
     pos -= 'a';
     manual.Low[pos] = GetUserTime(manual.Low[pos]);

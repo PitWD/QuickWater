@@ -722,14 +722,7 @@ void PrintCenteredWithSpacer(char *strIN, byte centerLen){
 
 
 void PrintLowToHigh(){
-  Serial.print(F("tooLow"));
-  PrintFlexSpacer(2, 3);  
-  Serial.print(F("Low"));
-  PrintFlexSpacer(4,3);
-  Serial.print(F("High"));
-  PrintFlexSpacer(3, 1);
-  Serial.print(F("tooHigh"));
-  PrintFlexSpacer(2,0);
+  Serial.print(F("tooLow   |    Low     |    High    |  tooHigh   |"));
 }
 
 int8_t PrintCopySettingTo(int8_t pos){
@@ -752,6 +745,14 @@ void PrintValuesMenuHlp(char key, byte i, uint32_t value){
   PrintSmallMenuKey(key + i);
   PrintFloat(value, 4, 2, ' ');
   PrintSpacer(0);
+}
+byte PrintValuesMenuChangeVal(int32_t *valIN){
+  // THIS IS STRANGE
+  //    Using this just two times has a lower flash use than
+  //    if it's used more or less times
+  // THIS IS STRANGE
+  *valIN = GetUserFloat(*valIN);
+  return 1;
 }
 void PrintValuesMenu(){
 
@@ -797,30 +798,35 @@ Start:
   }
   else if (pos >= 'a' && pos <= 'f'){
     // FailSave
+    //pos = PrintValuesMenuChangeVal(&setting.FailSaveValue[pos - 'a']);
     pos -= 'a';
     setting.FailSaveValue[pos] = GetUserFloat(setting.FailSaveValue[pos]);
     pos = 1;
   }
   else if (pos >= 'g' && pos <= 'l'){
     // tooLow
+    //pos = PrintValuesMenuChangeVal(&setting.ValueTooLow[pos - 'g']);
     pos -= 'g';
     setting.ValueTooLow[pos] = GetUserFloat(setting.ValueTooLow[pos]);
     pos = 1;
   }
   else if (pos >= 'm' && pos <= 'r'){
     // Low
-    pos -= 'm';
-    setting.ValueLow[pos] = GetUserFloat(setting.ValueLow[pos]);
-    pos = 1;
+    pos = PrintValuesMenuChangeVal(&setting.ValueLow[pos - 'm']);
+    //pos -= 'm';
+    //setting.ValueLow[pos] = GetUserFloat(setting.ValueLow[pos]);
+    //pos = 1;
   }
   else if (pos >= 's' && pos <= 'x'){
     // High
-    pos -= 's';
-    setting.ValueHigh[pos] = GetUserFloat(setting.ValueHigh[pos]);
-    pos = 1;
+    pos = PrintValuesMenuChangeVal(&setting.ValueHigh[pos - 's']);
+    //pos -= 's';
+    //setting.ValueHigh[pos] = GetUserFloat(setting.ValueHigh[pos]);
+    //pos = 1;
   }
   else if (pos >= 'A' && pos <= 'F'){
     // tooHigh
+    //pos = PrintValuesMenuChangeVal(&setting.ValueTooHigh[pos - 'A']);
     pos -= 'A';
     setting.ValueTooHigh[pos] = GetUserFloat(setting.ValueTooHigh[pos]);
     pos = 1;

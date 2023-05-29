@@ -622,7 +622,7 @@ int32_t PrintValsForCal(byte ezo, byte all, int32_t refValue){
             PrintSpacer(0);
             pos += 14;
             if (pos > 66){
-                Serial.println("");
+                Serial.println();
                 EscCursorRight(startPos);
                 pos = startPos + 1;
             }
@@ -795,7 +795,7 @@ void EzoScan(){
     int8_t hasCal;         // has a calibration
     byte lastAddr = 0;     // last read address (to check on 1-time re-read)
     ezoCnt = 0;
-    Serial.println("");
+    Serial.println();
 
     for (byte i = EZO_1st_ADDRESS; i < EZO_LAST_ADDRESS + 1 && ezoCnt < EZO_MAX_PROBES - INTERNAL_LEVEL_CNT; i++){
         
@@ -987,7 +987,7 @@ void EzoScan(){
                             else{
                                 Serial.println(F("ERR"));
                             }
-                            Serial.println(F(""));
+                            Serial.println();
                             
                             // done
                             ezoCnt++;

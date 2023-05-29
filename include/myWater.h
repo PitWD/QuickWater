@@ -145,6 +145,40 @@ struct manualSTRUCT{
     char Name[17];
 }manual;
 
+/*
+                                    | -------------------- HighLowTimes [24] -------------------- |
+name   typeID   typeTo    typeTo    typeTo    typeTo    typeToCalc typeToCalc typeToEdit typeToEdit   
+                LowPort   HighPort  Time2Low  TimeLow   TimeHigh   Time2High  TimeHigh   Time2High    
+Temp      0       2         10          0        8         16         20         16         20        
+ pH       1       3         11          1        9         17         21         17         21        
+Level     2       4         12          2       10         18         22         18         22        
+EC-1      3       5         13          3       11         19         23         19         23          
+ O2       4       8         na          4       12         na         na         na         na          
+ ORP      5       9          9          5       13          5         13         na         na          
+EC-2      6       6         na          6       14         na         na         na         na          
+EC-3      7       7         na          7       15         na         na         na         na          
+
+                         VertScreen  HorzScreen
+name   typeID   typeTo     orderTo    orderTo    typeTo      typeTo    typeTo
+                DelayTime  typeID     typeID     xyzSINCE  lastAction  avgVal
+Temp      0       0          0          0          0           0         0
+ pH       1       1          3          3          1           1         1
+Level     2       2          6          1          2           2         2
+EC-1      3       3          7          5          3           3         3
+ O2       4       4          1          4          4           4         4
+ ORP      5       5          5          2          5           5         5
+EC-2      6       na         4          na         6           6         3
+EC-3      7       na         2          na         7           7         3
+
+
+Validity:   Return-value zero is just valid if the input was zero too.
+            all other zero return is invalid.
+            byte IsValValid (byte id, int32_t val){
+                return (val || (!val && !id))
+            }
+
+*/
+
 // Counter for Low/High
 uint32_t tooLowSince[8];
 uint32_t lowSince[8];

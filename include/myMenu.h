@@ -101,6 +101,10 @@ void SetAutoAddress(){
   EzoScan();
 }
 
+byte PrintQuickWater(){
+  return PrintMenuTop((char*)"- QuickWater 1.02 -");
+}
+
 byte PrintAllMenuOpt1(byte pos){
 
   EscLocate(5, pos++);
@@ -262,7 +266,9 @@ void PrintAllMenu(){
 
 Start:
 
+  
   int8_t pos = PrintMenuTop((char*)"- ALL Menu -");
+  
   pos = PrintProbesOfType(255, 1, pos, 1);
   pos = PrintAllMenuOpt1(pos);
   
@@ -303,12 +309,12 @@ Start:
   
 }
 
-void PrintPointEqual(uint8_t pos){
+void PrintPointEqual(uint8_t pos, int32_t value){
   Serial.print (F("-Pt. "));
   EscLocate(29, pos);
   Serial.print (F("= "));
+  PrintBoldFloat(value, 4, 2, ' ');
 }
-
 void PrintCalMenu(byte ezo, byte all){
 
   byte ImInside = 0;
@@ -426,10 +432,10 @@ void PrintCalMenu(byte ezo, byte all){
   }  
   ImInside = 1;
 
-  pos = PrintProbesOfType(ezo, all, pos, 1);
-  pos++;
+  pos = PrintProbesOfType(ezo, all, pos++, 1);
+//  pos++;
 
-  EscLocate(5, pos);
+  EscLocate(5, pos++);
   if (myMenu.a){
     // 1-Point Cal.
     PrintMenuKeyStd('a'); Serial.print(F("Do 1-Pt. Cal."));
@@ -444,36 +450,32 @@ void PrintCalMenu(byte ezo, byte all){
     // 3-Point Cal.
     PrintMenuKeyStd('c'); Serial.print(F("Do 3-Pt. Cal."));
   }
-  pos++;
+  //pos++;
   pos = PrintShortLine(pos, 8);
 
   if (myMenu.d){
     // Set Single/Mid Point
     EscLocate(5, pos);
     PrintMenuKeyStd('d'); Serial.print(F("Set Single/Mid"));
-    PrintPointEqual(pos++);
-    PrintBoldFloat(calMid, 4, 2, ' ');
+    PrintPointEqual(pos++, calMid);
   }
   if (myMenu.e){
     // Use Avg as Single/Mid Point
     EscLocate(5, pos);
     PrintMenuKeyStd('e'); Serial.print(F("Set AVG As Mid"));
-    PrintPointEqual(pos++);
-    PrintBoldFloat(calAvg, 4, 2, ' ');
+    PrintPointEqual(pos++, calAvg);
   }
   if (myMenu.f){
     // Set Low Point
     EscLocate(5, pos);
     PrintMenuKeyStd('f'); Serial.print(F("Set Low"));
-    PrintPointEqual(pos++);
-    PrintBoldFloat(calLow, 4, 2, ' ');
+    PrintPointEqual(pos++, calLow);
 }
   if (myMenu.g){
     // Set High Point
     EscLocate(5, pos);
     PrintMenuKeyStd('g'); Serial.print(F("Set High"));
-    PrintPointEqual(pos++);
-    PrintBoldFloat(calHigh, 4, 2, ' ');
+    PrintPointEqual(pos++, calHigh);
   }
   
   PrintMenuEnd(pos + 1);
@@ -654,6 +656,7 @@ void PrintProbeMenu(byte ezo){
 
 Start:
 
+
   int8_t pos = PrintMenuTop((char*)"- Probe(Type) Menu -");
   
   pos = PrintProbesOfType(ezo, all, pos, 0);
@@ -744,6 +747,12 @@ int8_t PrintCopySettingTo(int8_t pos){
   Serial.print(F(" to Setting-No. [1-3]"));
   return pos;
 }
+
+void PrintValuesMenuHlp(char key, byte i, uint32_t value){
+  PrintSmallMenuKey(key + i);
+  PrintFloat(value, 4, 2, ' ');
+  PrintSpacer(0);
+}
 void PrintValuesMenu(){
 
 Start:
@@ -763,21 +772,16 @@ Start:
     EscBold(1);
     PrintCentered(Fa(ezoStrLongType[i]), 9);
     PrintSpacer(0);
-    PrintSmallMenuKey('a' + i);
-    PrintFloat(setting.FailSaveValue[i], 4, 2, ' ');
-    PrintSpacer(0);
-    PrintSmallMenuKey('g' + i);
-    PrintFloat(setting.ValueTooLow[i], 4, 2, ' ');
-    PrintSpacer(0);
-    PrintSmallMenuKey('m' + i);
-    PrintFloat(setting.ValueLow[i], 4, 2, ' ');
-    PrintSpacer(0);
-    PrintSmallMenuKey('s' + i);
-    PrintFloat(setting.ValueHigh[i], 4, 2, ' ');
-    PrintSpacer(0);
-    PrintSmallMenuKey('A' + i);
-    PrintFloat(setting.ValueTooHigh[i], 4, 2, ' ');
-    PrintSpacer(0);
+
+    PrintValuesMenuHlp('a', i, setting.FailSaveValue[i]);
+
+    PrintValuesMenuHlp('g', i, setting.ValueTooLow[i]);
+
+    PrintValuesMenuHlp('m', i, setting.ValueLow[i]);
+
+    PrintValuesMenuHlp('s', i, setting.ValueHigh[i]);
+
+    PrintValuesMenuHlp('A', i, setting.ValueTooHigh[i]);
 
     EscLocate(3, pos++);
   }
@@ -837,6 +841,47 @@ Start:
   
 }
 
+byte CorrectType(byte i){
+    // Correct type for the three times EC
+    if (i == 2){
+      return 1;
+    }
+    else if (i > 2){
+      return i - 2;
+    }
+    return i;
+    // type = (i == 2) ? 1 : ((i > 2) ? (type - 2) : type);
+}
+
+byte CorrectForRepeat(byte i){
+  if (i < 2){
+    // set repeat for temp & 1st EC high port
+    return i + 8;
+  }
+  else if (i == 4){
+    // set repeat for pH high port
+    return 10;
+  }
+  else if (i == 7){
+    // set repeat for level high port
+    return 11;
+  }
+  return i;
+}
+byte CorrectFromRepeat(byte i){
+  // set back i from high-port
+  if (i == 11){
+    return 7;
+  }
+  else if (i == 10){
+    return 4;
+  }
+  else if (i > 7){
+    return i - 8;
+  }
+  return i;
+}
+
 void RunManualSetting(byte port, byte style){
 
   struct runManualSTRUCT{
@@ -889,15 +934,10 @@ void RunManualSetting(byte port, byte style){
   for (byte i = 0; i < 8; i++){
     
     byte typeExist = 0;
-    byte type = i;
+    //byte type = i;
 
     // Correct type for the three times EC
-    if (i == 2){
-      type = 1;
-    }
-    else if (i > 2){
-      type -= 2;
-    }
+    byte type = CorrectType(i);
     
     DoLowHigh:
     // Low-Ports
@@ -983,35 +1023,14 @@ void RunManualSetting(byte port, byte style){
       typeExist = 1;
       
     }
-    //if (i < 6){
-    if (i < 2){
-      // set repeat for temp & 1st EC high port
-      i += 8;
+
+    byte j = CorrectForRepeat(i);
+    if (j != i){
+      i = j;
       goto DoLowHigh;
     }
-    else if (i == 4){
-      // set repeat for pH high port
-      i = 10;
-      goto DoLowHigh;
-    }
-    else if (i == 7){
-      // set repeat for level high port
-      i = 11;
-      goto DoLowHigh;
-    }
-    
-    
-    //i -= 6;
-    // set back i from high-port
-    if (i == 11){
-      i = 7;
-    }
-    else if (i == 10){
-      i = 4;
-    }
-    else if (i > 7){
-      i -= 8;
-    }
+    i = CorrectFromRepeat(i);
+
     
     if ((typeExist && type != ezoEC) || (typeExist && i == 3)){
       // Print type-separator line
@@ -1075,15 +1094,10 @@ void RunManualSetting(byte port, byte style){
         for (byte i = 0; i < 8; i++){
 
           byte typeExist = 0;
-          byte type = i;
+          //byte type = i;
 
           // Correct type for the three times EC
-          if (i == 2){
-            type = 1;
-          }
-          else if (i > 2){
-            type -= 2;
-          }
+          byte type = CorrectType(i);
 
           DoLowHigh2:
           // Low-Ports
@@ -1122,42 +1136,14 @@ void RunManualSetting(byte port, byte style){
             }
             PrintSpacer(0);
           }
-          /*
-          if (i < 6){
-            i += 6;
+
+          byte j = CorrectForRepeat(i);
+          if (j != i){
+            i = j;
             goto DoLowHigh2;
           }
-          i -= 6;
-          if (typeExist){
-            // separator line
-            firstLine++;
-          }
-          */
-          if (i < 2){
-            // set repeat for temp & 1st EC high port
-            i += 8;
-            goto DoLowHigh2;
-          }
-          else if (i == 4){
-            // set repeat for pH high port
-            i = 10;
-            goto DoLowHigh2;
-          }
-          else if (i == 7){
-            // set repeat for level high port
-            i = 11;
-            goto DoLowHigh2;
-          }
-          // set back i from high-port
-          if (i == 11){
-            i = 7;
-          }
-          else if (i == 10){
-            i = 4;
-          }
-          else if (i > 7){
-            i -= 8;
-          }
+          i = CorrectFromRepeat(i);
+
           if ((typeExist && type != ezoEC) || (typeExist && i == 3)){
             // separator line
             firstLine++;
@@ -1382,6 +1368,13 @@ Start:
   
 }
 
+void PrintTimingsMenuTime(char key, uint16_t timeIN, byte printSpacer){
+  PrintMenuKeySmallBoldFaint(key, 0, !timeIN);
+  PrintSerTime(timeIN, 0, 1);
+  if (printSpacer){
+    PrintSmallSpacer();
+  }
+}
 void PrintTimingsMenu(){
 
 Start:
@@ -1400,15 +1393,10 @@ Start:
   EscLocate(3, pos++);
   for (i = 0; i < 8; i++){
 
-    byte type = i;
+    //byte type = i;
     // Correct type for the three times EC
-    if (i == 2){
-      type = 1;
-    }
-    else if (i > 2){
-      type -= 2;
-    }
-
+    byte type = CorrectType(i);
+    
     EscBold(1);
     PrintCentered(Fa(ezoStrLongType[type]), 9);
     PrintSmallSpacer();
@@ -1419,31 +1407,25 @@ Start:
       PrintSpaces(11);
     }
     else{
-      PrintMenuKeySmallBoldFaint(type + 'a', 0, !setting.DelayTime[type]);
-      PrintSerTime(setting.DelayTime[type], 0, 1);
+      PrintTimingsMenuTime(type + 'a', setting.DelayTime[type], 0);
     }
     PrintSmallSpacer();
     
-    //PrintSmallMenuKey('g' + i);
-    PrintMenuKeySmallBoldFaint(i + 'g', 0, !setting.TimeTooLow[i]);
-    PrintSerTime(setting.TimeTooLow[i], 0, 1);
-    PrintSmallSpacer();
-    //PrintSmallMenuKey('m' + i);
-    PrintMenuKeySmallBoldFaint(i + 'o', 0, !setting.TimeLow[i]);
-    PrintSerTime(setting.TimeLow[i], 0, 1);
-    PrintSmallSpacer();
+    PrintTimingsMenuTime(i + 'g', setting.TimeTooLow[i], 1);
+    PrintTimingsMenuTime(i + 'o', setting.TimeLow[i], 1);
     
     // 0 & 1 as they are
     // 2 & 3 NOT
     // 4 = 2
     // 5 & 6 NOT
     // 7 = 3
-    //PrintSmallMenuKey('s' + i);
     type = i;     // to set TimeHigh & TimeTooHigh index right
     switch (i){
-    case 2 ... 3:
+    case 2:
+    case 3:
       // 2nd & 3rd EC
-    case 5 ... 6:
+    case 5:
+    case 6:
       // Redox / O2
       type = 0;
       break;
@@ -1456,14 +1438,12 @@ Start:
       break;
     }    
     if (type || (!type && !i)){
-      PrintMenuKeySmallBoldFaint(type + 'w', 0, !setting.TimeHigh[type]);
-      PrintSerTime(setting.TimeHigh[type], 0, 1);
-      PrintSmallSpacer();
-      //PrintSmallMenuKey('A' + i);
-      PrintMenuKeySmallBoldFaint(type + 'A', 0, !setting.TimeTooHigh[type]);
-      PrintSerTime(setting.TimeTooHigh[type], 0, 1);
+      // Has High Times
+      PrintTimingsMenuTime(type + 'w', setting.TimeHigh[type], 1);
+      PrintTimingsMenuTime(type + 'A', setting.TimeTooHigh[type], 0);
     }
     else{
+      // No HighTimes
       PrintFlexSpacer(11, 10);
     }
     
@@ -1481,6 +1461,7 @@ Start:
     // Exit & TimeOut
   }
   else if (pos >= 'a' && pos <= 'f'){
+  //else if (pos >= 'a' && pos <= 'f'){
     // FailSave
     pos -= 'a';
     setting.DelayTime[pos] = GetUserTime(setting.DelayTime[pos]);
@@ -1607,97 +1588,6 @@ byte PrintWaterVals(byte pos){
 
 }
 
-void PrintActionTimes(byte ezoType, byte posX, byte posY){
-  // Check which tooLow to tooHigh is actually valid
-  
-  int32_t timeToUse = 0;
-  int32_t timeToAction = 0;
-  byte isHighPort = 0;
-
-  byte colorState = GetAvgState(avgVal[ezoType], setting.ValueTooLow[ezoType], setting.ValueLow[ezoType], setting.ValueHigh[ezoType], setting.ValueTooHigh[ezoType]);
-  
-  EscLocate(posX, posY);
-
-  switch (colorState){
-  case fgCyan:
-    // tooLow
-    if (lowSince[ezoType] && (lowSince[ezoType] < tooLowSince[ezoType])){
-      timeToUse = lowSince[ezoType];
-      colorState = fgCyan;
-    }
-    else{
-      timeToUse = tooLowSince[ezoType];
-    }
-    break;
-  case fgBlue:
-    // Low
-    timeToUse = lowSince[ezoType];
-    break;
-  case fgRed:
-    // tooHigh
-    if (highSince[ezoType] && (highSince[ezoType] < tooHighSince[ezoType])){
-      timeToUse = highSince[ezoType];
-      colorState = fgYellow;
-    }
-    else{
-      timeToUse = tooHighSince[ezoType];
-    }
-    isHighPort = 1;
-    break;
-  case fgYellow:
-    // High
-    timeToUse = highSince[ezoType];  
-    isHighPort = 1;
-    break;
-  default:
-    // OK
-    timeToUse = okSince[ezoType];
-    break;
-  } 
-  EscColor(colorState);
-  EscFaint(1);
-
-  timeToUse = (myTime - timeToUse);            // time since state became true
-  if (colorState != fgGreen){
-    timeToAction = setting.DelayTime[ezoType] - timeToUse;     // time until action begins
-  }
-  
-  EscSaveCursor();
-  PrintSerTime(timeToUse, 1, 1);
-  EscRestoreCursor();
-  EscCursorDown(1);
-  EscFaint(0);
-  if (timeToAction >= 0){
-    PrintSerTime(timeToAction, 1, 1);
-  }
-  else{
-    if (isHighPort){
-      isHighPort = 6;       // HighPorts-Offset
-    }
-    isHighPort += 2;        // 1st LowPort
-    isHighPort += ezoType;
-    if (digitalRead(isHighPort)){
-      Serial.print(F("  -On Action-"));
-    }
-    else{
-      // sample cases:
-      //    not in read-loop while delayTime triggers 
-      Serial.print(F("  StrangeCase"));
-    }
-  }
-  
-  EscRestoreCursor();
-  EscCursorDown(2);
-  EscFaint(1);
-  timeToUse = 0;
-  if (lastAction[ezoType]){
-    timeToUse = myTime - lastAction[ezoType];
-  }
-  PrintSerTime(timeToUse, 1, 1);
-  EscFaint(0);
-  EscColor(0);
-}
-
 void PrintPortStates(){
 
   // 8 low-ports / 4 high ports
@@ -1750,59 +1640,34 @@ void PrintPortStates(){
     firstRun = 1;
     EscBoldColor(0);
   }
-  
-  
 }
 
+void PrintAVGsHLP(byte type, byte posX, byte posY, byte preDot, byte printUnit){
+  SetAvgColorEZO(type);
+  EscLocate(posX, posY);
+  PrintBoldFloat(avgVal[type], preDot, 2, ' ');
+  if (printUnit){
+    PrintUnit(type, 0, 0, 3);
+  }
+}
 byte PrintAVGs(byte pos){
-    
-  SetAvgColorEZO(ezoRTD);
-  EscLocate(7, pos);
-  PrintBoldFloat(avg_RTD, 2, 2, ' ');
-  PrintUnit(ezoRTD, 0, 0, 3);
 
-  //PrintActionTimes(ezoRTD, 1, pos + 2);
-
+  PrintAVGsHLP(ezoRTD, 7, pos, 2, 1);  
 
   SetAvgColorEZO(ezoEC);
   EscLocate(20, pos);
   PrintBoldInt(avg_EC / 1000, 4, ' ');
   PrintUnit(ezoEC, 0, 0, 3);
   
-  //PrintActionTimes(ezoEC, 14, pos + 2);
-
-
-  SetAvgColorEZO(ezoPH);
-  EscLocate(32, pos);
-  PrintBoldFloat(avg_pH, 2, 2, ' ');
-  PrintUnit(ezoPH, 0, 0, 3);
-
-  //PrintActionTimes(ezoPH, 27, pos + 2);
-
-
-  SetAvgColorEZO(ezoORP);
-  EscLocate(44, pos);
-  PrintBoldFloat(avg_ORP, 4, 2, ' ');
-  //PrintUnit(ezoORP, 0,  0 , 3);
+  PrintAVGsHLP(ezoPH, 32, pos, 2, 1);  
+  
+  PrintAVGsHLP(ezoORP, 44, pos, 4, 0);
   EscColor(0);
   Serial.print(F("rH"));
 
-  //PrintActionTimes(ezoORP, 40, pos + 2);
+  PrintAVGsHLP(ezoDiO2, 58, pos, 3, 1);
 
-
-  SetAvgColorEZO(ezoDiO2);
-  EscLocate(58, pos);
-  PrintBoldFloat(avg_O2, 3, 2, ' ');
-  PrintUnit(ezoDiO2, 0, 0, 3);
-
-  //PrintActionTimes(ezoDiO2, 53, pos + 2);
-
-  SetAvgColorEZO(ezoLVL);
-  EscLocate(72, pos);
-  PrintBoldFloat(avg_LVL, 3, 2, ' ');
-  PrintUnit(ezoLVL, 0, 0, 3);
-
-  //PrintActionTimes(ezoLVL, 66, pos + 2);
+  PrintAVGsHLP(ezoLVL, 72, pos, 3, 1);
 
   return pos + 1;
 
@@ -1812,24 +1677,16 @@ void PrintLoopMenu(){
 
   EscCls();
   EscInverse(1);
-  byte pos = PrintMenuTop((char*)"- QuickWater 1.02 -");
+  byte pos = PrintQuickWater();
   EscInverse(0);
   pos++;
 
-  EscLocate(2, pos++);
+  EscLocate(3, pos++);
+  EscBold(1);
+  Serial.print(F("|   Temp.    |    EC     |     pH     |    Redox    |    O2     |   Level  |"));
 
-  PrintCenteredWithSpacer(FaStrange(ezoStrLongType[ezoRTD]),10);
-  PrintCenteredWithSpacer(FaStrange(ezoStrLongType[ezoEC]),9);
-  PrintCenteredWithSpacer(FaStrange(ezoStrLongType[ezoPH]),10);
-  PrintCenteredWithSpacer(FaStrange(ezoStrLongType[ezoORP]),11);
-  PrintCenteredWithSpacer(FaStrange(ezoStrLongType[ezoDiO2]),9);
-  PrintCenteredWithSpacer(FaStrange(ezoStrLongType[ezoLVL]),9);
-  EscCursorLeft(1);
-  PrintSmallSpacer();
-  //Serial.print(F(" | Temperature | Conductivity |     pH     |    Redox    |     O2     |"));
   pos = PrintLine(pos, 3, 76);
     
-  //EscBold(1);
   EscBold(0);
 
   PrintErrorOK(0, 0, (char*)"Read Loop started...");
@@ -1859,7 +1716,7 @@ void PrintMainMenu(){
 
 Start:
 
-  int pos = PrintMenuTop((char*)"- QuickWater 1.02 -");
+  int pos = PrintQuickWater();
   
   uint32_t hlpTime = 0;
 

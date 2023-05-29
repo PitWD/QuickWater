@@ -1182,6 +1182,12 @@ void RunManualSetting(byte port, byte style){
   OffOutPorts();
 
 }
+void PrintManualMenuHlp1(char key, uint16_t value){
+  PrintMenuKeySmallBoldFaint(key, 0, !value);
+  PrintSerTime(value, 0, 1);
+  PrintMenuKey(key - 32, 1, '(', 0, 0, !value, !value);
+  PrintSpacer(1);
+}
 void PrintManualMenu(){
 
   //byte selectedSet = 0;
@@ -1206,33 +1212,20 @@ Start:
   byte ecCnt = 0;
 
   for (i = 0; i < 6; i++){
-    /*
-    EscBold(1);
-    PrintCentered(Fa(ezoStrLongType[i]), 17);
-    PrintSpacer(1);
-    //PrintSmallMenuKey('a' + i);
-    PrintMenuKeySmallBoldFaint(i + 'a', 0, !manual.Low[i]);
-    PrintSerTime(manual.Low[i], 0, 1);
-    PrintMenuKey(i + 'A', 1, '(', 0, 0, !manual.Low[i], !manual.Low[i]);
-    PrintSpacer(1);
-    //PrintSmallMenuKey('g' + i);
-    PrintMenuKeySmallBoldFaint(i + 'g', 0, !manual.High[i]);
-    PrintSerTime(manual.High[i], 0, 1);
-    PrintMenuKey(i + 'G', 1, '(', 0, 0, !manual.High[i], !manual.High[i]);
-    PrintSpacer(0);
-    EscLocate(8, pos++);
-    */
+
     byte iOffset = 0;
     RedoEC:
     EscLocate(8, pos++);
     EscBold(1);
     PrintCentered(Fa(ezoStrLongType[i]), 17);
     PrintSpacer(1);
+    
     //PrintSmallMenuKey('a' + i);
-    PrintMenuKeySmallBoldFaint(i + 'a' + ecCnt, 0, !manual.Low[i + ecCnt]);
-    PrintSerTime(manual.Low[i + ecCnt], 0, 1);
-    PrintMenuKey(i + ecCnt + 'A', 1, '(', 0, 0, !manual.Low[i + ecCnt], !manual.Low[i + ecCnt]);
-    PrintSpacer(1);
+    //PrintMenuKeySmallBoldFaint(i + 'a' + ecCnt, 0, !manual.Low[i + ecCnt]);
+    //PrintSerTime(manual.Low[i + ecCnt], 0, 1);
+    //PrintMenuKey(i + ecCnt + 'A', 1, '(', 0, 0, !manual.Low[i + ecCnt], !manual.Low[i + ecCnt]);
+    //PrintSpacer(1);
+    PrintManualMenuHlp1('a' + i + ecCnt, manual.Low[i + ecCnt]);
 
     if (i == ezoEC && ecCnt && ecCnt < 3){
       // EC - three times...
@@ -1260,6 +1253,7 @@ Start:
         PrintSerTime(manual.High[iOffset], 0, 1);
         PrintMenuKey(iOffset + 'I', 1, '(', 0, 0, !manual.High[iOffset], !manual.High[iOffset]);
         PrintSpacer(0);
+        //PrintManualMenuHlp1(iOffset + 'i', manual.High[iOffset], 0);
       }
             
       //EscLocate(8, pos++);

@@ -50,6 +50,7 @@ void DummyNameToStrDefault(void){
 void EditAutoName(){
   GetUserString(strDefault);
 }
+//#define EditAutoName() (GetUserString(strDefault))
 void EditAutoAddress(){
   adrDefault = GetUserInt(adrDefault);
   if (adrDefault > 127 - ezoCnt){
@@ -683,6 +684,11 @@ void PrintCenteredWithSpacer(char *strIN, byte centerLen){
   PrintCentered(strIN, centerLen);
 }
 
+void PrintMenuKeyLong(char *strIN){
+  EscKeyStyle(1);
+  Serial.print(strIN);
+  EscKeyStyle(0);
+}
 
 void PrintLowToHigh(){
   Serial.print(F("tooLow   |    Low     |    High    |  tooHigh   |"));
@@ -691,9 +697,7 @@ void PrintLowToHigh(){
 int8_t PrintCopySettingTo(int8_t pos){
   EscLocate(5, pos++);
   
-  EscKeyStyle(1);
-  Serial.print(F("1-3):"));
-  EscKeyStyle(0);
+  PrintMenuKeyLong((char*)"1-3):");
   
   Serial.print(F(" Copy FULL SETTING "));
   EscColor(fgBlue);
@@ -1153,12 +1157,7 @@ Start:
   EscColor(fgBlue);
   PrintCentered(manual.Name, 16);
   EscColor(0);
-  PrintFlexSpacer(0, 6);
-  Serial.print(F("LOW"));
-  PrintFlexSpacer(6, 5);
-  Serial.print(F("HIGH"));
-  PrintFlexSpacer(6, 0);
-
+  Serial.print(F(" |       LOW       |      HIGH       |"));
   PrintLine(pos++, 5, 58);
   byte ecCnt = 0;
 
@@ -1219,15 +1218,11 @@ Start:
   pos++;
   EscLocate(5, pos++);
   
-  EscKeyStyle(1);
-  Serial.print(F("a-l):"));
-  EscKeyStyle(0);
+  PrintMenuKeyLong((char*)"a-l):");
   
   Serial.print(F(" Edit   "));
   
-  EscKeyStyle(1);
-  Serial.print(F("A-L):"));
-  EscKeyStyle(0);
+  PrintMenuKeyLong((char*)"A-L):");
   
   Serial.print(F(" RunSingle   "));
   PrintMenuKeyStd('m');
@@ -1241,9 +1236,7 @@ Start:
   PrintMenuKeyStd('o');
   Serial.print(F("EditName   "));
   
-  EscKeyStyle(1);
-  Serial.print(F("1-4):"));
-  EscKeyStyle(0);
+  PrintMenuKeyLong((char*)"1-4):");
   
   Serial.print(F(" SelectSet = "));
   EscColor(fgBlue);
@@ -1252,9 +1245,7 @@ Start:
   EscColor(0);
   PrintSpaces(3);
   
-  EscKeyStyle(1);
-  Serial.print(F("5-8):"));
-  EscKeyStyle(0);
+  PrintMenuKeyLong((char*)"5-8):");
   
   Serial.print(F(" CopyToSet [1-4]"));
   
@@ -1268,16 +1259,10 @@ Start:
   else if (IsKeyBetween(pos, 'a', 'h')){
     // LowTime
     pos = GetUserTime16ptr(&manual.Low[pos - 'a']);
-    //pos -= 'a';
-    //manual.Low[pos] = GetUserTime(manual.Low[pos]);
-    //pos = 1;
   }
   else if (IsKeyBetween(pos, 'i', 'l')){
     // HighTime
     pos = GetUserTime16ptr(&manual.High[pos - '1']);
-    //pos -= 'i';
-    //manual.High[pos] = GetUserTime(manual.High[pos]);
-    //pos = 1;
   }
   else if (IsKeyBetween(pos, 'A', 'H')){
     // Run Single LowTime
@@ -1385,23 +1370,19 @@ Start:
     // 5 & 6 NOT
     // 7 = 3
     type = i;     // to set TimeHigh & TimeTooHigh index right
-    switch (i){
-    case 2:
-    case 3:
-      // 2nd & 3rd EC
-    case 5:
-    case 6:
-      // Redox / O2
-      type = 0;
-      break;
-    case 4:
+    if (i < 2) {
+    }
+    else if (i == 4) {
       type = 2;
-      break;
-    case 7:
+    }
+    else if (i == 7) {
       type = 3;
-    default:
-      break;
-    }    
+    }        
+    else{
+      // 2nd & 3rd EC or Redox / O2
+      type = 0;
+    }
+
     if (type || (!type && !i)){
       // Has High Times
       PrintTimingsMenuTime(type + 'w', setting.TimeHigh[type], 1);
@@ -1509,34 +1490,39 @@ byte PrintWaterValsHlp(byte pos, byte posX, byte ezotype, byte lz, byte dp, int 
 
 }
 
+/*
 byte GetPosMax(byte posAct, byte posMax){
-  if (posAct > posMax){
-    return posAct;
-  }
-  return posMax;
+  //if (posAct > posMax){
+    //return posAct;
+  //}
+  //return posMax;
+  return (posAct > posMax) ? posAct : posMax;
 }
+*/
+#define GetPosMax(posAct, posMax) ((posAct > posMax) ? posAct : posMax)
 byte PrintWaterVals(byte pos){
 
   byte posMax = 0;
   byte posAct = 0;
 
-  posMax = PrintWaterValsHlp(pos, 4, ezoRTD, 2, 2, 1); //, &avg_RTD);
+  byte posX[] = {4, 17, 29, 42, 54, 69};
+  byte lz[] = {2, 4, 2, 4, 3, 3};
+  byte dp;
+  int16_t divisor;
 
-  posAct = PrintWaterValsHlp(pos, 17, ezoEC, 4, 0, 1000); //, &avg_EC);
-  posMax = GetPosMax(posAct, posMax);
+  for (byte i = 0; i < 6; i++){
 
-  posAct = PrintWaterValsHlp(pos, 29, ezoPH, 2, 2, 1); //, &avg_pH);
-  posMax = GetPosMax(posAct, posMax);
-
-  posAct = PrintWaterValsHlp(pos, 42, ezoORP, 4, 2, 1); //, &avg_ORP);
-  posMax = GetPosMax(posAct, posMax);
-
-  posAct = PrintWaterValsHlp(pos, 54, ezoDiO2, 3, 2, 1); //, &avg_O2);
-  posMax = GetPosMax(posAct, posMax);
-
-  posAct = PrintWaterValsHlp(pos, 69, ezoLVL, 3, 2, 1); //, &avg_O2);
-  posMax = GetPosMax(posAct, posMax);
-
+    dp = 2;
+    divisor = 1;
+    if (i == 1){
+      dp = 0;
+      divisor = 1000;
+    }
+    
+    posAct = PrintWaterValsHlp(pos, posX[i], i, lz[i], dp, divisor); //, &avg_EC);
+    posMax = GetPosMax(posAct, posMax);
+  }
+  
   return pos + posMax;
 
 }
@@ -1712,9 +1698,7 @@ Start:
   Serial.print((char*)setting.Name);
   PrintSpaces(3);
 
-  EscKeyStyle(1);
-  Serial.print(F("o-q):"));
-  EscKeyStyle(0);
+  PrintMenuKeyLong((char*)"o-q):");
 
   Serial.print(F(" Sel.Setting [1-3] = "));
   EscBoldColor(fgBlue);

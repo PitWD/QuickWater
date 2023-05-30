@@ -108,10 +108,10 @@ byte PrintQuickWater(){
 byte PrintAllMenuOpt1(byte pos){
 
   EscLocate(5, pos++);
-  PrintMenuKeyStd('a'); Serial.print(F("Reset"));
-  PrintSpaces(5);
-  PrintMenuKeyStd('b'); Serial.print(F("Clear Calibration(s)"));
-  PrintSpaces(5);
+  PrintMenuKeyStd('a'); Serial.print(F("Reset     "));
+  //PrintSpaces(5);
+  PrintMenuKeyStd('b'); Serial.print(F("Clear Calibration(s)     "));
+  //PrintSpaces(5);
   PrintMenuKeyStd('c'); Serial.print(F("Delete Name(s)"));
   PrintShortLine(pos++, 8);
   EscLocate(5, pos);
@@ -275,9 +275,9 @@ Start:
   PrintShortLine(pos++, 8);
   EscLocate(5, pos);
   PrintMenuKeyStdBoldFaint('h', my.Boot, !my.Boot);
-  Serial.print(F("Boot As ModBUS Slave"));
+  Serial.print(F("Boot As ModBUS Slave     "));
   EscFaint(0);
-  PrintSpaces(5);
+  //PrintSpaces(5);
   PrintMenuKeyStdBoldFaint('i', !my.Boot, my.Boot);
   Serial.print(F("Boot For Terminal Use"));
   EscFaint(0);
@@ -438,13 +438,13 @@ void PrintCalMenu(byte ezo, byte all){
   EscLocate(5, pos++);
   if (myMenu.a){
     // 1-Point Cal.
-    PrintMenuKeyStd('a'); Serial.print(F("Do 1-Pt. Cal."));
-    PrintSpaces(5);
+    PrintMenuKeyStd('a'); Serial.print(F("Do 1-Pt. Cal.     "));
+    //PrintSpaces(5);
   }
   if (myMenu.b){
     // 3-Point Cal.
-    PrintMenuKeyStd('b'); Serial.print(F("Do 2-Pt. Cal."));
-    PrintSpaces(5);
+    PrintMenuKeyStd('b'); Serial.print(F("Do 2-Pt. Cal.     "));
+    //PrintSpaces(5);
   }
   if (myMenu.c){
     // 3-Point Cal.
@@ -757,6 +757,7 @@ byte PrintValuesMenuChangeVal(int32_t *valIN){
   *valIN = GetUserFloat(*valIN);
   return 1;
 }
+/*
 byte IsKeyBetween(char key, char start, char stop){
   // THIS IS STRANGE
   //    Using this some times has a lower flash use than
@@ -764,6 +765,9 @@ byte IsKeyBetween(char key, char start, char stop){
   // THIS IS STRANGE
   return (key >= start && key <= stop);
 }
+*/
+#define IsKeyBetween(key, start, stop) ((key >= start) && (key <= stop))
+
 void PrintValuesMenu(){
 
 Start:
@@ -809,17 +813,17 @@ Start:
   
   else if (IsKeyBetween(pos, 'a', 'f')){
     // FailSave
-    //pos = PrintValuesMenuChangeVal(&setting.FailSaveValue[pos - 'a']);
-    pos -= 'a';
-    setting.FailSaveValue[pos] = GetUserFloat(setting.FailSaveValue[pos]);
-    pos = 1;
+    pos = PrintValuesMenuChangeVal(&setting.FailSaveValue[pos - 'a']);
+    //pos -= 'a';
+    //setting.FailSaveValue[pos] = GetUserFloat(setting.FailSaveValue[pos]);
+    //pos = 1;
   }
   else if (IsKeyBetween(pos, 'g', 'l')){
     // tooLow
-    //pos = PrintValuesMenuChangeVal(&setting.ValueTooLow[pos - 'g']);
-    pos -= 'g';
-    setting.ValueTooLow[pos] = GetUserFloat(setting.ValueTooLow[pos]);
-    pos = 1;
+    pos = PrintValuesMenuChangeVal(&setting.ValueTooLow[pos - 'g']);
+    //pos -= 'g';
+    //setting.ValueTooLow[pos] = GetUserFloat(setting.ValueTooLow[pos]);
+    //pos = 1;
   }
   else if (IsKeyBetween(pos, 'm', 'r')){
     // Low
@@ -835,14 +839,14 @@ Start:
     //setting.ValueHigh[pos] = GetUserFloat(setting.ValueHigh[pos]);
     //pos = 1;
   }
-  else if (pos >= 'A' && pos <= 'F'){
+  else if (IsKeyBetween(pos, 'A', 'F')){
     // tooHigh
-    //pos = PrintValuesMenuChangeVal(&setting.ValueTooHigh[pos - 'A']);
-    pos -= 'A';
-    setting.ValueTooHigh[pos] = GetUserFloat(setting.ValueTooHigh[pos]);
-    pos = 1;
+    pos = PrintValuesMenuChangeVal(&setting.ValueTooHigh[pos - 'A']);
+    //pos -= 'A';
+    //setting.ValueTooHigh[pos] = GetUserFloat(setting.ValueTooHigh[pos]);
+    //pos = 1;
   }
-  else if (pos >= '1' && pos <= '3'){
+  else if (IsKeyBetween(pos, '1', '3')){
     SettingsToRom(pos - '1'); 
     pos = 2;   
   }
@@ -916,13 +920,14 @@ void RunManualSetting(byte port, byte style){
   int8_t pos = PrintMenuTop((char*)"- RUN Manual -");
   pos++;
 
-  EscLocate(18, pos++);
-  PrintCenteredWithSpacer((char*)"Offset", 8);
-  PrintCenteredWithSpacer((char*)"OnTime", 8);
-  PrintCenteredWithSpacer((char*)"OffTime", 8);
-  PrintCenteredWithSpacer((char*)"ON's_2Do", 8);
-  PrintCenteredWithSpacer((char*)"State", 8);
-  PrintSmallSpacer();
+  EscLocate(19, pos++);
+  Serial.print(F("|  Offset  |  OnTime  | OffTime  | ON's_2Do |  State   |"));
+  //PrintCenteredWithSpacer((char*)"Offset", 8);
+  //PrintCenteredWithSpacer((char*)"OnTime", 8);
+  //PrintCenteredWithSpacer((char*)"OffTime", 8);
+  //PrintCenteredWithSpacer((char*)"ON's_2Do", 8);
+  //PrintCenteredWithSpacer((char*)"State", 8);
+  //PrintSmallSpacer();
   EscBold(1);
   PrintLine(pos++, 7, 68);
 
@@ -1273,16 +1278,16 @@ Start:
   EscKeyStyle(1);
   Serial.print(F("a-l):"));
   EscKeyStyle(0);
-  Serial.print(F(" Edit"));
-  PrintSpaces(3);
+  Serial.print(F(" Edit   "));
+  //PrintSpaces(3);
   EscKeyStyle(1);
   Serial.print(F("A-L):"));
   EscKeyStyle(0);
-  Serial.print(F(" RunSingle"));
-  PrintSpaces(3);
+  Serial.print(F(" RunSingle   "));
+  //PrintSpaces(3);
   PrintMenuKeyStd('m');
-  Serial.print(F("RunALL"));
-  PrintSpaces(3);
+  Serial.print(F("RunALL   "));
+  //PrintSpaces(3);
   PrintMenuKeyStd('n');
   Serial.print(F("RunAllCent."));
     
@@ -1290,8 +1295,8 @@ Start:
 
   EscLocate(5, pos++);
   PrintMenuKeyStd('o');
-  Serial.print(F("EditName"));
-  PrintSpaces(3);
+  Serial.print(F("EditName   "));
+  //PrintSpaces(3);
   EscKeyStyle(1);
   Serial.print(F("1-4):"));
   EscKeyStyle(0);
@@ -1320,19 +1325,19 @@ Start:
     manual.Low[pos] = GetUserTime(manual.Low[pos]);
     pos = 1;
   }
-  else if (pos >= 'i' && pos <= 'l'){
+  else if (IsKeyBetween(pos, 'i', 'l')){
     // HighTime
     pos -= 'i';
     manual.High[pos] = GetUserTime(manual.High[pos]);
     pos = 1;
   }
-  else if (pos >= 'A' && pos <= 'H'){
+  else if (IsKeyBetween(pos, 'A', 'H')){
     // Run Single LowTime
     pos -= 'A';
     RunManualSetting(pos, 1);
     pos = 2;
   }
-  else if (pos >= 'I' && pos <= 'L'){
+  else if (IsKeyBetween(pos, 'I', 'L')){
     // Run Single HighTime
     pos = pos - 'I' + 6;
     RunManualSetting(pos, 1);
@@ -1348,13 +1353,13 @@ Start:
     RunManualSetting(255, 1);
     pos = 2;
   }
-  else if (pos >= '1' && pos <= '4'){
+  else if (IsKeyBetween(pos, '1', '4')){
     // Load Set
     my.Temporary = pos - '1';
     ManualTimesFromRom(my.Temporary);
     myToRom();
   }
-  else if (pos >= '5' && pos <= '8'){
+  else if (IsKeyBetween(pos, '5', '8')){
     // Copy Set
     ManualTimesToRom(pos - '5');
     pos = 2;
@@ -1386,6 +1391,18 @@ void PrintTimingsMenuTime(char key, uint16_t timeIN, byte printSpacer){
     PrintSmallSpacer();
   }
 }
+byte PrintTimingsMenuChangeVal(uint16_t *valIN){
+  // THIS IS STRANGE
+  //    Using this just two times has a lower flash use than
+  //    if it's used more or less times as replacement for:
+  //        pos -= 'a';
+  //        setting.FailSaveValue[pos] = GetUserFloat(setting.FailSaveValue[pos]);
+  //        pos = 1;
+  // THIS IS STRANGE
+  *valIN = GetUserTime(*valIN);
+  return 1;
+}
+
 void PrintTimingsMenu(){
 
 Start:
@@ -1471,38 +1488,43 @@ Start:
   if (pos < 1){
     // Exit & TimeOut
   }
-  else if (pos >= 'a' && pos <= 'f'){
+  else if (IsKeyBetween(pos, 'a', 'f')){
   //else if (pos >= 'a' && pos <= 'f'){
     // FailSave
-    pos -= 'a';
-    setting.DelayTime[pos] = GetUserTime(setting.DelayTime[pos]);
-    pos = 1;
+    pos = PrintTimingsMenuChangeVal(&setting.DelayTime[pos - 'a']);
+    //pos -= 'a';
+    //setting.DelayTime[pos] = GetUserTime(setting.DelayTime[pos]);
+    //pos = 1;
   }
-  else if (pos >= 'g' && pos <= 'n'){
+  else if (IsKeyBetween(pos, 'g', 'n')){
     // tooLow
-    pos -= 'g';
-    setting.TimeTooLow[pos] = GetUserTime(setting.TimeTooLow[pos]);
-    pos = 1;
+    pos = PrintTimingsMenuChangeVal(&setting.TimeTooLow[pos - 'g']);
+    //pos -= 'g';
+    //setting.TimeTooLow[pos] = GetUserTime(setting.TimeTooLow[pos]);
+    //pos = 1;
   }
-  else if (pos >= 'o' && pos <= 'v'){
+  else if (IsKeyBetween(pos, 'o', 'v')){
     // Low
-    pos -= 'o';
-    setting.TimeLow[pos] = GetUserTime(setting.TimeLow[pos]);
-    pos = 1;
+    pos = PrintTimingsMenuChangeVal(&setting.TimeLow[pos - 'o']);
+    //pos -= 'o';
+    //setting.TimeLow[pos] = GetUserTime(setting.TimeLow[pos]);
+    //pos = 1;
   }
-  else if (pos >= 'w' && pos <= 'z'){
+  else if (IsKeyBetween(pos, 'w', 'z')){
     // High
-    pos -= 'w';
-    setting.TimeHigh[pos] = GetUserTime(setting.TimeHigh[pos]);
-    pos = 1;
+    pos = PrintTimingsMenuChangeVal(&setting.TimeHigh[pos - 'w']);
+    //pos -= 'w';
+    //setting.TimeHigh[pos] = GetUserTime(setting.TimeHigh[pos]);
+    //pos = 1;
   }
-  else if (pos >= 'A' && pos <= 'D'){
+  else if (IsKeyBetween(pos, 'A', 'D')){
     // tooHigh
-    pos -= 'A';
-    setting.TimeTooHigh[pos] = GetUserTime(setting.TimeTooHigh[pos]);
-    pos = 1;
+    pos = PrintTimingsMenuChangeVal(&setting.TimeTooHigh[pos - 'A']);
+    //pos -= 'A';
+    //setting.TimeTooHigh[pos] = GetUserTime(setting.TimeTooHigh[pos]);
+    //pos = 1;
   }
-  else if (pos >= '1' && pos <= '3'){
+  else if (IsKeyBetween(pos, '1', '3')){
     SettingsToRom(pos - '1'); 
     pos = 2;   
   }
@@ -1734,14 +1756,14 @@ Start:
   pos = PrintProbesOfType(255, 1, pos, 0);
 
   EscLocate(5, pos++);
-  PrintMenuKeyStd('a'); Serial.print(F("ReScan"));
-  PrintSpaces(3);
-  PrintMenuKeyStd('b'); Serial.print(F("ReBoot"));
-  PrintSpaces(3);
-  PrintMenuKeyStd('c'); Serial.print(F("Date"));
-  PrintSpaces(3);
-  PrintMenuKeyStd('d'); Serial.print(F("Time"));
-  PrintSpaces(3);
+  PrintMenuKeyStd('a'); Serial.print(F("ReScan   "));
+  //PrintSpaces(3);
+  PrintMenuKeyStd('b'); Serial.print(F("ReBoot   "));
+  //PrintSpaces(3);
+  PrintMenuKeyStd('c'); Serial.print(F("Date   "));
+  //PrintSpaces(3);
+  PrintMenuKeyStd('d'); Serial.print(F("Time   "));
+  //PrintSpaces(3);
   PrintMenuKeyStd('e'); Serial.print(F("Addr. = "));
   PrintBoldInt(my.Address, 3, '0');
 
@@ -1755,23 +1777,23 @@ Start:
   PrintSpaces(3);  
   PrintMenuKeyStd('g'); Serial.print(F("Dim"));
   EscFaint(1);
-  Serial.print(F("Color"));
+  Serial.print(F("Color   "));
   EscFaint(0);
-  PrintSpaces(3);
-  PrintMenuKeyStd('h'); Serial.print(F("KeyColor"));
-  PrintSpaces(3);
+  //PrintSpaces(3);
+  PrintMenuKeyStd('h'); Serial.print(F("KeyColor   "));
+  //PrintSpaces(3);
   PrintMenuKeyStdBoldFaint('i', (my.Default), (!my.Default)); Serial.print(F("AsDefault"));
 
   pos = PrintShortLine(pos++, 8);
 
   EscLocate(5, pos++);
   PrintMenuKeyStd('j');
-  Serial.print(F("More..."));
-  PrintSpaces(3);
-  PrintMenuKeyStd('k'); Serial.print(F("Values..."));
-  PrintSpaces(3);
-  PrintMenuKeyStd('l'); Serial.print(F("Times..."));
-  PrintSpaces(3);
+  Serial.print(F("More...   "));
+  //PrintSpaces(3);
+  PrintMenuKeyStd('k'); Serial.print(F("Values...   "));
+  //PrintSpaces(3);
+  PrintMenuKeyStd('l'); Serial.print(F("Times...   "));
+  //PrintSpaces(3);
   PrintMenuKeyStd('m'); Serial.print(F("Manual..."));
 
   PrintShortLine(pos++, 8);

@@ -690,9 +690,11 @@ void PrintLowToHigh(){
 
 int8_t PrintCopySettingTo(int8_t pos){
   EscLocate(5, pos++);
+  
   EscKeyStyle(1);
   Serial.print(F("1-3):"));
   EscKeyStyle(0);
+  
   Serial.print(F(" Copy FULL SETTING "));
   EscColor(fgBlue);
   Serial.print((char*)setting.Name);
@@ -1127,6 +1129,18 @@ void PrintManualMenuHlp1(char key, uint16_t value, byte spacer){
   PrintMenuKey(key - 32, 1, '(', 0, 0, !value, !value);
   PrintSpacer(spacer);
 }
+byte GetUserTime16ptr(uint16_t *valIN){
+  // THIS IS STRANGE
+  //    Using this just two times has a lower flash use than
+  //    if it's used more or less times as replacement for:
+  //        pos -= 'a';
+  //        setting.FailSaveValue[pos] = GetUserFloat(setting.FailSaveValue[pos]);
+  //        pos = 1;
+  // THIS IS STRANGE
+  *valIN = GetUserTime(*valIN);
+  return 1;
+}
+
 void PrintManualMenu(){
 
 Start:
@@ -1181,11 +1195,13 @@ Start:
           iOffset = 3;
         }
         
-        PrintMenuKeySmallBoldFaint(iOffset + 'i', 0, !manual.High[iOffset]);
-        PrintSerTime(manual.High[iOffset], 0, 1);
-        PrintMenuKey(iOffset + 'I', 1, '(', 0, 0, !manual.High[iOffset], !manual.High[iOffset]);
-        PrintSpacer(0);
-        //PrintManualMenuHlp1(iOffset + 'i', manual.High[iOffset], 0); // Insane why this uses more flash....
+        // Insane that this is smaller than using PrintManualMenuHlp() a 2nd time
+          PrintMenuKeySmallBoldFaint(iOffset + 'i', 0, !manual.High[iOffset]);
+          PrintSerTime(manual.High[iOffset], 0, 1);
+          PrintMenuKey(iOffset + 'I', 1, '(', 0, 0, !manual.High[iOffset], !manual.High[iOffset]);
+          PrintSpacer(0);
+          // Really insane why this uses more flash...  
+            //PrintManualMenuHlp(iOffset + 'i', manual.High[iOffset], 0); 
       }
             
       //EscLocate(8, pos++);
@@ -1202,13 +1218,17 @@ Start:
   PrintLine(pos++, 5, 58);
   pos++;
   EscLocate(5, pos++);
+  
   EscKeyStyle(1);
   Serial.print(F("a-l):"));
   EscKeyStyle(0);
+  
   Serial.print(F(" Edit   "));
+  
   EscKeyStyle(1);
   Serial.print(F("A-L):"));
   EscKeyStyle(0);
+  
   Serial.print(F(" RunSingle   "));
   PrintMenuKeyStd('m');
   Serial.print(F("RunALL   "));
@@ -1220,18 +1240,22 @@ Start:
   EscLocate(5, pos++);
   PrintMenuKeyStd('o');
   Serial.print(F("EditName   "));
+  
   EscKeyStyle(1);
   Serial.print(F("1-4):"));
   EscKeyStyle(0);
+  
   Serial.print(F(" SelectSet = "));
   EscColor(fgBlue);
   EscBold(1);
   Serial.print(my.Temporary + 1);
   EscColor(0);
   PrintSpaces(3);
+  
   EscKeyStyle(1);
   Serial.print(F("5-8):"));
   EscKeyStyle(0);
+  
   Serial.print(F(" CopyToSet [1-4]"));
   
   PrintMenuEnd(pos + 1);
@@ -1243,15 +1267,17 @@ Start:
   }
   else if (IsKeyBetween(pos, 'a', 'h')){
     // LowTime
-    pos -= 'a';
-    manual.Low[pos] = GetUserTime(manual.Low[pos]);
-    pos = 1;
+    pos = GetUserTime16ptr(&manual.Low[pos - 'a']);
+    //pos -= 'a';
+    //manual.Low[pos] = GetUserTime(manual.Low[pos]);
+    //pos = 1;
   }
   else if (IsKeyBetween(pos, 'i', 'l')){
     // HighTime
-    pos -= 'i';
-    manual.High[pos] = GetUserTime(manual.High[pos]);
-    pos = 1;
+    pos = GetUserTime16ptr(&manual.High[pos - '1']);
+    //pos -= 'i';
+    //manual.High[pos] = GetUserTime(manual.High[pos]);
+    //pos = 1;
   }
   else if (IsKeyBetween(pos, 'A', 'H')){
     // Run Single LowTime
@@ -1312,17 +1338,6 @@ void PrintTimingsMenuTime(char key, uint16_t timeIN, byte printSpacer){
   if (printSpacer){
     PrintSmallSpacer();
   }
-}
-byte PrintTimingsMenuChangeVal(uint16_t *valIN){
-  // THIS IS STRANGE
-  //    Using this just two times has a lower flash use than
-  //    if it's used more or less times as replacement for:
-  //        pos -= 'a';
-  //        setting.FailSaveValue[pos] = GetUserFloat(setting.FailSaveValue[pos]);
-  //        pos = 1;
-  // THIS IS STRANGE
-  *valIN = GetUserTime(*valIN);
-  return 1;
 }
 
 void PrintTimingsMenu(){
@@ -1412,23 +1427,23 @@ Start:
   }
   else if (IsKeyBetween(pos, 'a', 'f')){
     // FailSave
-    pos = PrintTimingsMenuChangeVal(&setting.DelayTime[pos - 'a']);
+    pos = GetUserTime16ptr(&setting.DelayTime[pos - 'a']);
   }
   else if (IsKeyBetween(pos, 'g', 'n')){
     // tooLow
-    pos = PrintTimingsMenuChangeVal(&setting.TimeTooLow[pos - 'g']);
+    pos = GetUserTime16ptr(&setting.TimeTooLow[pos - 'g']);
   }
   else if (IsKeyBetween(pos, 'o', 'v')){
     // Low
-    pos = PrintTimingsMenuChangeVal(&setting.TimeLow[pos - 'o']);
+    pos = GetUserTime16ptr(&setting.TimeLow[pos - 'o']);
   }
   else if (IsKeyBetween(pos, 'w', 'z')){
     // High
-    pos = PrintTimingsMenuChangeVal(&setting.TimeHigh[pos - 'w']);
+    pos = GetUserTime16ptr(&setting.TimeHigh[pos - 'w']);
   }
   else if (IsKeyBetween(pos, 'A', 'D')){
     // tooHigh
-    pos = PrintTimingsMenuChangeVal(&setting.TimeTooHigh[pos - 'A']);
+    pos = GetUserTime16ptr(&setting.TimeTooHigh[pos - 'A']);
   }
   else if (IsKeyBetween(pos, '1', '3')){
     SettingsToRom(pos - '1'); 
@@ -1632,17 +1647,14 @@ void PrintLoopMenu(){
   pos = PrintWaterVals(pos);
 
   pos = PrintLine(pos, 3, 76);
-  //PrintLine(pos + 1, 6, 70);
-
+  
   // Avg 
   pos = PrintAVGs(pos);
 
-  //EscBold(1);
   pos = PrintLine(pos, 3, 76);
   
   EscBold(1);
-  //pos = PrintLine(pos + 3, 3, 76);
-
+  
   // we need this pos in loop()
   myLastLine = pos;
 
@@ -1662,13 +1674,9 @@ Start:
 
   EscLocate(5, pos++);
   PrintMenuKeyStd('a'); Serial.print(F("ReScan   "));
-  //PrintSpaces(3);
   PrintMenuKeyStd('b'); Serial.print(F("ReBoot   "));
-  //PrintSpaces(3);
   PrintMenuKeyStd('c'); Serial.print(F("Date   "));
-  //PrintSpaces(3);
   PrintMenuKeyStd('d'); Serial.print(F("Time   "));
-  //PrintSpaces(3);
   PrintMenuKeyStd('e'); Serial.print(F("Addr. = "));
   PrintBoldInt(my.Address, 3, '0');
 
@@ -1684,9 +1692,7 @@ Start:
   EscFaint(1);
   Serial.print(F("Color   "));
   EscFaint(0);
-  //PrintSpaces(3);
   PrintMenuKeyStd('h'); Serial.print(F("KeyColor   "));
-  //PrintSpaces(3);
   PrintMenuKeyStdBoldFaint('i', (my.Default), (!my.Default)); Serial.print(F("AsDefault"));
 
   pos = PrintShortLine(pos++, 8);
@@ -1694,11 +1700,8 @@ Start:
   EscLocate(5, pos++);
   PrintMenuKeyStd('j');
   Serial.print(F("More...   "));
-  //PrintSpaces(3);
   PrintMenuKeyStd('k'); Serial.print(F("Values...   "));
-  //PrintSpaces(3);
   PrintMenuKeyStd('l'); Serial.print(F("Times...   "));
-  //PrintSpaces(3);
   PrintMenuKeyStd('m'); Serial.print(F("Manual..."));
 
   PrintShortLine(pos++, 8);
@@ -1708,9 +1711,11 @@ Start:
   EscBoldColor(fgBlue);
   Serial.print((char*)setting.Name);
   PrintSpaces(3);
+
   EscKeyStyle(1);
   Serial.print(F("o-q):"));
   EscKeyStyle(0);
+
   Serial.print(F(" Sel.Setting [1-3] = "));
   EscBoldColor(fgBlue);
   Serial.print(my.Setting + 1);

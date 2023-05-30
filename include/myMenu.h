@@ -757,7 +757,7 @@ byte PrintValuesMenuChangeVal(int32_t *valIN){
   *valIN = GetUserFloat(*valIN);
   return 1;
 }
-/*
+
 byte IsKeyBetween(char key, char start, char stop){
   // THIS IS STRANGE
   //    Using this some times has a lower flash use than
@@ -765,8 +765,8 @@ byte IsKeyBetween(char key, char start, char stop){
   // THIS IS STRANGE
   return (key >= start && key <= stop);
 }
-*/
-#define IsKeyBetween(key, start, stop) ((key >= start) && (key <= stop))
+
+//#define IsKeyBetween(key, start, stop) ((key >= start) && (key <= stop))
 
 void PrintValuesMenu(){
 

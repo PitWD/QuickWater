@@ -425,7 +425,6 @@ void EzoSetAddress(byte ezo, byte addrNew, byte all){
             // Exclude RTCs
             addrNew = 105;
         }
-        
         if (EzoCheckOnSet(ezo,all, i)){
             strcpy_P(strHLP, (PGM_P)F("I2C,"));
             itoa(addrNew, strHLP2, 10);
@@ -620,26 +619,15 @@ int8_t EzoDoNext(){
                 // tooLow
                 ezoAct = 0;     // temporary use for comparison 
                 ezoValue[ezoCnt - INTERNAL_LEVEL_CNT][0] = 0;
-            if (!digitalRead(14)){
-                // Low
-                ezoAct += 25;
-                ezoValue[ezoCnt - INTERNAL_LEVEL_CNT][0] = 25;
+            
+            for (size_t i = 0; i < 4; i++){
+                if (!digitalRead(i + 14)){
+                    // Low -> tooHigh
+                    ezoAct += 25;
+                    ezoValue[ezoCnt - INTERNAL_LEVEL_CNT][0] = (i + 1) * 25;
+                }
             }
-            if (!digitalRead(15)){
-                // OK
-                ezoAct += 25;
-                ezoValue[ezoCnt - INTERNAL_LEVEL_CNT][0] = 50;
-            }
-            if (!digitalRead(16)){
-                // High
-                ezoAct += 25;
-                ezoValue[ezoCnt - INTERNAL_LEVEL_CNT][0] = 75;
-            }
-            if (!digitalRead(17)){
-                // toHigh
-                ezoAct += 25;
-                ezoValue[ezoCnt - INTERNAL_LEVEL_CNT][0] = 100;
-            }
+                       
             if (ezoValue[ezoCnt - INTERNAL_LEVEL_CNT][0] != ezoAct){
                 // One or some level-switches are wrong/faulty
                 ezoValue[ezoCnt - INTERNAL_LEVEL_CNT][0] = 66666;

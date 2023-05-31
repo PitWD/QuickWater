@@ -8,7 +8,9 @@
 // my Eeprom - Variables (Def. in quicklib.h)
 mySTRUCT my;
 
-byte myLastLine = 0;  // Helper for action-port refresh
+// Helper for action-port refresh
+  byte myLastLine = 0;
+  byte portStateFirstRun = 0;
 
 void myToRom(){
   EEPROM.put(997, my);
@@ -1532,7 +1534,6 @@ void PrintPortStates(){
   // 8 low-ports / 4 high ports
   byte posOfPort[] = {8, 17, 22, 26, 34, 47, 60, 73, 10, 19, 36, 75};
 
-  static byte firstRun = 0;
   static byte lastVal[12];
   byte isChanged = 0;
 
@@ -1545,7 +1546,7 @@ void PrintPortStates(){
     }
   }
   
-  if (isChanged || !firstRun){
+  if (isChanged || !portStateFirstRun){
     for (byte i = 0; i < 8; i++){
       // Low-Ports
       EscLocate(posOfPort[i], myLastLine);
@@ -1576,7 +1577,7 @@ void PrintPortStates(){
         Serial.print(F("<"));        
       }
     }
-    firstRun = 1;
+    portStateFirstRun = 1;
     EscBoldColor(0);
   }
 }
@@ -1643,7 +1644,8 @@ void PrintLoopMenu(){
   
   // we need this pos in loop()
   myLastLine = pos;
-
+  portStateFirstRun = 0;
+  
   PrintLine(pos + 1, 3, 76);
 
 }

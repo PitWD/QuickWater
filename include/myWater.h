@@ -421,6 +421,11 @@ void EzoSetAddress(byte ezo, byte addrNew, byte all){
             // Exclude Eprom-Addresses
             addrNew = 88;
         }
+        if (addrNew == 104){
+            // Exclude RTCs
+            addrNew = 105;
+        }
+        
         if (EzoCheckOnSet(ezo,all, i)){
             strcpy_P(strHLP, (PGM_P)F("I2C,"));
             itoa(addrNew, strHLP2, 10);

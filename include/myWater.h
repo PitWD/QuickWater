@@ -23,16 +23,6 @@ static byte ezoAct = 0;
 // How many ezo's we have
 static byte ezoCnt = 0;
 
-/*
-#define ezoHumT 0
-#define ezoRTD 1
-#define ezoPH 2
-#define ezoEC 3
-#define ezoORP 4
-#define ezoHUM 5
-#define ezoCO2 6
-#define ezoDiO2 7
-*/
 #define ezoRTD 0
 #define ezoEC 1
 #define ezoPH 2
@@ -107,22 +97,6 @@ ezoProbeSTRUCT ezoProbe[EZO_MAX_PROBES];
 
 int32_t ezoValue[EZO_MAX_PROBES][EZO_MAX_VALUES];
 
-/*
-struct settingSTRUCT{
-    // 197 Byte * 3 Modes = 591 Byte
-    uint16_t DelayTime[6];
-    uint16_t TimeTooLow[6];
-    uint16_t TimeLow[6];
-    uint16_t TimeHigh[6];
-    uint16_t TimeTooHigh[6];
-    int32_t FailSaveValue[6];
-    int32_t ValueTooLow[6];
-    int32_t ValueLow[6];
-    int32_t ValueHigh[6];
-    int32_t ValueTooHigh[6];
-    char Name[17];
-}setting;
-*/
 struct settingSTRUCT{
     // 197 Byte * 3 Modes = 591 Byte
     uint16_t DelayTime[6];
@@ -145,40 +119,6 @@ struct manualSTRUCT{
     char Name[17];
 }manual;
 
-/*
-                                    | -------------------- HighLowTimes [24] -------------------- |
-name   typeID   typeTo    typeTo    typeTo    typeTo    typeToCalc typeToCalc typeToEdit typeToEdit   
-                LowPort   HighPort  Time2Low  TimeLow   TimeHigh   Time2High  TimeHigh   Time2High    
-Temp      0       2         10          0        8         16         20         16         20        
- pH       1       3         11          1        9         17         21         17         21        
-Level     2       4         12          2       10         18         22         18         22        
-EC-1      3       5         13          3       11         19         23         19         23          
- O2       4       8         na          4       12         na         na         na         na          
- ORP      5       9          9          5       13          5         13         na         na          
-EC-2      6       6         na          6       14         na         na         na         na          
-EC-3      7       7         na          7       15         na         na         na         na          
-
-                         VertScreen  HorzScreen
-name   typeID   typeTo     orderTo    orderTo    typeTo      typeTo    typeTo
-                DelayTime  typeID     typeID     xyzSINCE  lastAction  avgVal
-Temp      0       0          0          0          0           0         0
- pH       1       1          3          3          1           1         1
-Level     2       2          6          1          2           2         2
-EC-1      3       3          7          5          3           3         3
- O2       4       4          1          4          4           4         4
- ORP      5       5          5          2          5           5         5
-EC-2      6       na         4          na         6           6         3
-EC-3      7       na         2          na         7           7         3
-
-
-Validity:   Return-value zero is just valid if the input was zero too.
-            all other zero return is invalid.
-            byte IsValValid (byte id, int32_t val){
-                return (val || (!val && !id))
-            }
-
-*/
-
 // Counter for Low/High
 uint32_t tooLowSince[8];
 uint32_t lowSince[8];
@@ -195,47 +135,6 @@ long avgVal[6]; //  = {21000L, 1250000L, 6000L, 225000L, 99999L, 66666L};
 #define avg_ORP avgVal[3]
 #define avg_O2 avgVal[4]
 #define avg_LVL avgVal[5]
-
-
-//long failSave[6]; //  = {21000L, 1250000L, 6000L, 225000L, 99999L, 66666L};
-#define failSave_RTD action.limits.FailSave[0]
-#define failSave_EC action.limits.FailSave[1]
-#define failSave_pH action.limits.FailSave[2]
-#define failSave_ORP action.limits.FailSave[3]
-#define failSave_O2 action.limits.FailSave[4]
-#define failSave_LVL action.limits.FailSave[5]
-
-// long tooLow[6]; //  = {15000L, 1000000L, 5500L, -750000L, 50000L, 24999L};
-#define tooLow_RTD action.limits.TooLow[0]
-#define tooLow_EC action.limits.TooLow[1]
-#define tooLow_pH action.limits.TooLow[2]
-#define tooLow_ORP action.limits.TooLow[3]
-#define tooLow_O2 action.limits.TooLow[4]
-#define tooLow_LVL action.limits.TooLow[5]
-
-// long low[6]; //  = {17000L, 1250000L, 5800L, -500000L, 66666L, 49999L};
-#define low_RTD action.limits.Low[0]
-#define low_EC action.limits.Low[1]
-#define low_pH action.limits.Low[2]
-#define low_ORP action.limits.Low[3]
-#define low_O2 action.limits.Low[4]
-#define low_LVL action.limits.Low[5]
-
-// long high[6]; //  = {20000L, 1750000L, 6800L, 500000L, 100001L, 74999L};
-#define high_RTD action.limits.High[0]
-#define high_EC action.limits.High[1]
-#define high_pH action.limits.High[2]
-#define high_ORP action.limits.High[3]
-#define high_O2 action.limits.High[4]
-#define high_LVL action.limits.High[5]
-
-// long tooHigh[6]; //  = {22000L, 2000000L, 7000L, 750000L, 100001L, 99999};
-#define tooHigh_RTD action.limits.TooHigh[0]
-#define tooHigh_EC action.limits.TooHigh[1]
-#define tooHigh_pH action.limits.TooHigh[2]
-#define tooHigh_ORP action.limits.TooHigh[3]
-#define tooHigh_O2 action.limits.TooHigh[4]
-#define tooHigh_LVL action.limits.TooHigh[5]
 
 
 #define CAL_RTD_RES -1         // Value for Reset
@@ -271,23 +170,11 @@ void DefaultProbesToRom(){
 void SettingsToRom(int set){ //(int set){
     // Save Action Model (2x197 byte / end @ 745)
     //set *= 197;
-    /*
-    EEPROM.put(351 + set, delayTimes);
-    EEPROM.put(363 + set, actionTooLow);
-    EEPROM.put(375 + set, actionLow);
-    EEPROM.put(387 + set, actionHigh);
-    EEPROM.put(399 + set, actionTooHigh);
-    */
     EEPROM.put(242 + set * 197, setting);
 }
 void ManualTimesToRom(int set){
     // Save temporay/manual times (4x41 byte / end @ 909)
     //set *= 41;
-    /*
-    EEPROM.put(663 + set, temporaryLow);
-    EEPROM.put(675 + set, temporaryHigh);
-    EEPROM.put(687 + set, temporaryName);
-    */
     EEPROM.put(833 + set * 41, manual);
 }
 
@@ -296,22 +183,10 @@ void DefaultProbesFromRom(){
 }
 void SettingsFromRom(int set){ //(int set){
     //set *= 197;
-    /*
-    EEPROM.get(351 + set, delayTimes);
-    EEPROM.get(363 + set, actionTooLow);
-    EEPROM.get(375 + set, actionLow);
-    EEPROM.get(387 + set, actionHigh);
-    EEPROM.get(399 + set, actionTooHigh);
-    */
    EEPROM.get(242 + set * 197, setting);
 }
 void ManualTimesFromRom(int set){
     //set *= 41;
-    /*
-    EEPROM.get(663 + set, temporaryLow);
-    EEPROM.get(675 + set, temporaryLow);
-    EEPROM.get(687 + set, temporaryName);
-    */
     EEPROM.get(833 + set * 41, manual);
 }
 
@@ -378,7 +253,7 @@ byte EzoCheckOnSet(byte ezo, byte all, byte i){
 
 void EzoSetName(char *strIN, byte ezo, byte all, byte autoName){
     
-    byte cnt[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    byte cnt[] = {0, 0, 0, 0, 0, 0};//, 0, 0, 0, 0, 0};
 
     byte len = 0;
 
@@ -475,7 +350,7 @@ int32_t CompensatePH(int32_t pH, int32_t temp) {
 void EzoSetCalTemp(byte ezo, byte all){
     
     for (byte i = 0; i < ezoCnt - INTERNAL_LEVEL_CNT; i++){
-        if (EzoCheckOnSet(ezo,all, i)){
+        if (EzoCheckOnSet(ezo, all, i)){
             IIcSetStr(ezoProbe[i].address, (char*)"T,25", 0);
         }
     }
@@ -542,6 +417,10 @@ void EzoSetCal(char *strCmd, byte ezo, byte all, int32_t value, byte calAction){
 
 void EzoSetAddress(byte ezo, byte addrNew, byte all){
     for (int i = 0; i < ezoCnt - INTERNAL_LEVEL_CNT; i++){
+        if (addrNew > 79 && addrNew < 88){
+            // Exclude Eprom-Addresses
+            addrNew = 88;
+        }
         if (EzoCheckOnSet(ezo,all, i)){
             strcpy_P(strHLP, (PGM_P)F("I2C,"));
             itoa(addrNew, strHLP2, 10);

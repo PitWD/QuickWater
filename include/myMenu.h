@@ -901,16 +901,15 @@ void RunManualSetting(byte port, byte style){
   }
   
   // Calc offset / onTime / offTime
-  //for (byte i = 0; i < 6; i++){
-  for (byte i = 0; i < 8; i++){
+//  for (byte i = 0; i < 8; i++){
+  for (byte i = 0; i < 12; i++){
     
-    byte typeExist = 0;
-    //byte type = i;
+//    byte typeExist = 0;
 
     // Correct type for the three times EC
-    byte type = CorrectType(i);
+//    byte type = CorrectType(i);
     
-    DoLowHigh:
+//    DoLowHigh:
     // Low-Ports
     if ((i == port || port == 255) && manualTiming[i].runTime){
 
@@ -959,8 +958,7 @@ void RunManualSetting(byte port, byte style){
         manualTiming[i].offset = manualTiming[i].offTime / 2;
       }
 
-      //if (i < 6){
-      if (i < 8){
+/*    if (i < 8){
         // Low-Ports
         EscColor(fgBlue);
       }
@@ -1001,7 +999,7 @@ void RunManualSetting(byte port, byte style){
       EscBold(0);
       PrintLine(pos++, 7, 68);
     }
-    
+  */  
   }
   firstLine = 0;
 

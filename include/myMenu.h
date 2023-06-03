@@ -926,9 +926,7 @@ void RunManualSetting(byte port, byte style){
       uint16_t offset;
       uint16_t onTime;
       uint16_t offTime;
-      //byte state;
-      //uint16_t inState;
-      uint16_t repeats;
+//      uint16_t repeats;
   }manualTiming[12];
 
   // byte firstLine = 0;
@@ -982,6 +980,7 @@ void RunManualSetting(byte port, byte style){
     
 //    DoLowHigh:
     // Low-Ports
+    uint16_t repeats = 0;
     if ((i == port || port == 255) && manualTiming[i].runTime){
 
       // we're in Action and have a time...
@@ -989,34 +988,34 @@ void RunManualSetting(byte port, byte style){
       case 0:
         // Distributed
 
-        manualTiming[i].repeats = (maxTime / manualTiming[i].runTime);
+        repeats = (maxTime / manualTiming[i].runTime);
         
-        if (manualTiming[i].repeats > manualTiming[i].runTime){
+        if (repeats > manualTiming[i].runTime){
           // we can't On/Off shorter than 1sec.
-          manualTiming[i].repeats = manualTiming[i].runTime;
+          repeats = manualTiming[i].runTime;
         }
         
         ReCalc:   // sucking integer resolution need this up & down
                   // to get total onTime exact but also as distributed as possible
-        manualTiming[i].onTime = manualTiming[i].runTime / manualTiming[i].repeats;
-        if ((manualTiming[i].onTime * manualTiming[i].repeats) < manualTiming[i].runTime){
+        manualTiming[i].onTime = manualTiming[i].runTime / repeats;
+        if ((manualTiming[i].onTime * repeats) < manualTiming[i].runTime){
           // onTime too short - raise onTime (suck - 1)
           manualTiming[i].onTime++;
         }
-        if ((manualTiming[i].onTime * manualTiming[i].repeats) > manualTiming[i].runTime){
+        if ((manualTiming[i].onTime * repeats) > manualTiming[i].runTime){
           // onTime too long - lower repeats (suck - 2)
-          if (manualTiming[i].repeats){
-            manualTiming[i].repeats--;
+          if (repeats){
+            repeats--;
             goto ReCalc;
           }          
         }
 
-        manualTiming[i].offTime = (maxTime - manualTiming[i].runTime) / manualTiming[i].repeats;               
-        manualTiming[i].offset = (maxTime - ((manualTiming[i].onTime + manualTiming[i].offTime) * manualTiming[i].repeats)) / 2;
+        manualTiming[i].offTime = (maxTime - manualTiming[i].runTime) / repeats;               
+        manualTiming[i].offset = (maxTime - ((manualTiming[i].onTime + manualTiming[i].offTime) * repeats)) / 2;
         break;
       case 1:
         // Centered
-        manualTiming[i].repeats = 1;
+        repeats = 1;
         manualTiming[i].onTime = manualTiming[i].runTime;
         manualTiming[i].offTime = maxTime - manualTiming[i].runTime;
         manualTiming[i].offset = 0;
@@ -1127,7 +1126,7 @@ void RunManualSetting(byte port, byte style){
                 // Start ON
                 manualTiming[i].inState = 0;
                 manualTiming[i].state = 1;
-                manualTiming[i].repeats--;
+                repeats--;
                 needRefresh = 1;
               }              
             }
@@ -1173,7 +1172,7 @@ void RunManualSetting(byte port, byte style){
               // High-Ports
               EscColor(fgYellow);
             }
-            PrintBoldInt(manualTiming[i].repeats, 8, '0');
+            PrintBoldInt(repeats, 8, '0');
             EscColor(0);
             PrintSpacer(manualTiming[i].state);
             if (manualTiming[i].state){

@@ -1098,7 +1098,7 @@ void RunManualSetting(byte port, byte style){
 
           if (runTime >= manualTiming[i].offset ){
             // Offset is expired - calc interval...
-            portState = ((runTime - manualTiming[i].runTime) % (manualTiming[i].onTime + manualTiming[i].offTime) < manualTiming[i].onTime);
+            portState = ((runTime - manualTiming[i].offset) % (manualTiming[i].onTime + manualTiming[i].offTime) < manualTiming[i].onTime);
           }
           else{
             // Offset is still active

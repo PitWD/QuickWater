@@ -858,6 +858,67 @@ byte CorrectFromRepeat(byte i){
   return i;
 }
 
+byte PrintTempToLevel(byte pos){
+  EscBold(1);
+  Serial.print(F("|   Temp.    |    EC     |     pH     |    Redox    |    O2     |   Level  |"));
+  pos = PrintLine(pos, 3, 76);    
+  EscBold(0);
+  return pos;
+}
+void PrintPortStates(){
+
+  // 8 low-ports / 4 high ports
+  byte posOfPort[] = {8, 17, 22, 26, 34, 47, 60, 73, 10, 19, 36, 75};
+
+  static byte lastVal[12];
+  byte isChanged = 0;
+
+  // Check on Port_Change
+  for (byte i = 0; i < 12; i++){
+    byte val = digitalRead(i + 2);
+    if (val != lastVal[i]){
+      lastVal[i] = val;
+      isChanged = 1;
+    }
+  }
+  
+  if (isChanged || !portStateFirstRun){
+    for (byte i = 0; i < 8; i++){
+      // Low-Ports
+      EscLocate(posOfPort[i], myLastLine);
+      if (lastVal[i]){
+        EscBoldColor(fgBlue);
+        Serial.print(F(">"));
+        EscFaint(1);
+      }
+      else{
+        EscFaint(1);
+        Serial.print(F(">"));
+        EscBoldColor(fgGreen);
+      }
+      Serial.print(F("~"));
+    }
+    for (byte i = 8; i < 12; i++){
+      // High-Ports
+      EscLocate(posOfPort[i], myLastLine);
+      if (lastVal[i]){
+        EscBoldColor(fgYellow);
+        Serial.print(F("<"));        
+        EscCursorLeft(2);
+        EscFaint(1);
+        Serial.print(F("~"));
+      }
+      else{
+        EscFaint(1);
+        Serial.print(F("<"));        
+      }
+    }
+    portStateFirstRun = 1;
+    EscBoldColor(0);
+  }
+}
+
+
 void RunManualSetting(byte port, byte style){
 
   struct runManualSTRUCT{
@@ -865,20 +926,30 @@ void RunManualSetting(byte port, byte style){
       uint16_t offset;
       uint16_t onTime;
       uint16_t offTime;
-      byte state;
-      uint16_t inState;
+      //byte state;
+      //uint16_t inState;
       uint16_t repeats;
   }manualTiming[12];
 
-  byte firstLine = 0;
+  // byte firstLine = 0;
 
-  int8_t pos = PrintMenuTop((char*)"- RUN Manual -");
+  int8_t pos = PrintMenuTop((char*)"- RUN Manual -") + 1;
+  EscLocate(3, pos);
   pos++;
 
+  pos = PrintTempToLevel(pos);
+  PrintLine(pos + 1, 3, 76);    
+
+  // we need this pos in loop() / PrintPortStates()
+  myLastLine = pos;
+  portStateFirstRun = 0;
+
+  /*
   EscLocate(19, pos++);
   Serial.print(F("|  Offset  |  OnTime  | OffTime  | ON's_2Do |  State   |"));
   EscBold(1);
   PrintLine(pos++, 7, 68);
+  */
 
   // Copy Low & High values to manualTiming array
   for (byte i = 0; i < 8; i++) {
@@ -897,7 +968,7 @@ void RunManualSetting(byte port, byte style){
         maxTime = manualTiming[i].runTime;
       }
     }
-    manualTiming[i].state = 0;
+//    manualTiming[i].state = 0;
   }
   
   // Calc offset / onTime / offTime
@@ -953,7 +1024,7 @@ void RunManualSetting(byte port, byte style){
       default:
         break;
       }
-      manualTiming[i].inState = manualTiming[i].offTime;
+      //manualTiming[i].inState = manualTiming[i].offTime;
       if (!manualTiming[i].offset){
         manualTiming[i].offset = manualTiming[i].offTime / 2;
       }
@@ -983,9 +1054,9 @@ void RunManualSetting(byte port, byte style){
         firstLine = 1;
       }
       typeExist = 1;
-      
+*/      
     }
-
+/*
     byte j = CorrectForRepeat(i);
     if (j != i){
       i = j;
@@ -999,27 +1070,42 @@ void RunManualSetting(byte port, byte style){
       EscBold(0);
       PrintLine(pos++, 7, 68);
     }
-  */  
+*/  
   }
-  firstLine = 0;
+//  firstLine = 0;
 
   // Run times...
+  uint16_t runTime = 0;
+  maxTime++;
   while (maxTime){
     if (DoTimer()){
       // A second is gone...
 
-      byte needRefresh = 0;
+//      byte needRefresh = 0;
 
       maxTime--;
 
+      // Time left as PrintErrOK...
       PrintSerTime(maxTime, 0, 0); // Time left to strHLP2
       strcpy(&strHLP2[8], (char*)" left...");
       PrintErrorOK(0, strlen(strHLP2), strHLP2);
 
       for (byte i = 0; i < 12; i++){
 
+        byte portState = 0;
         if ((i == port || port == 255) && manualTiming[i].runTime){
           // port is valid & timing exist
+
+          if (runTime >= manualTiming[i].offset ){
+            // Offset is expired - calc interval...
+            portState = ((runTime - manualTiming[i].runTime) % (manualTiming[i].onTime + manualTiming[i].offTime) < manualTiming[i].onTime);
+          }
+          else{
+            // Offset is still active
+          }
+          
+
+/*
           if (manualTiming[i].offset){
             // Start-Offset not reached
             manualTiming[i].offset--;
@@ -1048,9 +1134,13 @@ void RunManualSetting(byte port, byte style){
             digitalWrite(i + 2, manualTiming[i].state);
             manualTiming[i].inState++;        
           }
+*/          
         }
+        digitalWrite(i + 2, portState);
       }
+      runTime++;
 
+/*
       if (needRefresh){
         //for (byte i = 0; i < 6; i++){
         for (byte i = 0; i < 8; i++){
@@ -1114,8 +1204,9 @@ void RunManualSetting(byte port, byte style){
         }
         firstLine = 0;
       }
-      
+*/      
       PrintLoopTimes();    
+      PrintPortStates();
 
     }
     if (Serial.available()){
@@ -1527,59 +1618,6 @@ byte PrintWaterVals(byte pos){
 
 }
 
-void PrintPortStates(){
-
-  // 8 low-ports / 4 high ports
-  byte posOfPort[] = {8, 17, 22, 26, 34, 47, 60, 73, 10, 19, 36, 75};
-
-  static byte lastVal[12];
-  byte isChanged = 0;
-
-  // Check on Port_Change
-  for (byte i = 0; i < 12; i++){
-    byte val = digitalRead(i + 2);
-    if (val != lastVal[i]){
-      lastVal[i] = val;
-      isChanged = 1;
-    }
-  }
-  
-  if (isChanged || !portStateFirstRun){
-    for (byte i = 0; i < 8; i++){
-      // Low-Ports
-      EscLocate(posOfPort[i], myLastLine);
-      if (lastVal[i]){
-        EscBoldColor(fgBlue);
-        Serial.print(F(">"));
-        EscFaint(1);
-      }
-      else{
-        EscFaint(1);
-        Serial.print(F(">"));
-        EscBoldColor(fgGreen);
-      }
-      Serial.print(F("~"));
-    }
-    for (byte i = 8; i < 12; i++){
-      // High-Ports
-      EscLocate(posOfPort[i], myLastLine);
-      if (lastVal[i]){
-        EscBoldColor(fgYellow);
-        Serial.print(F("<"));        
-        EscCursorLeft(2);
-        EscFaint(1);
-        Serial.print(F("~"));
-      }
-      else{
-        EscFaint(1);
-        Serial.print(F("<"));        
-      }
-    }
-    portStateFirstRun = 1;
-    EscBoldColor(0);
-  }
-}
-
 void PrintAVGsHLP(byte type, byte posX, byte posY, byte preDot, byte printUnit){
   SetAvgColorEZO(type);
   EscLocate(posX, posY);
@@ -1620,12 +1658,13 @@ void PrintLoopMenu(){
   pos++;
 
   EscLocate(3, pos++);
-  EscBold(1);
-  Serial.print(F("|   Temp.    |    EC     |     pH     |    Redox    |    O2     |   Level  |"));
+  
+  //EscBold(1);
+  //Serial.print(F("|   Temp.    |    EC     |     pH     |    Redox    |    O2     |   Level  |"));
+  //pos = PrintLine(pos, 3, 76);
+  //EscBold(0);
 
-  pos = PrintLine(pos, 3, 76);
-    
-  EscBold(0);
+  pos = PrintTempToLevel(pos);
 
   PrintErrorOK(0, 0, (char*)"Read Loop started...");
 
@@ -1640,7 +1679,7 @@ void PrintLoopMenu(){
   
   EscBold(1);
   
-  // we need this pos in loop()
+  // we need this pos in loop() / PrintPortStates()
   myLastLine = pos;
   portStateFirstRun = 0;
   

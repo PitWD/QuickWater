@@ -926,10 +926,8 @@ void RunManualSetting(byte port, byte style){
       uint16_t offset;
       uint16_t onTime;
       uint16_t offTime;
-//      uint16_t repeats;
   }manualTiming[12];
 
-  // byte firstLine = 0;
 
   int8_t pos = PrintMenuTop((char*)"- RUN Manual -") + 1;
   EscLocate(3, pos);
@@ -938,16 +936,9 @@ void RunManualSetting(byte port, byte style){
   pos = PrintTempToLevel(pos);
   PrintLine(pos + 1, 3, 76);    
 
-  // we need this pos in loop() / PrintPortStates()
+  // we need this pos in "loop()" / see PrintPortStates()
   myLastLine = pos;
   portStateFirstRun = 0;
-
-  /*
-  EscLocate(19, pos++);
-  Serial.print(F("|  Offset  |  OnTime  | OffTime  | ON's_2Do |  State   |"));
-  EscBold(1);
-  PrintLine(pos++, 7, 68);
-  */
 
   // Copy Low & High values to manualTiming array
   for (byte i = 0; i < 8; i++) {
@@ -966,21 +957,13 @@ void RunManualSetting(byte port, byte style){
         maxTime = manualTiming[i].runTime;
       }
     }
-//    manualTiming[i].state = 0;
   }
   
   // Calc offset / onTime / offTime
-//  for (byte i = 0; i < 8; i++){
   for (byte i = 0; i < 12; i++){
-    
-//    byte typeExist = 0;
 
-    // Correct type for the three times EC
-//    byte type = CorrectType(i);
-    
-//    DoLowHigh:
-    // Low-Ports
     uint16_t repeats = 0;
+
     if ((i == port || port == 255) && manualTiming[i].runTime){
 
       // we're in Action and have a time...
@@ -1023,55 +1006,11 @@ void RunManualSetting(byte port, byte style){
       default:
         break;
       }
-      //manualTiming[i].inState = manualTiming[i].offTime;
       if (!manualTiming[i].offset){
         manualTiming[i].offset = manualTiming[i].offTime / 2;
       }
-
-/*    if (i < 8){
-        // Low-Ports
-        EscColor(fgBlue);
-      }
-      else{
-        // High-Ports
-        EscColor(fgYellow);
-      }
-      EscLocate(7, pos++);
-      EscBold(1);
-      PrintCentered(Fa(ezoStrLongType[type]), 11);
-      EscColor(0);
-      PrintSpacer(0);
-      PrintSerTime(manualTiming[i].offset, 0, 1);
-      PrintSpacer(0);
-      PrintSerTime(manualTiming[i].onTime, 0, 1);
-      PrintSpacer(0);
-      PrintSerTime(manualTiming[i].offTime, 0, 1);
-      PrintSpacer(1);
-      if (!firstLine){
-        // 1st Line
-        EscSaveCursor();
-        firstLine = 1;
-      }
-      typeExist = 1;
-*/      
     }
-/*
-    byte j = CorrectForRepeat(i);
-    if (j != i){
-      i = j;
-      goto DoLowHigh;
-    }
-    i = CorrectFromRepeat(i);
-
-    
-    if ((typeExist && type != ezoEC) || (typeExist && i == 3)){
-      // Print type-separator line
-      EscBold(0);
-      PrintLine(pos++, 7, 68);
-    }
-*/  
   }
-//  firstLine = 0;
 
   // Run times...
   uint16_t runTime = 0;
@@ -1079,8 +1018,6 @@ void RunManualSetting(byte port, byte style){
   while (maxTime){
     if (DoTimer()){
       // A second is gone...
-
-//      byte needRefresh = 0;
 
       maxTime--;
 
@@ -1102,108 +1039,11 @@ void RunManualSetting(byte port, byte style){
           else{
             // Offset is still active
           }
-          
-
-/*
-          if (manualTiming[i].offset){
-            // Start-Offset not reached
-            manualTiming[i].offset--;
-          }
-          else{
-            // Offset reached
-            if (manualTiming[i].state){
-              // port is ON
-              if (manualTiming[i].inState == manualTiming[i].onTime){
-                // Start OFF
-                manualTiming[i].inState = 0;
-                manualTiming[i].state = 0;
-                needRefresh = 1;
-              }
-            }
-            else{
-              // port is OFF
-              if (manualTiming[i].inState == manualTiming[i].offTime){
-                // Start ON
-                manualTiming[i].inState = 0;
-                manualTiming[i].state = 1;
-                repeats--;
-                needRefresh = 1;
-              }              
-            }
-            digitalWrite(i + 2, manualTiming[i].state);
-            manualTiming[i].inState++;        
-          }
-*/          
         }
         digitalWrite(i + 2, portState);
       }
       runTime++;
 
-/*
-      if (needRefresh){
-        //for (byte i = 0; i < 6; i++){
-        for (byte i = 0; i < 8; i++){
-
-          byte typeExist = 0;
-          //byte type = i;
-
-          // Correct type for the three times EC
-          byte type = CorrectType(i);
-
-          DoLowHigh2:
-          // Low-Ports
-          if ((i == port || port == 255) && manualTiming[i].runTime){
-            // we're in Action and have a time...
-
-            typeExist = 1;
-
-            EscRestoreCursor();
-            if (firstLine){
-              EscCursorDown(firstLine);
-            }
-            
-            firstLine++;
-
-            if (i < 8){
-              // Low-Ports
-              EscColor(fgBlue);
-            }
-            else{
-              // High-Ports
-              EscColor(fgYellow);
-            }
-            PrintBoldInt(repeats, 8, '0');
-            EscColor(0);
-            PrintSpacer(manualTiming[i].state);
-            if (manualTiming[i].state){
-              // ON
-              EscColor(my.KeyColor);
-              PrintCentered((char*)"ON", 8);
-              EscColor(0);
-            }
-            else{
-              // OFF
-              PrintCentered((char*)"OFF", 8);
-            }
-            PrintSpacer(0);
-          }
-
-          byte j = CorrectForRepeat(i);
-          if (j != i){
-            i = j;
-            goto DoLowHigh2;
-          }
-          i = CorrectFromRepeat(i);
-
-          if ((typeExist && type != ezoEC) || (typeExist && i == 3)){
-            // separator line
-            firstLine++;
-          }
-                   
-        }
-        firstLine = 0;
-      }
-*/      
       PrintLoopTimes();    
       PrintPortStates();
 

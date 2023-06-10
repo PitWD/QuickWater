@@ -1192,7 +1192,7 @@ Start:
   }
   else if (IsKeyBetween(pos, 'i', 'l')){
     // HighTime
-    pos = GetUserTime16ptr(&manual.High[pos - '1']);
+    pos = GetUserTime16ptr(&manual.High[pos - 'i']);
   }
   else if (IsKeyBetween(pos, 'A', 'H')){
     // Run Single LowTime

@@ -71,7 +71,7 @@ void SetAutoAddress(){
 }
 
 byte PrintQuickWater(){
-  return PrintMenuTop((char*)"- QuickWater 1.05 -");
+  return PrintMenuTop((char*)"- QuickWater 1.06 -");
 }
 
 byte PrintAllMenuOpt1(byte pos){

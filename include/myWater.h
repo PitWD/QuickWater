@@ -883,6 +883,7 @@ void EzoScan(){
     ezoProbe[ezoCnt].type = ezoLVL;
     ezoProbe[ezoCnt].calibrated = 0;
     ezoCnt++;
+    my.Cnt = ezoCnt;
 
 }
 

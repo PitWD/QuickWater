@@ -1441,7 +1441,7 @@ byte PrintWaterVals(byte pos){
   byte posMax = 0;
   byte posAct = 0;
 
-  byte posX[] = {4, 17, 29, 42, 54, 69};
+  byte posX[] = {4, 17, 29, 42, 56, 69};
   byte lz[] = {2, 4, 2, 4, 3, 3};
   byte dp;
   int16_t divisor;

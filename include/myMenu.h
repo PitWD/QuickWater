@@ -1441,7 +1441,7 @@ byte PrintWaterVals(byte pos){
   byte posMax = 0;
   byte posAct = 0;
 
-  byte posX[] = {4, 17, 29, 42, 56, 69};
+  byte posX[] = {4, 17, 29, 42, 56, 68};
   byte lz[] = {2, 4, 2, 4, 3, 3};
   byte dp;
   int16_t divisor;
@@ -1482,13 +1482,13 @@ byte PrintAVGs(byte pos){
   
   PrintAVGsHLP(ezoPH, 32, pos, 2, 1);  
   
-  PrintAVGsHLP(ezoORP, 44, pos, 4, 0);
+  PrintAVGsHLP(ezoORP, 45, pos, 4, 0);
   EscColor(0);
-  Serial.print(F("rH"));
+  Serial.print(F("rH2"));
 
-  PrintAVGsHLP(ezoDiO2, 58, pos, 3, 1);
+  PrintAVGsHLP(ezoDiO2, 59, pos, 3, 1);
 
-  PrintAVGsHLP(ezoLVL, 72, pos, 3, 1);
+  PrintAVGsHLP(ezoLVL, 71, pos, 3, 1);
 
   return pos + 1;
 

@@ -282,7 +282,7 @@ void EzoSetName(char *strIN, byte ezo, byte all, byte autoName){
                 strcpy(ezoProbe[i].name, &iicStr[5]);
             }               
         }
-        
+        delay(333);
         // No clue why - but a second 0 is needed... otherwise module go kind of crazy - sometimes...
         Wire.beginTransmission(ezoProbe[i].address);
         Wire.write(0);

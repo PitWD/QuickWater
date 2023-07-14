@@ -598,6 +598,8 @@ int8_t EzoDoNext(){
         errInfo[1] = 'D';
         errCnt = ezoAct;
         err = - 1;
+        // Replace missing Probe-Value with actual AVG
+        ezoValue[ezoAct][0] = avgVal[ezoProbe[ezoAct].type];
       }
       else{
         // errCnt = ezoAct;

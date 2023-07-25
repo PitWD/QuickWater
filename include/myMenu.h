@@ -5,6 +5,8 @@
 #include <EEPROM.h>
 #include "myWater.h"
 
+void (*softReset)(void) = 0;
+
 // my Eeprom - Variables (Def. in quicklib.h)
 mySTRUCT my;
 
@@ -1610,6 +1612,7 @@ Start:
     break;
   case 'b':
     // ReBoot
+    softReset();
     break;
   case 'c':
     // Date

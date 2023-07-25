@@ -600,6 +600,19 @@ int8_t EzoDoNext(){
         err = - 1;
         // Replace missing Probe-Value with actual AVG
         ezoValue[ezoAct][0] = avgVal[ezoProbe[ezoAct].type];
+        if (ezoProbe[ezoAct].type == ezoORP){
+            // Value of probe (eH/mV) is just the Redox-Potential
+            // The Redox-Value (redox-capability) has the pH...
+            // rH = eH /28.9 + (2 * pH)
+            // eh = (rh - (2 * pH)) * 28.9
+            ezoValue[ezoAct][0] = (avg_ORP - (2 * avg_pH)) * (int32_t)289 / 10;
+        }
+        else{
+            // Avgs and probe-values are same
+            ezoValue[ezoAct][0] = avgVal[ezoProbe[ezoAct].type];
+        }
+        
+        
       }
       else{
         // errCnt = ezoAct;

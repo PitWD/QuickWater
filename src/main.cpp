@@ -381,8 +381,7 @@ void loop() {
     } 
   }
 
-  if (Serial.available()){
-    Serial.read();
+  if (GetONEchar()){
     OffOutPorts();
     PrintMainMenu();
   }

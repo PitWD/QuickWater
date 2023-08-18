@@ -248,27 +248,24 @@ Start:
   
   PrintShortLine(pos++, 8);
   EscLocate(5, pos);
-  PrintMenuKeyStdBoldFaint('h', my.Boot, !my.Boot);
-  Serial.print(F("Boot As ModBUS Slave     "));
-  EscFaint(0);
-  PrintMenuKeyStdBoldFaint('i', !my.Boot, my.Boot);
-  Serial.print(F("Boot For Terminal Use"));
-  EscFaint(0);
+  PrintMenuKeyStd('h');
+  Serial.print(F("Boot Modes = "));
+  EscBold(1);
+  Serial.print((char*)Fa(bootMode[my.Boot]));
+  EscBold(0);
   
   PrintMenuEnd(pos + 2);
 
-  pos = GetUserKey('i', -1);
+  pos = GetUserKey('h', -1);
 
   if (!SwitchAllAndProbeMenu(pos, 0, 2)){
     switch (pos){
     case 'h':
-      // Boot As Slave
-      my.Boot = 1;
-      myToRom();
-      break;
-    case 'i':
-      // Boot For Terminal
-      my.Boot = 0;
+      // Boot Mode
+      my.Boot++;
+      if (my.Boot > 3){
+        my.Boot = 0;
+      }
       myToRom();
       break;
     default:

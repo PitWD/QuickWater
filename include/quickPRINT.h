@@ -51,5 +51,7 @@ void PrintSpacer(byte bold);
 
 byte MBstart(byte address);
 void MBstop(byte pos);
-void MBaction(byte address, byte actionPort, byte state);
+void MBaction(byte address, byte type, byte actionPort, byte state);
+byte MBaddLong(int32_t value, byte pos);
+
 #endif

@@ -330,7 +330,7 @@ void MBstop(byte pos){
   Serial.print(":");
 
   // Calc LCR - print message
-  for (byte i = 1; i < pos - 1; i++){
+  for (byte i = 1; i < pos; i++){
     lcr = lcr ^ iicStr[i];
     PrintHexByte(iicStr[i]);
   }
@@ -342,11 +342,19 @@ void MBstop(byte pos){
 
 }
 
-void MBaction(byte address, byte actionPort, byte state){
+void MBaction(byte address, byte type, byte actionPort, byte state){
   MBstart(address);
-  iicStr[2] = 1;          // 0 = QuickTimer, 1 = QuickWater, 2 = QuickAir
+  iicStr[2] = type;          // 0 = QuickTimer, 1 = QuickWater, 2 = QuickAir
   iicStr[3] = 1;          // State ActionPort
   iicStr[4] = actionPort; // ID of port
   iicStr[5] = state;      // state of port
   MBstop(6);
+}
+
+byte MBaddLong(int32_t value, byte pos){
+  iicStr[pos++] = (uint8_t)(value & 0xFF);
+  iicStr[pos++] = (uint8_t)((value >> 8) & 0xFF);
+  iicStr[pos++] = (uint8_t)((value >> 16) & 0xFF);
+  iicStr[pos++] = (uint8_t)((value >> 24) & 0xFF);
+  return pos;
 }

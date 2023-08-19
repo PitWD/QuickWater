@@ -907,7 +907,7 @@ void PrintPortStates(){
         }
         else{
           // just values
-          MBaction(my.Address, i, 1);
+          MBaction(my.Address, 1, i, 1);
         }
       }
       else{
@@ -922,7 +922,7 @@ void PrintPortStates(){
         }
         else{
           // just values
-          MBaction(my.Address, i, 0);
+          MBaction(my.Address, 1, i, 0);
         }
       }
       if (!my.Boot){
@@ -950,7 +950,7 @@ void PrintPortStates(){
         }
         else{
           // just values
-          MBaction(my.Address, i, 1);
+          MBaction(my.Address, 1, i, 1);
         }
       }
       else{
@@ -964,7 +964,7 @@ void PrintPortStates(){
         }
         else{
           // just values
-          MBaction(my.Address, i, 0);
+          MBaction(my.Address, 1, i, 0);
         }
       }
     }
@@ -1474,10 +1474,7 @@ byte PrintWaterValsHlp(byte pos, byte posX, byte ezotype, byte lz, byte dp, int 
         iicStr[4] = i;          // ID of probe
         iicStr[5] = ezotype;    // type of probe
         // Value of probe
-        iicStr[6] = (uint8_t)(ezoValue[i][0] & 0xFF);
-        iicStr[7] = (uint8_t)((ezoValue[i][0] >> 8) & 0xFF);
-        iicStr[8] = (uint8_t)((ezoValue[i][0] >> 16) & 0xFF);
-        iicStr[9] = (uint8_t)((ezoValue[i][0] >> 24) & 0xFF);
+        MBaddLong(ezoValue[i][0], 6);
         MBstop(10);
       }
       avg += ezoValue[i][0];
@@ -1492,27 +1489,6 @@ byte PrintWaterValsHlp(byte pos, byte posX, byte ezotype, byte lz, byte dp, int 
       // rH = eH /28.9 + (2 * pH)
       avgVal[ezoORP] = (avgVal[ezoORP] * 10) / (int32_t)289 + (2 * avgVal[ezoPH]);
     }    
-
-    if (!my.Boot){
-      // Terminal
-    }
-    else if (my.Boot < 3){
-      // ModBus RTU & AscII
-    }
-    else{
-      // just values
-      MBstart(my.Address);
-      iicStr[2] = 1;          // 0 = QuickTimer, 1 = QuickWater, 2 = QuickAir
-      iicStr[3] = 3;          // AVG Probe-Type
-      iicStr[4] = ezotype;    // type of probe
-      // Avg of probe-type
-      iicStr[5] = (uint8_t)(avgVal[ezotype] & 0xFF);
-      iicStr[6] = (uint8_t)((avgVal[ezotype] >> 8) & 0xFF);
-      iicStr[7] = (uint8_t)((avgVal[ezotype] >> 16) & 0xFF);
-      iicStr[8] = (uint8_t)((avgVal[ezotype] >> 24) & 0xFF);
-      MBstop(9);
-    }
-
   }
 
   return posAct;
@@ -1567,7 +1543,6 @@ void PrintAVGsHLP(byte type, byte posX, byte posY, byte preDot, byte printUnit){
 }
 byte PrintAVGs(byte pos){
 
-  if (!my.Boot){
     // Terminal
     PrintAVGsHLP(ezoRTD, 7, pos, 2, 1);  
 
@@ -1585,14 +1560,6 @@ byte PrintAVGs(byte pos){
     PrintAVGsHLP(ezoDiO2, 59, pos, 3, 1);
 
     PrintAVGsHLP(ezoLVL, 71, pos, 3, 1);
-
-  }
-  else if (my.Boot < 3){
-    // ModBus RTU & AscII
-  }
-  else{
-    // just values
-  }
 
   return pos + 1;
 
@@ -1626,15 +1593,9 @@ void PrintLoopMenu(){
   pos = PrintWaterVals(pos);
 
   if (!my.Boot){
-    // Terminal
     pos = PrintLine(pos, 3, 76);
-  }
-
-  // Avg 
-  pos = PrintAVGs(pos);
-
-  if (!my.Boot){
-    // Terminal
+    // Avg
+    pos = PrintAVGs(pos);
     pos = PrintLine(pos, 3, 76);
     
     EscBold(1);

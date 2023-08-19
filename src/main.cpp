@@ -382,7 +382,9 @@ void loop() {
     if (EzoDoNext() == 1){
       // All read
       err = PrintWaterVals(5);
-      PrintAVGs(err + 1);
+      if (!my.Boot){
+        PrintAVGs(err + 1);
+      }
     } 
   }
 

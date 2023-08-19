@@ -309,3 +309,44 @@ void PrintSpacer(byte bold){
   }
 }
 
+void PrintHexByte(byte value){
+    Serial.print(value < 16 ? "0" : "");
+    Serial.print(value, HEX);
+}
+
+byte MBstart(byte address){
+  // Start a ModBUS message
+  // (re)misuse iicStr...
+  iicStr[0] = ':';
+  iicStr[1] = address;
+  return 2; // next pos in iicStr
+}
+
+void MBstop(byte pos){
+  // Finish a ModBUS message
+
+  byte lcr = 0;
+
+  Serial.print(":");
+
+  // Calc LCR - print message
+  for (byte i = 1; i < pos - 1; i++){
+    lcr = lcr ^ iicStr[i];
+    PrintHexByte(iicStr[i]);
+  }
+  // print LCR
+  PrintHexByte(lcr);
+
+  // End message with crlf
+  Serial.print(F("\r\n"));
+
+}
+
+void MBaction(byte address, byte actionPort, byte state){
+  MBstart(address);
+  iicStr[2] = 1;          // 0 = QuickTimer, 1 = QuickWater, 2 = QuickAir
+  iicStr[3] = 1;          // State ActionPort
+  iicStr[4] = actionPort; // ID of port
+  iicStr[5] = state;      // state of port
+  MBstop(6);
+}

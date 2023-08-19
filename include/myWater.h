@@ -918,18 +918,79 @@ void EzoScan(){
 }
 // Thoughts about the "Just values mode..."
 //
-//  Three fast colon (maybe  using the 12ms from "SingleChar")
-//      to change LoopMode
+//  Four fast colon (maybe  using the 12ms from "SingleChar")
+//      to change LoopMode to terminal...
 //          Loop modes:
 //              - 0 - Terminal Standard
 //              - 1 - ModBus RTU
 //              - 2 - ModBus ASCII
 //              - 3 - just values in ASCII
 //
-// :FFFF.......ABcrlf
-// colon / address / function / message / LRC / crlf
-
+// :/FF/FD/01/......./AB/crlf
+// colon / address / function / QuickAddress / message / LRC / crlf
+//                   FE = QuickAir
+//                   FD = QuickWater
+//                   FC = QuickTimer
 
 // Take care:
 //  Timer & Air need the "4-BootModes Menu/Settings implemented" changes, too...
 
+// To myTime & myAir
+/*
+const char bootMode_0[] PROGMEM = "Terminal";
+const char bootMode_1[] PROGMEM = "RTU";
+const char bootMode_2[] PROGMEM = "ASCII";
+const char bootMode_3[] PROGMEM = "Just-Values";
+PGM_P const bootMode[] PROGMEM = {
+    bootMode_0,
+    bootMode_1,
+    bootMode_2,
+    bootMode_3
+};
+*/
+
+// In PrintAllMenu():
+    /*
+    Serial.print(F("Boot Modes = "));
+    EscBold(1);
+    Serial.print((char*)Fa(bootMode[my.Boot]));
+    EscBold(0);
+    */
+
+/*
+      // Boot Mode
+      my.Boot++;
+      if (my.Boot > 3){
+        my.Boot = 0;
+      }
+      myToRom();
+      break;
+*/
+
+// Main Loop Changes:
+
+/*
+    if (!my.Boot){
+      PrintPortStates();
+      PrintLoopTimes();    
+    }
+    else{
+      // We're not in Terminal-Mode
+    }
+
+*/
+
+/*
+        if (!my.Boot){
+          // Terminal
+        }
+        else if (my.Boot < 3){
+          // ModBus RTU & AscII
+        }
+        else{
+          // just values
+        }
+
+*/
+
+// ::::

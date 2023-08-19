@@ -49,4 +49,7 @@ void PrintFalse(void);
 void PrintCharInSpaces(char charIN);
 void PrintSpacer(byte bold);
 
+byte MBstart(byte address);
+void MBstop(byte pos);
+void MBaction(byte address, byte actionPort, byte state);
 #endif

@@ -160,8 +160,13 @@ void loop() {
     uint32_t preToo = 0;
 
     PrintPortStates();
-
-    PrintLoopTimes();    
+    if (!my.Boot){
+      PrintLoopTimes();    
+    }
+    else{
+      // We're not in Terminal-Mode
+    }
+    
 
     // Check High/Low of AVGs 
     // compare timeOuts with timing-setting
@@ -382,8 +387,14 @@ void loop() {
   }
 
   if (GetONEchar()){
-    OffOutPorts();
-    PrintMainMenu();
+    if (!my.Boot){
+      OffOutPorts();
+      PrintMainMenu();
+    }
+    else{
+      // We're not in Terminal-Mode
+      // Force 1x values output
+      portStateFirstRun = 0;
+    }
   }
-
 }

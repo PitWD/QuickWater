@@ -1082,7 +1082,7 @@ void RunManualSetting(byte port, byte style){
       // Time left as PrintErrOK...
       PrintSerTime(maxTime, 0, 0); // Time left to strHLP2
       strcpy(&strHLP2[8], (char*)" left...");
-      PrintErrorOK(0, strlen(strHLP2), strHLP2, 0);
+      PrintErrorOK(0, strlen(strHLP2), strHLP2, 0, 1);
 
       for (byte i = 0; i < 12; i++){
 
@@ -1586,7 +1586,7 @@ void PrintLoopMenu(){
 
     pos = PrintTempToLevel(pos);
 
-    PrintErrorOK(0, 0, (char*)"Read Loop started...", 0);
+    PrintErrorOK(0, 0, (char*)"Read Loop started...", 0, 1);
 
   }
 

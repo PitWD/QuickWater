@@ -163,8 +163,16 @@ void loop() {
     if (!my.Boot){
       PrintLoopTimes();    
     }
+    else if (my.Boot < 3){
+      // ModBus RTU & AscII
+    }
     else{
-      // We're not in Terminal-Mode
+      // just values - send heart-beat
+      MBstart(my.Address);
+      // iicStr[2] = type;    // 0 = QuickTimer, 1 = QuickWater, 2 = QuickAir
+      iicStr[2] = 4;          // HeartBeat
+      MBaddLong(myTime, 3);
+      MBstop(7);
     }
     
 

@@ -907,7 +907,7 @@ void PrintPortStates(){
         }
         else{
           // just values
-          MBaction(my.Address, 1, i, 1);
+          MBaction(my.Address, i, 1);
         }
       }
       else{
@@ -922,7 +922,7 @@ void PrintPortStates(){
         }
         else{
           // just values
-          MBaction(my.Address, 1, i, 0);
+          MBaction(my.Address, i, 0);
         }
       }
       if (!my.Boot){
@@ -950,7 +950,7 @@ void PrintPortStates(){
         }
         else{
           // just values
-          MBaction(my.Address, 1, i, 1);
+          MBaction(my.Address, i, 1);
         }
       }
       else{
@@ -964,7 +964,7 @@ void PrintPortStates(){
         }
         else{
           // just values
-          MBaction(my.Address, 1, i, 0);
+          MBaction(my.Address, i, 0);
         }
       }
     }

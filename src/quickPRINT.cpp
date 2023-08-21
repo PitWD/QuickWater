@@ -119,7 +119,7 @@ byte PrintDashLine(byte posY, byte posX, byte len){
 #endif
 
 
-void PrintErrorOK(int8_t err, byte len, char *strIN, byte addr, byte type){
+void PrintErrorOK(int8_t err, byte len, char *strIN, byte addr){
 
    // !! Bottom-Line of TUI !!
 
@@ -183,11 +183,10 @@ void PrintErrorOK(int8_t err, byte len, char *strIN, byte addr, byte type){
     // just values in case of an error
     if (err == -1){
       MBstart(my.Address);
-      iicStr[2] = type;       // 0 = QuickTimer, 1 = QuickWater, 2 = QuickAir
-      iicStr[3] = 3;          // Error
-      iicStr[4] = addr;       // ID of probe
-      iicStr[5] = strIN[1];   // value ID (e.g. HUM has multiple values on one probe...)
-      MBstop(6);
+      iicStr[2] = 3;          // Error
+      iicStr[3] = addr;       // ID of probe
+      iicStr[4] = strIN[1];   // value ID (e.g. HUM has multiple values on one probe...)
+      MBstop(5);
     }    
   }
 
@@ -360,13 +359,21 @@ void MBstop(byte pos){
 
 }
 
-void MBaction(byte address, byte actionPort, byte state){
+void MBaction(byte address, byte idPort, byte state){
   MBstart(address);
-  // iicStr[2] = type;       // 0 = QuickTimer, 1 = QuickWater, 2 = QuickAir
-  iicStr[2] = 1;          // State ActionPort
-  iicStr[3] = actionPort; // ID of port
+  iicStr[2] = 1;          // Command ActionPort
+  iicStr[3] = idPort;     // ID of port
   iicStr[4] = state;      // state of port
   MBstop(5);
+}
+
+void MBanalog(byte address, byte idProbe, byte idVal, int32_t value){
+  MBstart(address);
+  iicStr[2] = 2;          // Command ActionPort
+  iicStr[3] = idProbe;    // ID of port
+  iicStr[4] = idVal;      // state of port
+  MBaddLong(value, 5);
+  MBstop(9);
 }
 
 byte MBaddLong(int32_t value, byte pos){

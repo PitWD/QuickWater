@@ -1082,7 +1082,7 @@ void RunManualSetting(byte port, byte style){
       // Time left as PrintErrOK...
       PrintSerTime(maxTime, 0, 0); // Time left to strHLP2
       strcpy(&strHLP2[8], (char*)" left...");
-      PrintErrorOK(0, strlen(strHLP2), strHLP2, 0, 1);
+      PrintErrorOK(0, strlen(strHLP2), strHLP2, 0);
 
       for (byte i = 0; i < 12; i++){
 
@@ -1468,14 +1468,7 @@ byte PrintWaterValsHlp(byte pos, byte posX, byte ezotype, byte lz, byte dp, int 
       }
       else{
         // just values
-        MBstart(my.Address);
-        // iicStr[2] = 1;          // 0 = QuickTimer, 1 = QuickWater, 2 = QuickAir
-        iicStr[2] = 2;          // Value Probe
-        iicStr[3] = i;          // ID of probe
-        // iicStr[4] = ezotype;    // type of probe
-        // Value of probe
-        MBaddLong(ezoValue[i][0], 4);
-        MBstop(8);
+        MBanalog(my.Address, i, 0,ezoValue[i][0]);
       }
       avg += ezoValue[i][0];
     }
@@ -1586,7 +1579,7 @@ void PrintLoopMenu(){
 
     pos = PrintTempToLevel(pos);
 
-    PrintErrorOK(0, 0, (char*)"Read Loop started...", 0, 1);
+    PrintErrorOK(0, 0, (char*)"Read Loop started...", 0);
 
   }
 

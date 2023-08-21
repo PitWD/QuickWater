@@ -676,7 +676,7 @@ int8_t EzoDoNext(){
     }
 
     if (err < 0){
-        PrintErrorOK(-1, strlen(errInfo), errInfo, errCnt + 1, 1);
+        PrintErrorOK(-1, strlen(errInfo), errInfo, errCnt + 1);
         return -1;
     }
     else{
@@ -990,6 +990,18 @@ PGM_P const bootMode[] PROGMEM = {
         else{
           // just values
         }
+
+*/
+
+/*
+
+:   | Addr |  Cmd  | IDprobe | IDvalue | Value |  LRC  | crlf |
+
+Cmd = 1     Action Ports
+            Value = 1 Byte
+
+Cmd = 2     Analog Values (ezo's)
+            Value = 4 Byte
 
 */
 

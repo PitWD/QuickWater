@@ -363,7 +363,7 @@ void MBaction(byte address, byte idPort, byte state, byte value){
   MBstart(address);
   iicStr[2] = 1;          // Command ActionPort
   iicStr[3] = idPort;     // ID of port
-  iicStr[4] = value;      // state of port
+  iicStr[4] = value;      // value of port
   iicStr[5] = state;      // state of port
   MBstop(6);
 }

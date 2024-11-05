@@ -73,7 +73,7 @@ void SetAutoAddress(){
 }
 
 byte PrintQuickWater(){
-  return PrintMenuTop((char*)"- QuickWater 1.10 -");
+  return PrintMenuTop((char*)"- QuickWater 1.11 -");
 }
 
 byte PrintAllMenuOpt1(byte pos){
@@ -1690,7 +1690,7 @@ Start:
     hlpTime += GetUserDate(myTime);
   case 'd':
     // Time
-    if (pos == 'c'){
+    if (pos == 'd'){
       hlpTime = SerializeTime(myDay, myMonth, myYear, 0, 0, 0);    // Midnight of today
       hlpTime += GetUserTime(myTime);
     }

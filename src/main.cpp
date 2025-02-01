@@ -152,6 +152,8 @@ uint32_t checkAction(uint32_t valIN, uint32_t actionTime, byte ezotype, byte i, 
 void loop() {
 // put your main code here, to run repeatedly:
 
+  my.Boot = 0; // Prevent Lock-In after Eeprom-Crash
+
   if (DoTimer()){
     // A Second is over...
 
